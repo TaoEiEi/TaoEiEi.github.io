@@ -1,145 +1,247 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UltraTradeVPS - VPS Forex</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #1a1a3d;
-            color: #fff;
-            margin: 0;
-            padding: 0;
-            text-align: center;
-        }
-        header {
-            background-color: #16213e;
-            padding: 20px;
-        }
-        .logo {
-            font-size: 40px;
-            font-weight: bold;
-            color: #fff;
-            border: 2px solid #fff;
-            border-radius: 50%;
-            width: 60px;
-            height: 60px;
-            display: inline-block;
-            line-height: 60px;
-            margin-bottom: 10px;
-        }
-        h1 {
-            font-size: 36px;
-            margin: 0;
-        }
-        h2 {
-            font-size: 24px;
-            color: #00d4ff;
-        }
-        .plans {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 20px;
-            padding: 20px;
-        }
-        .plan {
-            background-color: #0f3460;
-            border: 2px solid #16213e;
-            border-radius: 10px;
-            width: 180px;
-            padding: 15px;
-        }
-        .plan h3 {
-            font-size: 20px;
-            margin: 0 0 10px;
-        }
-        .plan p {
-            font-size: 16px;
-            margin: 5px 0;
-        }
-        .price {
-            font-size: 18px;
-            color: #ffcc00;
-        }
-        .discount {
-            font-size: 14px;
-            color: #ff4500;
-        }
-        .cta {
-            display: inline-block;
-            background-color: #ffcc00;
-            color: #0f3460;
-            padding: 10px 20px;
-            text-decoration: none;
-            border-radius: 5px;
-            margin-top: 10px;
-        }
-        .promotion {
-            font-size: 18px;
-            color: #00ff00;
-            margin-top: 20px;
-        }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>UltraTradeVPS – VPS สำหรับเทรด Forex เร็ว เสถียร มืออาชีพ</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800&family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --primary:#1E3A8A; /* navy */
+      --accent:#22C55E; /* green */
+      --highlight:#F59E0B; /* gold */
+      --fg:#FFFFFF; /* white */
+      --muted:#D1D5DB; /* gray */
+      --card:#0F183D; /* dark card */
+      --card-2:#101a44;
+      --ring: rgba(34,197,94,.35);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; color:var(--fg); background: radial-gradient(1200px 600px at 10% -10%, #2545a4 0%, #0c1330 60%), linear-gradient(180deg,#0b1120 0,#0b1120 60%,#0a0f27 100%);
+      font-family:'Poppins', 'Montserrat', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      line-height:1.5;
+    }
+    .wrap{max-width:1200px;margin:0 auto;padding:28px 20px 60px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:26px}
+    .brand{display:flex;align-items:center;gap:14px}
+    .logo{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#fecf5a,#caa13b);color:#0b1120;font-weight:800}
+    .title{font:800 28px/1.1 'Montserrat', sans-serif;letter-spacing:.2px}
+    .subtitle{color:var(--muted);font-weight:400}
+
+    .hero{
+      position:relative;overflow:hidden;border-radius:18px;padding:26px 24px 20px;margin-bottom:22px;
+      background: linear-gradient(135deg, rgba(30,58,138,.75), rgba(10,15,39,.75)), url('image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400"><g fill="none" stroke="%2322C55E" stroke-opacity="0.25"><path d="M0 330 Q60 280 120 300 T240 310 T360 280 T480 320 T600 250 T720 300 T840 260 T960 310 T1080 270 T1200 300"/><path d="M0 260 Q80 240 160 250 T320 230 T480 260 T640 200 T800 260 T960 210 T1120 230"/></g></svg>') center/cover no-repeat;
+      border:1px solid rgba(255,255,255,.06);
+      box-shadow:0 20px 60px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.04);
+    }
+    .hero h1{margin:0 0 6px;font:800 30px/1.1 'Montserrat',sans-serif}
+    .hero p{margin:0;color:var(--muted)}
+
+    .plans{display:grid;grid-template-columns:repeat(6,1fr);gap:16px}
+    @media (max-width:1200px){.plans{grid-template-columns:repeat(3,1fr)}}
+    @media (max-width:780px){.plans{grid-template-columns:repeat(2,1fr)}}
+    @media (max-width:520px){.plans{grid-template-columns:1fr}}
+
+    .card{
+      background:linear-gradient(180deg,var(--card) 0%, var(--card-2) 100%);
+      border-radius:16px; padding:18px 16px 16px; position:relative; border:1px solid rgba(255,255,255,.06);
+      box-shadow:0 16px 40px rgba(0,0,0,.35);
+      transition:transform .25s ease, box-shadow .25s ease; isolation:isolate;
+    }
+    .card:hover{transform:translateY(-3px); box-shadow:0 24px 60px rgba(0,0,0,.45)}
+    .badge{position:absolute;top:12px;right:12px;background:linear-gradient(135deg,#ffd271,#F59E0B);color:#0b1120;font-weight:700;border-radius:999px;padding:6px 10px;font-size:12px;box-shadow:0 6px 16px rgba(245,158,11,.35)}
+
+    .card h3{margin:0 0 14px;font:800 22px/1.2 'Montserrat',sans-serif}
+    .plan-tag{display:inline-block;font-size:12px;padding:4px 8px;border-radius:999px;background:rgba(34,197,94,.18);color:#9af0b8;border:1px solid var(--ring);margin-left:6px}
+
+    .specs{display:grid;gap:10px;margin:14px 0 12px}
+    .spec{display:grid;grid-template-columns:28px 1fr;align-items:center;gap:10px}
+    .spec .ico{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06)}
+    .spec b{font-weight:700}
+
+    .price{margin:10px 0 12px}
+    .price .now{font:800 26px 'Montserrat',sans-serif;color:var(--fg)}
+    .price .per{opacity:.8;font-weight:600}
+    .price .strike{color:#f1c77a;text-decoration:line-through;margin-left:8px;font-weight:600}
+    .discount{color:#F59E0B;font-weight:800}
+
+    .cta{display:flex;gap:10px;align-items:center}
+    .btn{cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;font:700 15px 'Montserrat',sans-serif;padding:12px 14px;border-radius:12px;border:none}
+    .btn-primary{background:linear-gradient(135deg,#29d071,#22C55E);color:#07121a;box-shadow:0 10px 24px rgba(34,197,94,.35)}
+    .btn-primary:hover{filter:brightness(1.05)}
+    .btn-ghost{background:transparent;color:#F59E0B;border:1px dashed rgba(245,158,11,.6)}
+
+    .footnote{margin-top:10px;color:var(--muted);font-size:12px}
+
+    /* plan colors */
+    .basic h3{color:#8BE0AE}
+    .starter h3{color:#c5d9ff}
+    .standard h3{color:#ffd271}
+    .pro h3{color:#7db2ff}
+    .premium h3{color:#ffdf96}
+    .elite h3{color:#8DF0C8}
+
+    /* Additional info */
+    .additional-info {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+  </style>
 </head>
 <body>
+  <div class="wrap">
     <header>
-        <div class="logo">UTV</div>
-        <h1>VPS FOREX</h1>
-        <h2>ลดทันที 20% เดือนแรก</h2>
+      <div class="brand">
+        <div class="logo">UT</div>
+        <div>
+          <div class="title">UltraTradeVPS</div>
+          <div class="subtitle">VPS สำหรับเทรด Forex – เร็ว เสถียร มืออาชีพ</div>
+        </div>
+      </div>
     </header>
-    <div class="plans">
-        <div class="plan">
-            <h3>Basic Plan</h3>
-            <p>CPU 1 (2 Threads)</p>
-            <p>RAM 6GB</p>
-            <p>SSD 20GB</p>
-            <p class="price">350.- /month</p>
-            <p class="discount">280.- <del>350.-</del> /month (20% off)</p>
-            <a href="#" class="cta">สมัครเลย!</a>
+
+    <section class="hero">
+      <h1>แพ็กเกจ VPS สำหรับเทรด Forex</h1>
+      <p>ธีมสีตามแบรนด์: น้ำเงินเข้ม • เขียวความสำเร็จ • เหลืองทองเน้นราคา — พร้อมโปรโมชันลด 20% เดือนแรก และทดลองฟรี 3 วัน (บางแพ็กเกจ)</p>
+    </section>
+
+    <section class="plans" aria-label="UltraTradeVPS Plans">
+      <!-- Basic Plan -->
+      <article class="card basic" aria-labelledby="p-basic">
+        <span class="badge">เริ่มต้นเพียง</span>
+        <h3 id="p-basic">Basic <span class="plan-tag">เริ่มต้น</span></h3>
+        <div class="specs">
+          <div class="spec"><div class="ico" aria-hidden="true">💠</div><div><b>CPU</b> 1 คอร์</div></div>
+          <div class="spec"><div class="ico">🧠</div><div><b>RAM</b> 4GB</div></div>
+          <div class="spec"><div class="ico">💾</div><div><b>Storage</b> 20GB SSD</div></div>
+          <div class="spec"><div class="ico">🌐</div><div><b>จำนวน VPS</b> 20 เครื่อง</div></div>
+          <div class="spec"><div class="ico">⚡</div><div><b>Bandwidth</b> 4,000 Mbps</div></div>
+          <div class="spec"><div class="ico">💰</div><div><b>ราคาต่อเครื่อง</b> 2,100 บาท</div></div>
         </div>
-        <div class="plan">
-            <h3>Standard Plan</h3>
-            <p>CPU 2 (4 Threads)</p>
-            <p>RAM 8GB</p>
-            <p>SSD 30GB</p>
-            <p class="price">550.- /month</p>
-            <p class="discount">440.- <del>550.-</del> /month (20% off)</p>
-            <p>Free 3-Day Trial</p>
-            <a href="#" class="cta">ทดลองฟรี!</a>
+        <div class="price">
+          <span class="now">฿200</span><span class="per">/เดือน</span>
         </div>
-        <div class="plan">
-            <h3>Premium Plan</h3>
-            <p>CPU 2 (4 Threads)</p>
-            <p>RAM 12GB + 2GB Bonus</p>
-            <p>SSD 40GB</p>
-            <p class="price">800.- /month</p>
-            <p class="discount">640.- <del>800.-</del> /month (20% off)</p>
-            <p>Free 3-Day Trial</p>
-            <a href="#" class="cta">สมัครเลย!</a>
+        <div class="cta">
+          <button class="btn btn-primary">สมัครเลย!</button>
         </div>
-        <div class="plan">
-            <h3>Pro Plan</h3>
-            <p>CPU 3 (6 Threads)</p>
-            <p>RAM 16GB + 2GB Bonus</p>
-            <p>SSD 50GB</p>
-            <p class="price">1,100.- /month</p>
-            <p class="discount">880.- <del>1,100.-</del> /month (20% off)</p>
-            <p>Free 3-Day Trial</p>
-            <a href="#" class="cta">สมัครเลย!</a>
+        <div class="additional-info">เหมาะสำหรับผู้เริ่มต้นและทดลองใช้งาน</div>
+      </article>
+
+      <!-- Starter Plan -->
+      <article class="card starter" aria-labelledby="p-starter">
+        <span class="badge">ยอดนิยม</span>
+        <h3 id="p-starter">Starter <span class="plan-tag">เริ่มต้น</span></h3>
+        <div class="specs">
+          <div class="spec"><div class="ico">💠</div><div><b>CPU</b> 2 คอร์</div></div>
+          <div class="spec"><div class="ico">🧠</div><div><b>RAM</b> 6GB</div></div>
+          <div class="spec"><div class="ico">💾</div><div><b>Storage</b> 25GB SSD</div></div>
+          <div class="spec"><div class="ico">🌐</div><div><b>จำนวน VPS</b> 14 เครื่อง</div></div>
+          <div class="spec"><div class="ico">⚡</div><div><b>Bandwidth</b> 4,200 Mbps</div></div>
+          <div class="spec"><div class="ico">💰</div><div><b>ราคาต่อเครื่อง</b> - บาท</div></div>
         </div>
-        <div class="plan">
-            <h3>Elite Plan</h3>
-            <p>CPU 3 (6 Threads)</p>
-            <p>RAM 20GB + 2GB Bonus</p>
-            <p>SSD 60GB</p>
-            <p class="price">1,400.- /month</p>
-            <p class="discount">1,120.- <del>1,400.-</del> /month (20% off)</p>
-            <p>Free 3-Day Trial</p>
-            <a href="#" class="cta">สมัครเลย!</a>
+        <div class="price">
+          <span class="now">฿300</span><span class="per">/เดือน</span>
         </div>
-    </div>
-    <div class="promotion">โปรโมชันถึง 3 ก.ย. 2568</div>
+        <div class="cta">
+          <button class="btn btn-primary">สมัครเลย!</button>
+        </div>
+        <div class="additional-info">สมดุลระหว่างราคาและประสิทธิภาพ</div>
+      </article>
+
+      <!-- Standard Plan -->
+      <article class="card standard" aria-labelledby="p-standard">
+        <span class="badge">นิยมมาก</span>
+        <h3 id="p-standard">Standard <span class="plan-tag">มาตรฐาน</span></h3>
+        <div class="specs">
+          <div class="spec"><div class="ico">💠</div><div><b>CPU</b> 2 คอร์</div></div>
+          <div class="spec"><div class="ico">🧠</div><div><b>RAM</b> 8GB</div></div>
+          <div class="spec"><div class="ico">💾</div><div><b>Storage</b> 30GB SSD</div></div>
+          <div class="spec"><div class="ico">🌐</div><div><b>จำนวน VPS</b> 12 เครื่อง</div></div>
+          <div class="spec"><div class="ico">⚡</div><div><b>Bandwidth</b> 4,800 Mbps</div></div>
+          <div class="spec"><div class="ico">💰</div><div><b>ราคาต่อเครื่อง</b> - บาท</div></div>
+        </div>
+        <div class="price">
+          <span class="now">฿400</span><span class="per">/เดือน</span>
+        </div>
+        <div class="cta">
+          <button class="btn btn-primary">สมัครเลย!</button>
+        </div>
+        <div class="additional-info">เหมาะสำหรับนักเทรดระดับกลาง</div>
+      </article>
+
+      <!-- Pro Plan -->
+      <article class="card pro" aria-labelledby="p-pro">
+        <span class="badge">มืออาชีพ</span>
+        <h3 id="p-pro">Pro <span class="plan-tag">มืออาชีพ</span></h3>
+        <div class="specs">
+          <div class="spec"><div class="ico">💠</div><div><b>CPU</b> 4 คอร์</div></div>
+          <div class="spec"><div class="ico">🧠</div><div><b>RAM</b> 12GB</div></div>
+          <div class="spec"><div class="ico">💾</div><div><b>Storage</b> 40GB SSD</div></div>
+          <div class="spec"><div class="ico">🌐</div><div><b>จำนวน VPS</b> 5 เครื่อง</div></div>
+          <div class="spec"><div class="ico">⚡</div><div><b>Bandwidth</b> 3,250 Mbps</div></div>
+          <div class="spec"><div class="ico">💰</div><div><b>ราคาต่อเครื่อง</b> - บาท</div></div>
+        </div>
+        <div class="price">
+          <span class="now">฿650</span><span class="per">/เดือน</span>
+        </div>
+        <div class="cta">
+          <button class="btn btn-primary">สมัครเลย!</button>
+        </div>
+        <div class="additional-info">ประสิทธิภาพสูงสำหรับการเทรดขั้นสูง</div>
+      </article>
+
+      <!-- Premium Plan -->
+      <article class="card premium" aria-labelledby="p-premium">
+        <span class="badge">พรีเมียม</span>
+        <h3 id="p-premium">Premium <span class="plan-tag">พรีเมียม</span></h3>
+        <div class="specs">
+          <div class="spec"><div class="ico">💠</div><div><b>CPU</b> 6 คอร์</div></div>
+          <div class="spec"><div class="ico">🧠</div><div><b>RAM</b> 16GB</div></div>
+          <div class="spec"><div class="ico">💾</div><div><b>Storage</b> 50GB SSD</div></div>
+          <div class="spec"><div class="ico">🌐</div><div><b>จำนวน VPS</b> 3 เครื่อง</div></div>
+          <div class="spec"><div class="ico">⚡</div><div><b>Bandwidth</b> 2,700 Mbps</div></div>
+          <div class="spec"><div class="ico">💰</div><div><b>ราคาต่อเครื่อง</b> - บาท</div></div>
+        </div>
+        <div class="price">
+          <span class="now">฿900</span><span class="per">/เดือน</span>
+        </div>
+        <div class="cta">
+          <button class="btn btn-primary">สมัครเลย!</button>
+        </div>
+        <div class="additional-info">สุดยอดประสิทธิภาพสำหรับนักเทรดมืออาชีพ</div>
+      </article>
+
+      <!-- Elite Plan -->
+      <article class="card elite" aria-labelledby="p-elite">
+        <span class="badge">สูงสุด</span>
+        <h3 id="p-elite">Elite (MAX) <span class="plan-tag">สูงสุด</span></h3>
+        <div class="specs">
+          <div class="spec"><div class="ico">💠</div><div><b>CPU</b> 8 คอร์</div></div>
+          <div class="spec"><div class="ico">🧠</div><div><b>RAM</b> 24GB</div></div>
+          <div class="spec"><div class="ico">💾</div><div><b>Storage</b> 60GB SSD</div></div>
+          <div class="spec"><div class="ico">🌐</div><div><b>จำนวน VPS</b> 2 เครื่อง</div></div>
+          <div class="spec"><div class="ico">⚡</div><div><b>Bandwidth</b> 2,400 Mbps</div></div>
+          <div class="spec"><div class="ico">💰</div><div><b>ราคาต่อเครื่อง</b> - บาท</div></div>
+        </div>
+        <div class="price">
+          <span class="now">฿1,200</span><span class="per">/เดือน</span>
+        </div>
+        <div class="cta">
+          <button class="btn btn-primary">สมัครเลย!</button>
+        </div>
+        <div class="additional-info">ประสิทธิภาพสูงสุดสำหรับการเทรดระดับองค์กร</div>
+      </article>
+    </section>
+
+    <p class="footnote" style="text-align:center;margin-top:22px">© <span id="yr"></span> UltraTradeVPS · ความเร็วและความเสถียรเพื่อการเทรดของคุณ</p>
+  </div>
+
+  <script>
+    document.getElementById('yr').textContent = new Date().getFullYear();
+  </script>
 </body>
 </html>
