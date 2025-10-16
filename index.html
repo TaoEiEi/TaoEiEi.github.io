@@ -1,247 +1,619 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>UltraTradeVPS – VPS สำหรับเทรด Forex เร็ว เสถียร มืออาชีพ</title>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800&family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Badminton Court Management</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
   <style>
-    :root{
-      --primary:#1E3A8A; /* navy */
-      --accent:#22C55E; /* green */
-      --highlight:#F59E0B; /* gold */
-      --fg:#FFFFFF; /* white */
-      --muted:#D1D5DB; /* gray */
-      --card:#0F183D; /* dark card */
-      --card-2:#101a44;
-      --ring: rgba(34,197,94,.35);
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0; color:var(--fg); background: radial-gradient(1200px 600px at 10% -10%, #2545a4 0%, #0c1330 60%), linear-gradient(180deg,#0b1120 0,#0b1120 60%,#0a0f27 100%);
-      font-family:'Poppins', 'Montserrat', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
-      line-height:1.5;
-    }
-    .wrap{max-width:1200px;margin:0 auto;padding:28px 20px 60px}
-    header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:26px}
-    .brand{display:flex;align-items:center;gap:14px}
-    .logo{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#fecf5a,#caa13b);color:#0b1120;font-weight:800}
-    .title{font:800 28px/1.1 'Montserrat', sans-serif;letter-spacing:.2px}
-    .subtitle{color:var(--muted);font-weight:400}
-
-    .hero{
-      position:relative;overflow:hidden;border-radius:18px;padding:26px 24px 20px;margin-bottom:22px;
-      background: linear-gradient(135deg, rgba(30,58,138,.75), rgba(10,15,39,.75)), url('image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400"><g fill="none" stroke="%2322C55E" stroke-opacity="0.25"><path d="M0 330 Q60 280 120 300 T240 310 T360 280 T480 320 T600 250 T720 300 T840 260 T960 310 T1080 270 T1200 300"/><path d="M0 260 Q80 240 160 250 T320 230 T480 260 T640 200 T800 260 T960 210 T1120 230"/></g></svg>') center/cover no-repeat;
-      border:1px solid rgba(255,255,255,.06);
-      box-shadow:0 20px 60px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.04);
-    }
-    .hero h1{margin:0 0 6px;font:800 30px/1.1 'Montserrat',sans-serif}
-    .hero p{margin:0;color:var(--muted)}
-
-    .plans{display:grid;grid-template-columns:repeat(6,1fr);gap:16px}
-    @media (max-width:1200px){.plans{grid-template-columns:repeat(3,1fr)}}
-    @media (max-width:780px){.plans{grid-template-columns:repeat(2,1fr)}}
-    @media (max-width:520px){.plans{grid-template-columns:1fr}}
-
-    .card{
-      background:linear-gradient(180deg,var(--card) 0%, var(--card-2) 100%);
-      border-radius:16px; padding:18px 16px 16px; position:relative; border:1px solid rgba(255,255,255,.06);
-      box-shadow:0 16px 40px rgba(0,0,0,.35);
-      transition:transform .25s ease, box-shadow .25s ease; isolation:isolate;
-    }
-    .card:hover{transform:translateY(-3px); box-shadow:0 24px 60px rgba(0,0,0,.45)}
-    .badge{position:absolute;top:12px;right:12px;background:linear-gradient(135deg,#ffd271,#F59E0B);color:#0b1120;font-weight:700;border-radius:999px;padding:6px 10px;font-size:12px;box-shadow:0 6px 16px rgba(245,158,11,.35)}
-
-    .card h3{margin:0 0 14px;font:800 22px/1.2 'Montserrat',sans-serif}
-    .plan-tag{display:inline-block;font-size:12px;padding:4px 8px;border-radius:999px;background:rgba(34,197,94,.18);color:#9af0b8;border:1px solid var(--ring);margin-left:6px}
-
-    .specs{display:grid;gap:10px;margin:14px 0 12px}
-    .spec{display:grid;grid-template-columns:28px 1fr;align-items:center;gap:10px}
-    .spec .ico{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06)}
-    .spec b{font-weight:700}
-
-    .price{margin:10px 0 12px}
-    .price .now{font:800 26px 'Montserrat',sans-serif;color:var(--fg)}
-    .price .per{opacity:.8;font-weight:600}
-    .price .strike{color:#f1c77a;text-decoration:line-through;margin-left:8px;font-weight:600}
-    .discount{color:#F59E0B;font-weight:800}
-
-    .cta{display:flex;gap:10px;align-items:center}
-    .btn{cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;font:700 15px 'Montserrat',sans-serif;padding:12px 14px;border-radius:12px;border:none}
-    .btn-primary{background:linear-gradient(135deg,#29d071,#22C55E);color:#07121a;box-shadow:0 10px 24px rgba(34,197,94,.35)}
-    .btn-primary:hover{filter:brightness(1.05)}
-    .btn-ghost{background:transparent;color:#F59E0B;border:1px dashed rgba(245,158,11,.6)}
-
-    .footnote{margin-top:10px;color:var(--muted);font-size:12px}
-
-    /* plan colors */
-    .basic h3{color:#8BE0AE}
-    .starter h3{color:#c5d9ff}
-    .standard h3{color:#ffd271}
-    .pro h3{color:#7db2ff}
-    .premium h3{color:#ffdf96}
-    .elite h3{color:#8DF0C8}
-
-    /* Additional info */
-    .additional-info {
-      font-size: 12px;
-      color: var(--muted);
-      margin-top: 8px;
-    }
+    body{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;}
+    .glass-effect{background:rgba(255,255,255,.95);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.2);}
+    .gradient-text{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+    .court-card{transition:.3s;animation:slideUp .5s ease;}
+    .court-card:hover{transform:translateY(-8px);box-shadow:0 20px 40px rgba(102,126,234,.2)}
+    @keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+    .btn-custom{transition:.3s}
+    .btn-custom:hover{transform:translateY(-2px);box-shadow:0 10px 20px rgba(0,0,0,.15)}
+    .status-badge{display:inline-block;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600}
+    .status-available{background:linear-gradient(135deg,#10b981 0%,#059669 100%);color:#fff}
+    .status-playing{background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%);color:#fff}
+    table tr:hover{background:linear-gradient(90deg,rgba(102,126,234,.05) 0%,transparent 100%)}
+    .modal-content{animation:modalSlide .3s ease}
+    @keyframes modalSlide{from{transform:scale(.96);opacity:0}to{transform:scale(1);opacity:1}}
+    .checkbox-custom{accent-color:#667eea}
+    .input-custom{border:2px solid #e5e7eb;transition:.3s}
+    .input-custom:focus{border-color:#667eea;box-shadow:0 0 0 3px rgba(102,126,234,.1);outline:none}
+    .icon-badge{width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff}
+    .wait-pill{display:inline-block;margin-left:.5rem;padding:.1rem .5rem;border-radius:9999px;background:rgba(16,185,129,.12);color:#065f46;font-size:11px;font-weight:700;border:1px solid rgba(16,185,129,.35)}
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <div class="brand">
-        <div class="logo">UT</div>
+  <!-- Navbar -->
+  <nav class="glass-effect shadow-lg sticky top-0 z-50">
+    <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <div class="icon-badge"><i class="fa-solid fa-table-tennis-paddle-ball"></i></div>
+        <h1 class="text-3xl font-bold text-white drop-shadow-md">Court Manager</h1>
+      </div>
+      <div class="flex gap-3">
+        <button class="btn-custom bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6 py-2 rounded-lg font-semibold" onclick="openModal('settings')">
+          <i class="fas fa-cog mr-2"></i>กำหนดราคา
+        </button>
+        <button onclick="clearAllCourts()" class="btn-custom bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-6 py-2 rounded-lg font-semibold">
+          <i class="fas fa-trash mr-2"></i>ล้างข้อมูล
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Modal: Settings -->
+  <div id="settings-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
+    <div class="glass-effect modal-content p-8 rounded-2xl shadow-2xl w-96">
+      <h2 class="text-2xl font-bold gradient-text mb-6">กำหนดราคา</h2>
+      <form id="settings-form" class="space-y-4">
         <div>
-          <div class="title">UltraTradeVPS</div>
-          <div class="subtitle">VPS สำหรับเทรด Forex – เร็ว เสถียร มืออาชีพ</div>
+          <label for="shuttlecock-price" class="block font-semibold text-gray-700 mb-2">
+            <i class="fas fa-coins mr-2 text-yellow-500"></i>ราคาต่อลูกแบด
+          </label>
+          <input id="shuttlecock-price" type="number" min="0" class="input-custom w-full p-3 rounded-lg" placeholder="0" required>
+        </div>
+        <div>
+          <label for="court-rental-fee" class="block font-semibold text-gray-700 mb-2">
+            <i class="fas fa-layer-group mr-2 text-purple-500"></i>ค่าบริการสนาม (ต่อรอบ/ต่อเกม)
+          </label>
+          <input id="court-rental-fee" type="number" min="0" class="input-custom w-full p-3 rounded-lg" placeholder="0" required>
+        </div>
+        <div class="flex justify-end gap-3 pt-4">
+          <button type="button" onclick="closeModal('settings')" class="px-6 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 font-semibold">ยกเลิก</button>
+          <button type="submit" class="px-6 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold btn-custom">บันทึก</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Add Court -->
+  <div id="add-court-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
+    <div class="glass-effect modal-content p-8 rounded-2xl shadow-2xl w-96">
+      <h2 class="text-2xl font-bold gradient-text mb-6">เพิ่มสนามใหม่</h2>
+      <form id="add-court-form" class="space-y-4">
+        <input id="court-name-input" type="text" class="input-custom w-full p-3 rounded-lg" placeholder="กรอกชื่อสนาม เช่น สนาม 1" required>
+        <div class="flex items-center gap-3">
+          <label class="font-semibold text-gray-700">ความจุ (คน):</label>
+          <input id="court-capacity-input" type="number" min="1" class="input-custom w-24 p-2 rounded-lg" placeholder="4" />
+        </div>
+        <div class="flex justify-end gap-3 pt-4">
+          <button type="button" onclick="closeModal('court')" class="px-6 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 font-semibold">ยกเลิก</button>
+          <button type="submit" class="px-6 py-2 rounded-lg bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold btn-custom">เพิ่มสนาม</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Add Player -->
+  <div id="add-player-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
+    <div class="glass-effect modal-content p-8 rounded-2xl shadow-2xl w-96">
+      <h2 class="text-2xl font-bold gradient-text mb-6">เพิ่มผู้เล่นใหม่</h2>
+      <form id="add-player-form" class="space-y-4">
+        <input id="player-name-input" type="text" class="input-custom w-full p-3 rounded-lg" placeholder="กรอกชื่อผู้เล่น" required>
+        <div class="flex justify-end gap-3 pt-4">
+          <button type="button" onclick="closeModal('player')" class="px-6 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 font-semibold">ยกเลิก</button>
+          <button type="submit" class="px-6 py-2 rounded-lg bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white font-semibold btn-custom">เพิ่มผู้เล่น</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Assign Players to Court -->
+  <div id="assign-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
+    <div class="glass-effect modal-content p-6 md:p-8 rounded-2xl shadow-2xl w-[92vw] max-w-2xl">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-2xl font-bold gradient-text">เลือกสนามสำหรับผู้เล่นที่เลือก</h2>
+        <button class="text-gray-500 hover:text-gray-800" onclick="closeModal('assign')"><i class="fa-solid fa-xmark text-xl"></i></button>
+      </div>
+
+      <div class="bg-white/70 rounded-xl border p-4 max-h-[55vh] overflow-auto" id="assign-court-list"></div>
+
+      <div class="flex items-center justify-between mt-4">
+        <label class="inline-flex items-center gap-2">
+          <input id="assign-auto" type="checkbox" class="checkbox-custom">
+          <span class="font-semibold text-gray-700">โหมดอัตโนมัติ: กระจายไปหลายสนามที่ยังว่าง</span>
+        </label>
+        <div class="flex gap-2">
+          <button class="px-5 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 font-semibold" onclick="closeModal('assign')">ยกเลิก</button>
+          <button class="px-5 py-2 rounded-lg text-white font-semibold btn-custom bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700" onclick="confirmAssign()">ยืนยันการเพิ่มผู้เล่น</button>
         </div>
       </div>
-    </header>
+    </div>
+  </div>
 
-    <section class="hero">
-      <h1>แพ็กเกจ VPS สำหรับเทรด Forex</h1>
-      <p>ธีมสีตามแบรนด์: น้ำเงินเข้ม • เขียวความสำเร็จ • เหลืองทองเน้นราคา — พร้อมโปรโมชันลด 20% เดือนแรก และทดลองฟรี 3 วัน (บางแพ็กเกจ)</p>
-    </section>
+  <div class="container mx-auto px-6 py-8">
+    <!-- Add Court -->
+    <div class="flex justify-between items-center mb-8">
+      <h2 class="text-3xl font-bold text-white drop-shadow-md">สนามแบดมินตั้น</h2>
+      <button onclick="openModal('court')" class="btn-custom bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2">
+        <i class="fas fa-plus"></i>เพิ่มสนาม
+      </button>
+    </div>
 
-    <section class="plans" aria-label="UltraTradeVPS Plans">
-      <!-- Basic Plan -->
-      <article class="card basic" aria-labelledby="p-basic">
-        <span class="badge">เริ่มต้นเพียง</span>
-        <h3 id="p-basic">Basic <span class="plan-tag">เริ่มต้น</span></h3>
-        <div class="specs">
-          <div class="spec"><div class="ico" aria-hidden="true">💠</div><div><b>CPU</b> 1 คอร์</div></div>
-          <div class="spec"><div class="ico">🧠</div><div><b>RAM</b> 4GB</div></div>
-          <div class="spec"><div class="ico">💾</div><div><b>Storage</b> 20GB SSD</div></div>
-          <div class="spec"><div class="ico">🌐</div><div><b>จำนวน VPS</b> 20 เครื่อง</div></div>
-          <div class="spec"><div class="ico">⚡</div><div><b>Bandwidth</b> 4,000 Mbps</div></div>
-          <div class="spec"><div class="ico">💰</div><div><b>ราคาต่อเครื่อง</b> 2,100 บาท</div></div>
-        </div>
-        <div class="price">
-          <span class="now">฿200</span><span class="per">/เดือน</span>
-        </div>
-        <div class="cta">
-          <button class="btn btn-primary">สมัครเลย!</button>
-        </div>
-        <div class="additional-info">เหมาะสำหรับผู้เริ่มต้นและทดลองใช้งาน</div>
-      </article>
+    <!-- Courts -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12" id="court-container"></div>
 
-      <!-- Starter Plan -->
-      <article class="card starter" aria-labelledby="p-starter">
-        <span class="badge">ยอดนิยม</span>
-        <h3 id="p-starter">Starter <span class="plan-tag">เริ่มต้น</span></h3>
-        <div class="specs">
-          <div class="spec"><div class="ico">💠</div><div><b>CPU</b> 2 คอร์</div></div>
-          <div class="spec"><div class="ico">🧠</div><div><b>RAM</b> 6GB</div></div>
-          <div class="spec"><div class="ico">💾</div><div><b>Storage</b> 25GB SSD</div></div>
-          <div class="spec"><div class="ico">🌐</div><div><b>จำนวน VPS</b> 14 เครื่อง</div></div>
-          <div class="spec"><div class="ico">⚡</div><div><b>Bandwidth</b> 4,200 Mbps</div></div>
-          <div class="spec"><div class="ico">💰</div><div><b>ราคาต่อเครื่อง</b> - บาท</div></div>
-        </div>
-        <div class="price">
-          <span class="now">฿300</span><span class="per">/เดือน</span>
-        </div>
-        <div class="cta">
-          <button class="btn btn-primary">สมัครเลย!</button>
-        </div>
-        <div class="additional-info">สมดุลระหว่างราคาและประสิทธิภาพ</div>
-      </article>
+    <!-- Players -->
+    <div class="glass-effect rounded-2xl shadow-xl p-8">
 
-      <!-- Standard Plan -->
-      <article class="card standard" aria-labelledby="p-standard">
-        <span class="badge">นิยมมาก</span>
-        <h3 id="p-standard">Standard <span class="plan-tag">มาตรฐาน</span></h3>
-        <div class="specs">
-          <div class="spec"><div class="ico">💠</div><div><b>CPU</b> 2 คอร์</div></div>
-          <div class="spec"><div class="ico">🧠</div><div><b>RAM</b> 8GB</div></div>
-          <div class="spec"><div class="ico">💾</div><div><b>Storage</b> 30GB SSD</div></div>
-          <div class="spec"><div class="ico">🌐</div><div><b>จำนวน VPS</b> 12 เครื่อง</div></div>
-          <div class="spec"><div class="ico">⚡</div><div><b>Bandwidth</b> 4,800 Mbps</div></div>
-          <div class="spec"><div class="ico">💰</div><div><b>ราคาต่อเครื่อง</b> - บาท</div></div>
-        </div>
-        <div class="price">
-          <span class="now">฿400</span><span class="per">/เดือน</span>
-        </div>
-        <div class="cta">
-          <button class="btn btn-primary">สมัครเลย!</button>
-        </div>
-        <div class="additional-info">เหมาะสำหรับนักเทรดระดับกลาง</div>
-      </article>
 
-      <!-- Pro Plan -->
-      <article class="card pro" aria-labelledby="p-pro">
-        <span class="badge">มืออาชีพ</span>
-        <h3 id="p-pro">Pro <span class="plan-tag">มืออาชีพ</span></h3>
-        <div class="specs">
-          <div class="spec"><div class="ico">💠</div><div><b>CPU</b> 4 คอร์</div></div>
-          <div class="spec"><div class="ico">🧠</div><div><b>RAM</b> 12GB</div></div>
-          <div class="spec"><div class="ico">💾</div><div><b>Storage</b> 40GB SSD</div></div>
-          <div class="spec"><div class="ico">🌐</div><div><b>จำนวน VPS</b> 5 เครื่อง</div></div>
-          <div class="spec"><div class="ico">⚡</div><div><b>Bandwidth</b> 3,250 Mbps</div></div>
-          <div class="spec"><div class="ico">💰</div><div><b>ราคาต่อเครื่อง</b> - บาท</div></div>
+      <!-- Price Info -->
+      <div class="grid grid-cols-2 gap-4 mb-6">
+        <div class="bg-gradient-to-br from-yellow-50 to-yellow-100 p-4 rounded-lg border-l-4 border-yellow-500">
+          <p class="text-gray-600 text-sm">ราคาลูกแบด</p>
+          <p class="text-2xl font-bold gradient-text"><span id="shuttlecock-price-display">20</span> บาท</p>
         </div>
-        <div class="price">
-          <span class="now">฿650</span><span class="per">/เดือน</span>
+        <div class="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg border-l-4 border-purple-500">
+          <p class="text-gray-600 text-sm">ราคาเช่าสนาม</p>
+          <p class="text-2xl font-bold gradient-text"><span id="court-price">0</span> บาท</p>
         </div>
-        <div class="cta">
-          <button class="btn btn-primary">สมัครเลย!</button>
-        </div>
-        <div class="additional-info">ประสิทธิภาพสูงสำหรับการเทรดขั้นสูง</div>
-      </article>
+      </div>
 
-      <!-- Premium Plan -->
-      <article class="card premium" aria-labelledby="p-premium">
-        <span class="badge">พรีเมียม</span>
-        <h3 id="p-premium">Premium <span class="plan-tag">พรีเมียม</span></h3>
-        <div class="specs">
-          <div class="spec"><div class="ico">💠</div><div><b>CPU</b> 6 คอร์</div></div>
-          <div class="spec"><div class="ico">🧠</div><div><b>RAM</b> 16GB</div></div>
-          <div class="spec"><div class="ico">💾</div><div><b>Storage</b> 50GB SSD</div></div>
-          <div class="spec"><div class="ico">🌐</div><div><b>จำนวน VPS</b> 3 เครื่อง</div></div>
-          <div class="spec"><div class="ico">⚡</div><div><b>Bandwidth</b> 2,700 Mbps</div></div>
-          <div class="spec"><div class="ico">💰</div><div><b>ราคาต่อเครื่อง</b> - บาท</div></div>
-        </div>
-        <div class="price">
-          <span class="now">฿900</span><span class="per">/เดือน</span>
-        </div>
-        <div class="cta">
-          <button class="btn btn-primary">สมัครเลย!</button>
-        </div>
-        <div class="additional-info">สุดยอดประสิทธิภาพสำหรับนักเทรดมืออาชีพ</div>
-      </article>
+      <!-- Add Players Button (opens popup) -->
+      <button onclick="openAssignModal()" class="w-full btn-custom bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-4 py-3 rounded-lg font-semibold mb-6 flex items-center justify-center gap-2">
+        <i class="fas fa-arrow-right"></i>เพิ่มผู้เล่นที่เลือกลงสนาม...
+      </button>
+	        <div class="flex justify-between items-center mb-6">
+        <h2 class="text-3xl font-bold text-black drop-shadow-md">รายชื่อผู้เล่น</h2>
+        <button onclick="openModal('player')" class="btn-custom bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white px-6 py-2 rounded-lg font-semibold flex items-center gap-2">
+          <i class="fas fa-user-plus"></i>เพิ่มผู้เล่น
+        </button>
+      </div>
 
-      <!-- Elite Plan -->
-      <article class="card elite" aria-labelledby="p-elite">
-        <span class="badge">สูงสุด</span>
-        <h3 id="p-elite">Elite (MAX) <span class="plan-tag">สูงสุด</span></h3>
-        <div class="specs">
-          <div class="spec"><div class="ico">💠</div><div><b>CPU</b> 8 คอร์</div></div>
-          <div class="spec"><div class="ico">🧠</div><div><b>RAM</b> 24GB</div></div>
-          <div class="spec"><div class="ico">💾</div><div><b>Storage</b> 60GB SSD</div></div>
-          <div class="spec"><div class="ico">🌐</div><div><b>จำนวน VPS</b> 2 เครื่อง</div></div>
-          <div class="spec"><div class="ico">⚡</div><div><b>Bandwidth</b> 2,400 Mbps</div></div>
-          <div class="spec"><div class="ico">💰</div><div><b>ราคาต่อเครื่อง</b> - บาท</div></div>
-        </div>
-        <div class="price">
-          <span class="now">฿1,200</span><span class="per">/เดือน</span>
-        </div>
-        <div class="cta">
-          <button class="btn btn-primary">สมัครเลย!</button>
-        </div>
-        <div class="additional-info">ประสิทธิภาพสูงสุดสำหรับการเทรดระดับองค์กร</div>
-      </article>
-    </section>
-
-    <p class="footnote" style="text-align:center;margin-top:22px">© <span id="yr"></span> UltraTradeVPS · ความเร็วและความเสถียรเพื่อการเทรดของคุณ</p>
+      <!-- Player Table -->
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead>
+            <tr class="bg-gradient-to-r from-gray-800 to-gray-900 text-white">
+              <th class="py-3 px-4 text-left">
+                <input id="select-all" type="checkbox" class="checkbox-custom">
+              </th>
+              <th class="py-3 px-4 text-center">#</th>
+              <th class="py-3 px-4 text-left"><i class="fas fa-user mr-2"></i>ชื่อผู้เล่น</th>
+              <th class="py-3 px-4 text-center"><i class="fas fa-circle mr-2"></i>สถานะ</th>
+              <th class="py-3 px-4 text-center"><i class="fas fa-gamepad mr-2"></i>เกมที่เล่น</th>
+              <th class="py-3 px-4 text-center"><i class="fa-solid fa-table-tennis-paddle-ball mr-2"></i>ลูกแบด</th>
+              <th class="py-3 px-4 text-center"><i class="fas fa-money-bill mr-2"></i>ค่าใช้จ่าย</th>
+            </tr>
+          </thead>
+          <tbody id="player-table-body"></tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
   <script>
-    document.getElementById('yr').textContent = new Date().getFullYear();
+    // ---------- Helpers ----------
+    function openModal(type){
+      if(type==='court'){document.getElementById('add-court-modal').classList.remove('hidden');}
+      else if(type==='player'){document.getElementById('add-player-modal').classList.remove('hidden');}
+      else if(type==='settings'){
+        const {shuttlecockPrice,courtRentalFee}=getPriceSettings();
+        document.getElementById('shuttlecock-price').value=shuttlecockPrice;
+        document.getElementById('court-rental-fee').value=courtRentalFee;
+        document.getElementById('settings-modal').classList.remove('hidden');
+      } else if (type==='assign'){
+        document.getElementById('assign-modal').classList.remove('hidden');
+      }
+    }
+    function closeModal(type){
+      if(type==='court'){document.getElementById('add-court-modal').classList.add('hidden');}
+      else if(type==='player'){document.getElementById('add-player-modal').classList.add('hidden');}
+      else if(type==='settings'){document.getElementById('settings-modal').classList.add('hidden');}
+      else if(type==='assign'){document.getElementById('assign-modal').classList.add('hidden');}
+    }
+    function getNumberOrZero(v){const n=parseFloat(v);return Number.isFinite(n)?n:0;}
+
+    function clearAllCourts(){
+      if(confirm('คุณแน่ใจว่าต้องการล้างข้อมูลสนามทั้งหมด?')){
+        localStorage.removeItem('courts');
+        localStorage.removeItem('players');
+        renderCourts(); renderPlayers();
+      }
+    }
+
+    // ---------- Prices ----------
+    document.getElementById('settings-form').addEventListener('submit',function(e){
+      e.preventDefault();
+      const shuttlecockPrice=getNumberOrZero(document.getElementById('shuttlecock-price').value);
+      const courtRentalFee=getNumberOrZero(document.getElementById('court-rental-fee').value);
+      localStorage.setItem('shuttlecockPrice',shuttlecockPrice);
+      localStorage.setItem('courtRentalFee',courtRentalFee);
+      closeModal('settings');
+      updatePriceDisplay();
+    });
+    function getPriceSettings(){
+      const shuttlecockPrice=localStorage.getItem('shuttlecockPrice')||20;
+      const courtRentalFee=localStorage.getItem('courtRentalFee')||0;
+      return {shuttlecockPrice:parseFloat(shuttlecockPrice),courtRentalFee:parseFloat(courtRentalFee)};
+    }
+    function updatePriceDisplay(){
+      const prices=getPriceSettings();
+      document.getElementById('court-price').textContent=prices.courtRentalFee;
+      document.getElementById('shuttlecock-price-display').textContent=prices.shuttlecockPrice;
+    }
+
+    // ---------- Storage ----------
+    function savePlayerData(data){localStorage.setItem('players',JSON.stringify(data));}
+    function getPlayerData(){const raw=localStorage.getItem('players');try{return raw?JSON.parse(raw):[]}catch{return [];}}
+    function saveCourtData(data){localStorage.setItem('courts',JSON.stringify(data));}
+    function getCourtData(){const raw=localStorage.getItem('courts');try{return raw?JSON.parse(raw):[]}catch{return [];}}
+
+    // ---------- Waiting Time Utils ----------
+    function ensureAvailableSince(players){
+      const now = Date.now();
+      players.forEach(p=>{
+        if(p.status==='ว่าง' && !p.availableSince){ p.availableSince = now; }
+        if(p.status!=='ว่าง' && p.availableSince){ p.availableSince = null; }
+      });
+      return players;
+    }
+    function minutesSince(ts){
+      if(!ts) return 0;
+      const diffMs = Date.now() - ts;
+      const m = Math.floor(diffMs/60000);
+      return m < 1 ? '<1' : m;
+    }
+
+    // ---------- Render Players ----------
+    function renderPlayers(){
+      const tbody=document.getElementById('player-table-body');
+      tbody.innerHTML='';
+      const players=ensureAvailableSince(getPlayerData());
+      savePlayerData(players); // เผื่อเติม availableSince ให้คนที่ว่างอยู่
+
+      const prices=getPriceSettings();
+      players.sort((a,b)=>{
+        const af = a.status==='ว่าง', bf = b.status==='ว่าง';
+        if (af && !bf) return -1;       // 'ว่าง' ก่อน
+        if (!af && bf) return 1;        // ที่เหลือทีหลัง
+        if (af && bf) {                 // ทั้งคู่ 'ว่าง' → เรียงคนที่รอนานสุดไว้บน
+          const ta = a.availableSince ?? Date.now();
+          const tb = b.availableSince ?? Date.now();
+          return ta - tb;               // เวลาที่เก่ากว่า (รอนานกว่า) ขึ้นก่อน
+        }
+        // ทั้งคู่กำลังเล่น → เรียงตามชื่อเพื่อความนิ่ง
+        return (a.name||'').localeCompare(b.name||'');
+      });
+
+      players.forEach((player,index)=>{
+        const cost=(player.shuttlecocksUsed*prices.shuttlecockPrice)+prices.courtRentalFee; // logic เดิม
+        const isFree = player.status==='ว่าง';
+        const statusClass=isFree?'status-available':'status-playing';
+        const waitInfo = isFree ? `<span class="wait-pill">รอ ${minutesSince(player.availableSince)} นาที</span>` : '';
+
+        const row=`
+          <tr class="border-b border-gray-200">
+            <td class="py-3 px-4"><input type="checkbox" class="player-checkbox checkbox-custom" data-index="${index}"></td>
+            <td class="py-3 px-4 text-center font-semibold text-gray-600">${index+1}</td>
+            <td class="py-3 px-4">${player.name}</td>
+            <td class="py-3 px-4 text-center">
+              <span class="status-badge ${statusClass}">${player.status}</span>${waitInfo}
+            </td>
+            <td class="py-3 px-4 text-center"><strong>${player.gamesPlayed||0}</strong></td>
+            <td class="py-3 px-4 text-center"><strong>${player.shuttlecocksUsed||0}</strong></td>
+            <td class="py-3 px-4 text-center font-bold text-green-600">${cost}</td>
+          </tr>`;
+        tbody.insertAdjacentHTML('beforeend',row);
+      });
+
+      const master=document.getElementById('select-all');
+      if(master){
+        master.checked=false;
+        master.onchange=(e)=>{
+          document.querySelectorAll('#player-table-body .player-checkbox').forEach(cb=>cb.checked=e.target.checked);
+        };
+      }
+    }
+
+    // ---------- Render Courts ----------
+    function renderCourts(){
+      const courtContainer=document.getElementById('court-container');
+      courtContainer.innerHTML='';
+      const courts=getCourtData();
+
+      courts.forEach((court,index)=>{
+        const capacity=court.capacity??4;
+        const isAvailable=court.status==='ว่าง';
+        const playersCount=(court.players||[]).length;
+        const statusColor=isAvailable
+          ?'bg-gradient-to-br from-green-50 to-green-100 border-l-4 border-green-500'
+          :'bg-gradient-to-br from-orange-50 to-orange-100 border-l-4 border-orange-500';
+        const percent=Math.min(100,(playersCount/capacity)*100);
+        const playersLabel=playersCount>0?(court.players||[]).join(', '):'ไม่มีผู้เล่น';
+
+        const html=`
+          <div class="court-card glass-effect rounded-2xl shadow-lg p-6 ${statusColor}">
+            <div class="flex justify-between items-start mb-4">
+              <h3 class="text-2xl font-bold gradient-text">${court.name}</h3>
+              <span class="status-badge ${isAvailable?'status-available':'status-playing'}">${court.status}</span>
+            </div>
+            <div class="mb-4">
+              <p class="text-gray-600 text-sm mb-2"><i class="fas fa-users mr-2"></i>ผู้เล่น (${playersCount}/${capacity})</p>
+              <p class="text-gray-800 font-semibold">${playersLabel}</p>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2 mb-4">
+              <div class="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full" style="width:${percent}%"></div>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="endGame(${index})" class="flex-1 btn-custom bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-4 py-2 rounded-lg font-semibold text-sm">
+                <i class="fas fa-stop-circle mr-1"></i>จบเกม
+              </button>
+              <button onclick="openConfirmShuttlecock(${index})" class="flex-1 btn-custom bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white px-4 py-2 rounded-lg font-semibold text-sm">
+                <i class="fas fa-plus mr-1"></i>เพิ่มลูก
+              </button>
+            </div>
+          </div>`;
+        courtContainer.insertAdjacentHTML('beforeend',html);
+      });
+    }
+
+    // ---------- Court Actions ----------
+    function endGame(courtIndex){
+      const playerData=getPlayerData();
+      const courtData=getCourtData();
+      const court=courtData[courtIndex];
+
+      (court.players||[]).forEach(playerName=>{
+        const player=playerData.find(p=>p.name===playerName);
+        if(player){
+          player.status='ว่าง';
+          player.availableSince = Date.now(); // เริ่มจับเวลารอใหม่
+        }
+      });
+      court.players=[];
+      court.status='ว่าง';
+
+      savePlayerData(playerData);
+      saveCourtData(courtData);
+      renderPlayers(); renderCourts();
+    }
+
+    function addShuttlecock(courtIndex){
+      const playerData=getPlayerData();
+      const courtData=getCourtData();
+      const court=courtData[courtIndex];
+
+      (court.players||[]).forEach(playerName=>{
+        const player=playerData.find(p=>p.name===playerName);
+        if(player){player.shuttlecocksUsed=(player.shuttlecocksUsed||0)+1;}
+      });
+
+      savePlayerData(playerData);
+      renderPlayers();
+    }
+
+    // ---------- Assign Popup ----------
+    let _assignSelectedPlayers = []; // เก็บ index ผู้เล่นที่เลือกไว้ตอนเปิด popup
+
+    function openAssignModal(){
+      _assignSelectedPlayers = Array.from(document.querySelectorAll('.player-checkbox:checked'))
+        .map(cb => parseInt(cb.getAttribute('data-index')));
+
+      if(_assignSelectedPlayers.length===0){
+        alert('กรุณาเลือกผู้เล่นอย่างน้อย 1 คน');
+        return;
+      }
+
+      buildAssignCourtList();
+      document.getElementById('assign-auto').checked = false;
+      openModal('assign');
+    }
+
+    function buildAssignCourtList(){
+      const host=document.getElementById('assign-court-list');
+      host.innerHTML='';
+      const courts=getCourtData();
+
+      host.insertAdjacentHTML('beforeend',
+        `<div class="mb-3 text-sm text-gray-600">เลือก 1 สนามด้านล่าง หรือเปิดโหมดอัตโนมัติเพื่อกระจายผู้เล่นไปสนามที่ยังว่าง</div>`
+      );
+
+      const list=document.createElement('div');
+      list.className='grid grid-cols-1 sm:grid-cols-2 gap-3';
+
+      courts.forEach((court, idx) => {
+        const cap = court.capacity ?? 4;
+        const used = (court.players?.length || 0);
+        const remain = Math.max(0, cap - used);
+        const disabled = remain === 0 ? 'disabled' : '';
+        const percent = Math.min(100, (used / cap) * 100);
+
+        const card = `
+          <label class="cursor-pointer block border rounded-xl p-4 hover:shadow-md transition ${disabled?'opacity-60':''}">
+            <div class="flex items-start gap-3">
+              <input type="radio" name="assign-court" value="${idx}" ${disabled} class="mt-1">
+              <div class="flex-1">
+                <div class="flex items-center justify-between">
+                  <div class="font-semibold">${court.name}</div>
+                  <span class="text-sm ${remain>0?'text-emerald-600':'text-gray-500'}">ว่าง ${remain}/${cap}</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+                  <div class="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full" style="width:${percent}%"></div>
+                </div>
+                <div class="text-xs text-gray-500 mt-2">ผู้เล่น: ${used>0?(court.players||[]).join(', '):'—'}</div>
+              </div>
+            </div>
+          </label>
+        `;
+        list.insertAdjacentHTML('beforeend', card);
+      });
+
+      host.appendChild(list);
+    }
+
+    function confirmAssign(){
+      const auto = document.getElementById('assign-auto').checked;
+      const playerData=getPlayerData();
+      const courtData=getCourtData();
+
+      const getCourtsWithSpace = () =>
+        courtData.map((c,i)=>({court:c,index:i,capacity:c.capacity??4}))
+                 .filter(x => (x.court.players?.length || 0) < x.capacity);
+
+      if(auto){
+        // โหมดกระจายอัตโนมัติ
+        let courts = getCourtsWithSpace();
+        if(courts.length===0){ alert('ไม่มีสนามที่ว่างอยู่'); return; }
+
+        for(const pIndex of _assignSelectedPlayers){
+          let assigned = false;
+          for(const c of courts){
+            if((c.court.players?.length||0) < c.capacity){
+              const p = playerData[pIndex];
+              if(!p) break;
+              if(p.status!=='ว่าง') break;
+
+              if(!Array.isArray(c.court.players)) c.court.players=[];
+              c.court.players.push(p.name);
+              p.status='กำลังเล่น';
+              p.availableSince = null; // หยุดจับเวลารอ
+              p.gamesPlayed=(p.gamesPlayed||0)+1;
+              p.shuttlecocksUsed=(p.shuttlecocksUsed||0)+1; // ตาม logic เดิม
+              c.court.status='กำลังเล่น';
+              assigned = true;
+              break;
+            }
+          }
+          courts = getCourtsWithSpace();
+          if(!assigned && courts.length===0) break;
+        }
+
+        savePlayerData(playerData); saveCourtData(courtData);
+        renderPlayers(); renderCourts();
+        document.querySelectorAll('.player-checkbox:checked').forEach(cb=>cb.checked=false);
+        closeModal('assign');
+        return;
+      }
+
+      // โหมดเลือกสนามเดียว
+      const chosen = document.querySelector('input[name="assign-court"]:checked');
+      if(!chosen){
+        alert('กรุณาเลือกสนาม หรือเปิดโหมดอัตโนมัติ');
+        return;
+      }
+
+      const idx = parseInt(chosen.value);
+      const target = courtData[idx];
+      if(!target){ alert('สนามที่เลือกไม่ถูกต้อง'); return; }
+
+      if(!Array.isArray(target.players)) target.players=[];
+      const capacity = target.capacity ?? 4;
+      let added = 0;
+
+      for(const pIndex of _assignSelectedPlayers){
+        if(target.players.length >= capacity) break;
+        const p = playerData[pIndex];
+        if(!p) continue;
+        if(p.status === 'ว่าง'){
+          target.players.push(p.name);
+          p.status='กำลังเล่น';
+          p.availableSince = null; // หยุดจับเวลารอ
+          p.gamesPlayed=(p.gamesPlayed||0)+1;
+          p.shuttlecocksUsed=(p.shuttlecocksUsed||0)+1; // ตาม logic เดิม
+          added++;
+        }
+      }
+
+      if(added===0){
+        alert('สนามที่เลือกเต็มแล้ว หรือผู้เล่นที่เลือกไม่ว่าง');
+        return;
+      }
+
+      target.status='กำลังเล่น';
+      savePlayerData(playerData); saveCourtData(courtData);
+      renderPlayers(); renderCourts();
+      document.querySelectorAll('.player-checkbox:checked').forEach(cb=>cb.checked=false);
+      closeModal('assign');
+    }
+
+    // ---------- Forms ----------
+    document.getElementById('add-court-form').addEventListener('submit',function(e){
+      e.preventDefault();
+      const courtName=document.getElementById('court-name-input').value.trim();
+      const capacity=getNumberOrZero(document.getElementById('court-capacity-input').value)||4;
+
+      const courtData=getCourtData();
+      courtData.push({name:courtName,status:'ว่าง',players:[],capacity});
+      saveCourtData(courtData);
+      renderCourts();
+      closeModal('court');
+      document.getElementById('court-name-input').value='';
+      document.getElementById('court-capacity-input').value='';
+    });
+
+    document.getElementById('add-player-form').addEventListener('submit',function(e){
+      e.preventDefault();
+      const playerName=document.getElementById('player-name-input').value.trim();
+      const playerData=getPlayerData();
+      playerData.push({name:playerName,status:'ว่าง',gamesPlayed:0,shuttlecocksUsed:0,availableSince: Date.now()});
+      savePlayerData(playerData);
+      renderPlayers();
+      closeModal('player');
+      document.getElementById('player-name-input').value='';
+    });
+
+    // ---------- Init & Auto Refresh ----------
+    renderCourts();
+    renderPlayers();
+    updatePriceDisplay();
+
+    // อัปเดตตัวเลข "รอกี่นาที" อัตโนมัติทุก 30 วินาที
+    setInterval(renderPlayers, 30000);
+
+    // ---------- Confirm Add Shuttlecock Modal ----------
+    let _pendingShuttleCourtIndex = null;
+    function openConfirmShuttlecock(index){
+      const courts = getCourtData();
+      const c = courts[index];
+      const nameEl = document.getElementById('confirm-shuttlecourt-name');
+      const playersEl = document.getElementById('confirm-shuttlecourt-players');
+      if(nameEl) nameEl.textContent = c?.name ?? ('สนาม #' + (index+1));
+      if(playersEl) playersEl.textContent = (c?.players && c.players.length>0) ? c.players.join(', ') : '—';
+      _pendingShuttleCourtIndex = index;
+      document.getElementById('confirm-shuttle-modal').classList.remove('hidden');
+    }
+    function closeConfirmShuttlecock(){
+      _pendingShuttleCourtIndex = null;
+      document.getElementById('confirm-shuttle-modal').classList.add('hidden');
+    }
+    function confirmAddShuttlecock(){
+      if(_pendingShuttleCourtIndex===null) return;
+      addShuttlecock(_pendingShuttleCourtIndex);
+      closeConfirmShuttlecock();
+    }
+
   </script>
+
+  <!-- Modal: Confirm Add Shuttlecock -->
+  <div id="confirm-shuttle-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
+    <div class="glass-effect modal-content p-6 rounded-2xl shadow-2xl w-96">
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="text-xl font-bold"><span class="gradient-text">ยืนยันการเพิ่มลูกแบด</span></h3>
+        <button class="text-gray-500 hover:text-gray-800" onclick="closeConfirmShuttlecock()">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+      <p class="text-gray-700 mb-4">
+        เพิ่มลูกแบดให้ <span id="confirm-shuttlecourt-name" class="font-semibold"></span> จำนวน <span class="font-semibold">1</span> ลูก?
+      </p>
+      <div class="bg-gray-50 border rounded-lg p-3 text-sm text-gray-600 mb-4">
+        ผู้เล่นในสนาม: <span id="confirm-shuttlecourt-players" class="font-semibold">—</span>
+      </div>
+      <div class="flex justify-end gap-3">
+        <button class="px-5 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 font-semibold" onclick="closeConfirmShuttlecock()">ยกเลิก</button>
+        <button class="px-5 py-2 rounded-lg text-white font-semibold btn-custom bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700" onclick="confirmAddShuttlecock()">
+          <i class="fa-solid fa-plus mr-1"></i>ยืนยัน
+        </button>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>
