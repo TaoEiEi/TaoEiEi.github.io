@@ -3,12 +3,35 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Badminton Court Manager — Fixed v6</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Badminton Court Manager — v8 (Clickable Header Sort, Full Modals)</title>
+  <script src="https://cdn.tailwindcss.com">
+    /* Forms: add court (restored) */
+    document.getElementById('add-court-form').addEventListener('submit',e=>{
+      e.preventDefault();
+      const name=document.getElementById('court-name-input').value.trim();
+      const capacity=getNumberOrZero(document.getElementById('court-capacity-input').value)||4;
+      const courts=getCourts(); if(courts.some(c=>(c.name||'').toLowerCase()===name.toLowerCase())){ alert('ชื่อซ้ำ'); return; }
+      const before=JSON.stringify(courts);
+      courts.push({id:uuid(), name, status:'ว่าง', players:[], pairs:[], waiting:null, roundNo:0, capacity});
+      saveCourts(courts); hide('add-court-modal'); renderCourts(); e.target.reset();
+      setUndo('เพิ่มสนาม', ()=>{ saveCourts(JSON.parse(before)); renderCourts(); });
+      showToast('เพิ่มสนามแล้ว ✓','เลิกทำ', triggerUndo);
+    });
+
+  </script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
   <style>
-    :root{ --bg:#0b1020; --panel:#0f172a; --muted:#94a3b8; --border:rgba(148,163,184,.18);
-      --primary:#6366f1; --green:#10b981; --amber:#f59e0b; --danger:#ef4444; }
+    :root{
+      --bg:#0b1020;
+      --panel:#0f172a;
+      --muted:#94a3b8;
+      --border:rgba(148,163,184,.18);
+      --primary:#6366f1;
+      --green:#10b981;
+      --amber:#f59e0b;
+      --danger:#ef4444;
+      color-scheme: dark;
+    }
     body{background:radial-gradient(1200px 800px at 10% -10%, rgba(99,102,241,.22), transparent 40%),radial-gradient(900px 700px at 80% -20%, rgba(16,185,129,.18), transparent 35%),var(--bg);min-height:100vh;color:#e5e7eb;}
     .panel{background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.02));border:1px solid var(--border);border-radius:16px;box-shadow:0 10px 30px rgba(2,6,23,.25);}
     .soft{border-radius:14px;border:1px solid var(--border);background:rgba(255,255,255,.02);}
@@ -36,34 +59,50 @@
     .subtle{font-size:.85rem;color:var(--muted)}
     .pair-box{border:1px dashed var(--border); border-radius:14px; padding:.75rem; background:rgba(255,255,255,.02)}
     .pair-title{font-size:.9rem;color:#c7d2fe;font-weight:700;letter-spacing:.2px}
+    /* sorting UI */
+    th.sortable{cursor:pointer; user-select:none;}
+    th.sortable .label{display:inline-flex;align-items:center;gap:.35rem}
+    th.sortable .icon{opacity:.55}
+    th.sortable.active .icon{opacity:1}
+    
+    /* Dark select styling (force dark dropdown list) */
     select.soft{
-	  -webkit-appearance: none;
-	  -moz-appearance: none;
-	  appearance: none;
-	  background: rgba(255,255,255,.02);
-	  color: #e5e7eb;
-	  border: 1px solid var(--border);
-	  border-radius: 12px;
-	  padding-right: 2.25rem; /* เว้นที่ให้ไอคอนลูกศร */
-	  background-image:
-		url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="%23c7d2fe" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z"/></svg>');
-	  background-repeat: no-repeat;
-	  background-position: right .7rem center;
-	  background-size: 1rem;
-	}
-	select.soft:focus{
-	  outline: none;
-	  box-shadow: 0 0 0 2px rgba(99,102,241,.45);
-	  border-color: rgba(99,102,241,.55);
-	}
-	select.soft option{
-	  background: #0f172a;  /* สีแผงดรอปดาวน์ */
-	  color: #e5e7eb;
-	}
-	select.soft::-ms-expand{ display: none; } /* สำหรับ IE/Edge เก่า */
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      background: rgba(255,255,255,.02);
+      color: #e5e7eb;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding-right: 2.25rem;
+      background-image:
+        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="%23c7d2fe" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z"/></svg>');
+      background-repeat: no-repeat;
+      background-position: right .7rem center;
+      background-size: 1rem;
+    }
+    select.soft:focus{
+      outline:none;
+      box-shadow:0 0 0 2px rgba(99,102,241,.45);
+      border-color:rgba(99,102,241,.55);
+    }
+    /* Important: set the dropdown panel colors */
+    select.soft option, select.soft optgroup{
+      background:#0f172a;
+      color:#e5e7eb;
+    }
+    /* Hide default arrow on old IE/Edge */
+    select.soft::-ms-expand{ display:none; }
+
+    /* Toast */
+    #toast-container{ position:fixed; right:16px; bottom:16px; display:flex; flex-direction:column; gap:10px; z-index:9999; }
+    .toast{ background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03)); border:1px solid var(--border); border-radius:12px; padding:.75rem 1rem; min-width:260px; display:flex; align-items:center; gap:.6rem; box-shadow:0 10px 30px rgba(2,6,23,.35); }
+    .toast .msg{ flex:1; font-size:.9rem; }
+    .toast .undo{ border:1px solid var(--border); padding:.3rem .6rem; border-radius:10px; }
   </style>
 </head>
 <body>
+  <!-- Topbar -->
   <header class="sticky top-0 z-40 backdrop-blur supports-[backdrop-filter]:bg-white/0">
     <div class="max-w-7xl mx-auto px-5 py-4 flex items-center justify-between">
       <div class="flex items-center gap-3">
@@ -76,18 +115,30 @@
         <button class="btn btn-ghost" onclick="show('settings-modal')"><i class="fa-solid fa-sliders"></i><span class="hidden sm:inline">กำหนดราคา</span></button>
         <button class="btn btn-ghost" onclick="show('add-player-modal')"><i class="fa-solid fa-user-plus"></i><span class="hidden sm:inline">เพิ่มผู้เล่น</span></button>
         <button class="btn btn-ghost" onclick="show('add-court-modal')"><i class="fa-solid fa-plus"></i><span class="hidden sm:inline">เพิ่มสนาม</span></button>
+        <button class="btn" onclick="openDataModal()"><i class="fa-solid fa-database"></i><span class="hidden sm:inline">สำรอง/นำเข้า</span></button>
         <button class="btn" onclick="clearAllCourts()"><i class="fa-solid fa-trash"></i></button>
       </div>
     </div>
     <div class="divider"></div>
   </header>
 
-  <main class="max-w-7xl mx-auto px-5 py-8 space-y-8">
+  <main class="max-w-7xl mx-auto px-5 py-8">
+
+    <!-- Overview -->
     <section class="grid sm:grid-cols-3 gap-4">
-      <div class="panel p-5"><div class="subtle">ราคาลูกแบด</div><div class="text-2xl font-bold"><span id="shuttlecock-price-display">20</span> บาท</div></div>
-      <div class="panel p-5"><div class="subtle">ราคาเช่าสนาม</div><div class="text-2xl font-bold"><span id="court-price">0</span> บาท</div></div>
+      <div class="panel p-5">
+        <div class="subtle">ราคาลูกแบด</div>
+        <div class="text-2xl font-bold"><span id="shuttlecock-price-display">20</span> บาท</div>
+      </div>
+      <div class="panel p-5">
+        <div class="subtle">ราคาเช่าสนาม</div>
+        <div class="text-2xl font-bold"><span id="court-price">0</span> บาท</div>
+      </div>
       <div class="panel p-5 flex items-center justify-between">
-        <div><div class="subtle">คิวทั้งหมด</div><div class="text-2xl font-bold"><span id="queue-count">0</span> คิว</div></div>
+        <div>
+          <div class="subtle">คิวทั้งหมด</div>
+          <div class="text-2xl font-bold"><span id="queue-count">0</span> คิว</div>
+        </div>
         <div class="flex gap-2">
           <button class="btn btn-green" onclick="buildQueueMatchesFromAvailable()"><i class="fa-solid fa-shuffle"></i><span class="hidden sm:inline">จัดคิวอัตโนมัติ</span></button>
           <button class="btn btn-primary" onclick="openManualMatch()"><i class="fa-solid fa-hand-pointer"></i><span class="hidden sm:inline">จับคู่ด้วยมือ</span></button>
@@ -95,28 +146,47 @@
       </div>
     </section>
 
-    <section class="space-y-3">
-      <div class="flex items-center justify-between"><div class="heading">สนาม</div></div>
+    <!-- Courts -->
+    <section class="space-y-3 mt-8">
+      <div class="flex items-center justify-between">
+        <div class="heading">สนาม</div>
+      </div>
       <div id="court-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
     </section>
 
-    <section class="space-y-3">
+    <!-- Players -->
+    <section class="space-y-3 mt-8">
       <div class="flex items-center justify-between">
         <div class="heading">ผู้เล่น</div>
-        <button class="btn" onclick="openAssignModal()"><i class="fa-solid fa-arrow-right"></i> เพิ่มผู้เล่นที่เลือกลงสนาม</button>
+        <div class="flex flex-wrap gap-2">
+          <input id="filter-search" class="soft px-3 py-2" placeholder="ค้นหาชื่อ...">
+          <select id="filter-skill" class="soft px-3 py-2">
+            <option value="">ทุกมือ</option>
+            <option>BG</option><option>N</option><option>S</option><option>P-</option><option>P</option><option>P+</option><option>C</option>
+          </select>
+          <select id="filter-status" class="soft px-3 py-2">
+            <option value="">ทุกสถานะ</option>
+            <option value="ว่าง">ว่าง</option>
+            <option value="ในสนาม">ในสนาม</option>
+            <option value="กำลังเล่น">กำลังเล่น</option>
+          </select>
+          <button class="btn" onclick="selectAllFiltered()"><i class="fa-regular fa-square-check"></i> เลือกทั้งหมด(ตามที่กรอง)</button>
+          <button class="btn" onclick="openAssignModal()"><i class="fa-solid fa-arrow-right"></i> เพิ่มผู้เล่นที่เลือกลงสนาม</button>
+        </div>
       </div>
+
       <div class="panel overflow-hidden">
         <table class="table w-full text-sm">
           <thead class="bg-white/5">
             <tr>
               <th class="text-left p-3"><input id="select-all" type="checkbox" class="accent-indigo-400"></th>
               <th class="text-center p-3">#</th>
-              <th class="text-left p-3">ชื่อ</th>
-              <th class="text-center p-3">มือ</th>
-              <th class="text-center p-3">สถานะ</th>
-              <th class="text-center p-3">เกม</th>
-              <th class="text-center p-3">ลูกแบด</th>
-              <th class="text-center p-3">ค่าใช้จ่าย</th>
+              <th class="text-left p-3 sortable" data-key="name"><span class="label">ชื่อ <i class="icon fa-solid fa-sort"></i></span></th>
+              <th class="text-center p-3 sortable" data-key="skill"><span class="label">มือ <i class="icon fa-solid fa-sort"></i></span></th>
+              <th class="text-center p-3 sortable" data-key="status"><span class="label">สถานะ <i class="icon fa-solid fa-sort"></i></span></th>
+              <th class="text-center p-3 sortable" data-key="games"><span class="label">เกม <i class="icon fa-solid fa-sort"></i></span></th>
+              <th class="text-center p-3 sortable" data-key="shuttle"><span class="label">ลูกแบด <i class="icon fa-solid fa-sort"></i></span></th>
+              <th class="text-center p-3 sortable" data-key="cost"><span class="label">ค่าใช้จ่าย <i class="icon fa-solid fa-sort"></i></span></th>
               <th class="text-center p-3">จัดการ</th>
             </tr>
           </thead>
@@ -125,7 +195,8 @@
       </div>
     </section>
 
-    <section class="space-y-3">
+    <!-- Queue -->
+    <section class="space-y-3 mt-8">
       <div class="flex items-center justify-between">
         <div class="heading">คิว (4 คน / 2 คู่)</div>
         <div class="flex gap-2">
@@ -134,39 +205,86 @@
       </div>
       <div id="queue-container" class="space-y-2"></div>
     </section>
+
   </main>
+
+  <!-- Toast container -->
+  <div id="toast-container"></div>
 
   <!-- Settings / Add Court / Add Player -->
   <div id="settings-modal" class="modal fixed inset-0 hidden items-center justify-center z-50">
     <div class="modal-card w-[92vw] max-w-md p-6">
-      <div class="flex items-center justify-between mb-4"><div class="heading">กำหนดราคา</div><button class="icon-btn" onclick="hide('settings-modal')"><i class="fa-solid fa-xmark"></i></button></div>
+      <div class="flex items-center justify-between mb-4">
+        <div class="heading">กำหนดราคา</div>
+        <button class="icon-btn" onclick="hide('settings-modal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
       <form id="settings-form" class="grid gap-4">
-        <label class="grid gap-2"><span class="subtle">ราคาต่อลูกแบด</span><input id="shuttlecock-price" type="number" min="0" class="soft px-3 py-2" placeholder="0" required></label>
-        <label class="grid gap-2"><span class="subtle">ค่าบริการสนาม (คิดเฉพาะตาแรก)</span><input id="court-rental-fee" type="number" min="0" class="soft px-3 py-2" placeholder="0" required></label>
-        <div class="flex justify-end gap-2 pt-2"><button type="button" class="btn" onclick="hide('settings-modal')">ยกเลิก</button><button type="submit" class="btn btn-primary">บันทึก</button></div>
+        <label class="grid gap-2">
+          <span class="subtle">ราคาต่อลูกแบด</span>
+          <input id="shuttlecock-price" type="number" min="0" class="soft px-3 py-2" placeholder="0" required>
+        </label>
+        <label class="grid gap-2">
+          <span class="subtle">ค่าบริการสนาม (คิดเฉพาะตาแรก)</span>
+          <input id="court-rental-fee" type="number" min="0" class="soft px-3 py-2" placeholder="0" required>
+        </label>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" class="btn" onclick="hide('settings-modal')">ยกเลิก</button>
+          <button type="submit" class="btn btn-primary">บันทึก</button>
+        </div>
       </form>
     </div>
   </div>
 
   <div id="add-court-modal" class="modal fixed inset-0 hidden items-center justify-center z-50">
     <div class="modal-card w-[92vw] max-w-md p-6">
-      <div class="flex items-center justify-between mb-4"><div class="heading">เพิ่มสนาม</div><button class="icon-btn" onclick="hide('add-court-modal')"><i class="fa-solid fa-xmark"></i></button></div>
+      <div class="flex items-center justify-between mb-4">
+        <div class="heading">เพิ่มสนาม</div>
+        <button class="icon-btn" onclick="hide('add-court-modal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
       <form id="add-court-form" class="grid gap-4">
-        <label class="grid gap-2"><span class="subtle">ชื่อสนาม</span><input id="court-name-input" class="soft px-3 py-2" placeholder="เช่น สนาม 1" required></label>
-        <label class="grid gap-2"><span class="subtle">ความจุ (คน)</span><input id="court-capacity-input" type="number" min="1" class="soft px-3 py-2" placeholder="4"></label>
-        <div class="flex justify-end gap-2 pt-2"><button type="button" class="btn" onclick="hide('add-court-modal')">ยกเลิก</button><button class="btn btn-green" type="submit">เพิ่มสนาม</button></div>
+        <label class="grid gap-2">
+          <span class="subtle">ชื่อสนาม</span>
+          <input id="court-name-input" class="soft px-3 py-2" placeholder="เช่น สนาม 1" required>
+        </label>
+        <label class="grid gap-2">
+          <span class="subtle">ความจุ (คน)</span>
+          <input id="court-capacity-input" type="number" min="1" class="soft px-3 py-2" placeholder="4">
+        </label>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" class="btn" onclick="hide('add-court-modal')">ยกเลิก</button>
+          <button class="btn btn-green" type="submit">เพิ่มสนาม</button>
+        </div>
       </form>
     </div>
   </div>
 
   <div id="add-player-modal" class="modal fixed inset-0 hidden items-center justify-center z-50">
     <div class="modal-card w-[92vw] max-w-md p-6">
-      <div class="flex items-center justify-between mb-4"><div class="heading">เพิ่มผู้เล่น</div><button class="icon-btn" onclick="hide('add-player-modal')"><i class="fa-solid fa-xmark"></i></button></div>
+      <div class="flex items-center justify-between mb-4">
+        <div class="heading">เพิ่มผู้เล่น</div>
+        <button class="icon-btn" onclick="hide('add-player-modal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
       <form id="add-player-form" class="grid gap-4">
-        <label class="grid gap-2"><span class="subtle">ชื่อผู้เล่น</span><input id="player-name-input" class="soft px-3 py-2" placeholder="เช่น นาย A" required></label>
-        <label class="grid gap-2"><span class="subtle">ประเภทมือ</span><select id="player-skill-input" class="soft px-3 py-2" required>
-          <option value="BG">BG</option><option value="N" selected>N</option><option value="S">S</option><option value="P-">P-</option><option value="P">P</option><option value="P+">P+</option><option value="C">C</option></select></label>
-        <div class="flex justify-end gap-2 pt-2"><button type="button" class="btn" onclick="hide('add-player-modal')">ยกเลิก</button><button class="btn btn-primary" type="submit">เพิ่ม</button></div>
+        <label class="grid gap-2">
+          <span class="subtle">ชื่อผู้เล่น</span>
+          <input id="player-name-input" class="soft px-3 py-2" placeholder="เช่น นาย A" required>
+        </label>
+        <label class="grid gap-2">
+          <span class="subtle">ประเภทมือ</span>
+          <select id="player-skill-input" class="soft px-3 py-2" required>
+            <option value="BG">BG</option>
+            <option value="N" selected>N</option>
+            <option value="S">S</option>
+            <option value="P-">P-</option>
+            <option value="P">P</option>
+            <option value="P+">P+</option>
+            <option value="C">C</option>
+          </select>
+        </label>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" class="btn" onclick="hide('add-player-modal')">ยกเลิก</button>
+          <button class="btn btn-primary" type="submit">เพิ่ม</button>
+        </div>
       </form>
     </div>
   </div>
@@ -175,14 +293,22 @@
   <div id="queue-manual-modal" class="modal fixed inset-0 hidden items-center justify-center z-50">
     <div class="modal-card w-[94vw] max-w-4xl p-0 overflow-hidden">
       <div class="px-6 py-4 border-b border-[var(--border)] flex items-center justify-between">
-        <div class="flex items-center gap-3"><div class="chip"><i class="fa-solid fa-wand-magic-sparkles"></i><span>โหมดเพิ่มคิว</span></div><div class="subtle">เลือกผู้เล่น 4 คน แล้วจัดเป็น 2 คู่</div></div>
+        <div class="flex items-center gap-3">
+          <div class="chip"><i class="fa-solid fa-wand-magic-sparkles"></i><span>โหมดเพิ่มคิว</span></div>
+          <div class="subtle">เลือกผู้เล่น 4 คน แล้วจัดเป็น 2 คู่</div>
+        </div>
         <button class="icon-btn" onclick="hide('queue-manual-modal')"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div class="grid md:grid-cols-2 gap-0">
-        <div class="p-6"><div class="heading mb-2">เลือกรายชื่อ</div><div id="manual-list" class="soft p-3 max-h-[60vh] overflow-auto"></div></div>
+        <div class="p-6">
+          <div class="heading mb-2">เลือกรายชื่อ</div>
+          <div id="manual-list" class="soft p-3 max-h-[60vh] overflow-auto"></div>
+        </div>
         <div class="p-6 border-l border-[var(--border)]">
-          <div class="heading mb-2">สลอต 1–4</div><div id="manual-slots" class="grid grid-cols-2 gap-2 mb-4"></div>
-          <div class="heading mb-2">พรีวิว</div><div id="manual-stage" class="soft p-4 min-h-[120px] mb-3"></div>
+          <div class="heading mb-2">สลอต 1–4</div>
+          <div id="manual-slots" class="grid grid-cols-2 gap-2 mb-4"></div>
+          <div class="heading mb-2">พรีวิว</div>
+          <div id="manual-stage" class="soft p-4 min-h-[120px] mb-3"></div>
           <div class="flex flex-wrap gap-2">
             <button id="btn-pair-default" class="btn btn-green disabled:opacity-40" disabled>1-2 vs 3-4</button>
             <button id="btn-pair-acbd" class="btn disabled:opacity-40" disabled>1-3 / 2-4</button>
@@ -194,7 +320,7 @@
     </div>
   </div>
 
-  <!-- Manage Modal (slots on top, action list below) -->
+  <!-- Manage Modal -->
   <div id="manage-modal" class="modal fixed inset-0 hidden items-center justify-center z-50">
     <div class="modal-card w-[94vw] max-w-3xl p-6">
       <div class="flex items-center justify-between mb-4">
@@ -204,8 +330,20 @@
       <div class="soft p-3 mb-4">
         <p class="subtle mb-3">แตะสลอต 2 จุดเพื่อ <span class="font-semibold">สลับตำแหน่ง</span> • บันทึกอัตโนมัติ</p>
         <div class="grid md:grid-cols-2 gap-3">
-          <div class="pair-box"><div class="pair-title mb-2">คู่ A</div><div class="space-y-2"><div class="slot" id="pairA-0"></div><div class="slot" id="pairA-1"></div></div></div>
-          <div class="pair-box"><div class="pair-title mb-2">คู่ B</div><div class="space-y-2"><div class="slot" id="pairB-0"></div><div class="slot" id="pairB-1"></div></div></div>
+          <div class="pair-box">
+            <div class="pair-title mb-2">คู่ A</div>
+            <div class="space-y-2">
+              <div class="slot" id="pairA-0"></div>
+              <div class="slot" id="pairA-1"></div>
+            </div>
+          </div>
+          <div class="pair-box">
+            <div class="pair-title mb-2">คู่ B</div>
+            <div class="space-y-2">
+              <div class="slot" id="pairB-0"></div>
+              <div class="slot" id="pairB-1"></div>
+            </div>
+          </div>
         </div>
       </div>
       <div class="soft p-3">
@@ -221,7 +359,10 @@
   <!-- Free picker -->
   <div id="free-picker-modal" class="modal fixed inset-0 hidden items-center justify-center z-50">
     <div class="modal-card w-[92vw] max-w-md p-6">
-      <div class="flex items-center justify-between mb-3"><div class="heading">เลือกผู้เล่นที่ว่างอยู่</div><button class="icon-btn" onclick="hide('free-picker-modal')"><i class="fa-solid fa-xmark"></i></button></div>
+      <div class="flex items-center justify-between mb-3">
+        <div class="heading">เลือกผู้เล่นที่ว่างอยู่</div>
+        <button class="icon-btn" onclick="hide('free-picker-modal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
       <input id="free-search" class="soft w-full px-3 py-2 mb-3" placeholder="ค้นหาชื่อ...">
       <div id="free-list" class="soft p-3 max-h-[55vh] overflow-auto text-sm"></div>
     </div>
@@ -230,7 +371,10 @@
   <!-- History -->
   <div id="history-modal" class="modal fixed inset-0 hidden items-center justify-center z-50">
     <div class="modal-card w-[92vw] max-w-lg p-6">
-      <div class="flex items-center justify-between mb-3"><div class="heading">ประวัติการจับคู่ของ <span id="history-player-name"></span></div><button class="icon-btn" onclick="hide('history-modal')"><i class="fa-solid fa-xmark"></i></button></div>
+      <div class="flex items-center justify-between mb-3">
+        <div class="heading">ประวัติการจับคู่ของ <span id="history-player-name"></span></div>
+        <button class="icon-btn" onclick="hide('history-modal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
       <div id="history-list" class="soft p-3 max-h-[60vh] overflow-auto"></div>
     </div>
   </div>
@@ -238,26 +382,70 @@
   <!-- Assign / Shuttle / Queue send -->
   <div id="assign-modal" class="modal fixed inset-0 hidden items-center justify-center z-50">
     <div class="modal-card w-[94vw] max-w-2xl p-6">
-      <div class="flex items-center justify-between mb-4"><div class="heading">เลือกสนามสำหรับผู้เล่นที่เลือก</div><button class="icon-btn" onclick="hide('assign-modal')"><i class="fa-solid fa-xmark"></i></button></div>
+      <div class="flex items-center justify-between mb-4">
+        <div class="heading">เลือกสนามสำหรับผู้เล่นที่เลือก</div>
+        <button class="icon-btn" onclick="hide('assign-modal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
       <div id="assign-court-list" class="soft p-3 max-h-[50vh] overflow-auto"></div>
-      <div class="flex items-center justify-between mt-3"><label class="flex items-center gap-2 subtle"><input id="assign-auto" type="checkbox" class="accent-indigo-400"> กระจายไปสนามที่ว่าง</label><div class="flex gap-2"><button class="btn" onclick="hide('assign-modal')">ยกเลิก</button><button class="btn btn-green" onclick="confirmAssign()">ยืนยัน</button></div></div>
+      <div class="flex items-center justify-between mt-3">
+        <label class="flex items-center gap-2 subtle">
+          <input id="assign-auto" type="checkbox" class="accent-indigo-400"> กระจายไปสนามที่ว่าง
+        </label>
+        <div class="flex gap-2">
+          <button class="btn" onclick="hide('assign-modal')">ยกเลิก</button>
+          <button class="btn btn-green" onclick="confirmAssign()">ยืนยัน</button>
+        </div>
+      </div>
     </div>
   </div>
 
   <div id="confirm-shuttle-modal" class="modal fixed inset-0 hidden items-center justify-center z-50">
     <div class="modal-card w-[92vw] max-w-md p-6">
-      <div class="flex items-center justify-between mb-3"><div class="heading">ยืนยันการเพิ่มลูกแบด</div><button class="icon-btn" onclick="hide('confirm-shuttle-modal')"><i class="fa-solid fa-xmark"></i></button></div>
-      <div class="soft p-3 mb-3">เพิ่มให้ <span id="confirm-shuttlecourt-name" class="font-semibold"></span><br/>ผู้เล่น: <span id="confirm-shuttlecourt-players" class="muted">—</span></div>
-      <div class="flex justify-end gap-2"><button class="btn" onclick="hide('confirm-shuttle-modal')">ยกเลิก</button><button class="btn btn-primary" onclick="confirmAddShuttlecock()">ยืนยัน</button></div>
+      <div class="flex items-center justify-between mb-3">
+        <div class="heading">ยืนยันการเพิ่มลูกแบด</div>
+        <button class="icon-btn" onclick="hide('confirm-shuttle-modal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="soft p-3 mb-3">
+        เพิ่มให้ <span id="confirm-shuttlecourt-name" class="font-semibold"></span><br/>
+        ผู้เล่น: <span id="confirm-shuttlecourt-players" class="muted">—</span>
+      </div>
+      <div class="flex justify-end gap-2">
+        <button class="btn" onclick="hide('confirm-shuttle-modal')">ยกเลิก</button>
+        <button class="btn btn-primary" onclick="confirmAddShuttlecock()">ยืนยัน</button>
+      </div>
     </div>
   </div>
 
   <div id="queue-send-modal" class="modal fixed inset-0 hidden items-center justify-center z-50">
     <div class="modal-card w-[92vw] max-w-md p-6">
-      <div class="flex items-center justify-between mb-3"><div class="heading">ส่งคิวลงสนาม</div><button class="icon-btn" onclick="hide('queue-send-modal')"><i class="fa-solid fa-xmark"></i></button></div>
+      <div class="flex items-center justify-between mb-3">
+        <div class="heading">ส่งคิวลงสนาม</div>
+        <button class="icon-btn" onclick="hide('queue-send-modal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
       <div id="queue-send-summary" class="soft p-3 mb-3 text-sm"></div>
       <div id="queue-send-court" class="soft p-3 mb-3"></div>
-      <div class="flex justify-end gap-2"><button class="btn" onclick="hide('queue-send-modal')">ยกเลิก</button><button class="btn btn-green" onclick="confirmSendQueueMatch()">ยืนยัน</button></div>
+      <div class="flex justify-end gap-2">
+        <button class="btn" onclick="hide('queue-send-modal')">ยกเลิก</button>
+        <button class="btn btn-green" onclick="confirmSendQueueMatch()">ยืนยัน</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Data modal -->
+  <div id="data-modal" class="modal fixed inset-0 hidden items-center justify-center z-50">
+    <div class="modal-card w-[92vw] max-w-lg p-6">
+      <div class="flex items-center justify-between mb-3">
+        <div class="heading">สำรอง/นำเข้าข้อมูล</div>
+        <button class="icon-btn" onclick="hide('data-modal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="grid gap-3">
+        <button class="btn btn-green" onclick="exportData()"><i class="fa-solid fa-file-arrow-down"></i> ดาวน์โหลดไฟล์สำรอง (JSON)</button>
+        <label class="btn">
+          <i class="fa-solid fa-file-arrow-up"></i> เลือกไฟล์นำเข้า (JSON)
+          <input id="import-file" type="file" accept="application/json" class="hidden" onchange="importDataFile(this.files[0])" />
+        </label>
+        <textarea id="export-textarea" class="soft p-3 text-xs min-h-[140px]" placeholder="ข้อมูล JSON จะปรากฏที่นี่เมื่อต้องการคัดลอกด้วยมือ"></textarea>
+      </div>
     </div>
   </div>
 
@@ -275,8 +463,24 @@
     const mapById = arr => { const m=new Map(); arr.forEach(x=>m.set(x.id,x)); return m; };
     const minutesSince=ts=>!ts?0:(Math.floor((Date.now()-ts)/60000)||'<1');
 
+    /* ------- Toast + Undo ------- */
+    let _undo = null; // {undoFn}
+    function showToast(msg, undoLabel=null, undoHandler=null, timeoutMs=6000){
+      const cont=document.getElementById('toast-container');
+      const el=document.createElement('div'); el.className='toast';
+      el.innerHTML=`<div class="msg">${msg}</div>${undoLabel?`<button class="undo">${undoLabel}</button>`:''}<button class="icon-btn" title="ปิด"><i class="fa-solid fa-xmark"></i></button>`;
+      cont.appendChild(el);
+      const closeBtn=el.querySelector('.icon-btn'); const undoBtn=el.querySelector('.undo');
+      const close=()=>{ if(el.parentNode) el.parentNode.removeChild(el); };
+      closeBtn.onclick=close;
+      if(undoLabel && undoHandler){ undoBtn.onclick=()=>{ try{ undoHandler(); } finally { close(); } }; }
+      setTimeout(close, timeoutMs);
+    }
+    function setUndo(label, undoFn){ _undo = {label, undoFn}; }
+    function triggerUndo(){ if(_undo?.undoFn){ _undo.undoFn(); _undo=null; } }
+
     /* ------- Price ------- */
-    function getPrice(){return {shuttle:parseFloat(localStorage.getItem('shuttlecockPrice')??'20'), fee:parseFloat(localStorage.getItem('courtRentalFee')??'0')}};
+    function getPrice(){return {shuttle:parseFloat(localStorage.getItem('shuttlecockPrice')??'20'), fee:parseFloat(localStorage.getItem('courtRentalFee')??'0')}}
     function updatePriceDisplay(){const p=getPrice(); document.getElementById('shuttlecock-price-display').textContent=p.shuttle; document.getElementById('court-price').textContent=p.fee;}
 
     document.getElementById('settings-form').addEventListener('submit',e=>{
@@ -284,20 +488,40 @@
       localStorage.setItem('shuttlecockPrice', document.getElementById('shuttlecock-price').value);
       localStorage.setItem('courtRentalFee',  document.getElementById('court-rental-fee').value);
       hide('settings-modal'); updatePriceDisplay(); renderPlayers();
+      showToast('บันทึกราคาเรียบร้อย ✓');
     });
 
     /* ------- Data migration ------- */
     function migrate(){
       let players=getPlayers(); let changed=false;
-      for(const p of players){ if(!p.id){ p.id=uuid(); changed=true; } if(!p.status){ p.status='ว่าง'; changed=true; } if(!p.skill){ p.skill='N'; changed=true; } if(!Array.isArray(p.history)){ p.history=[]; changed=true; } }
+      for(const p of players){
+        if(!p.id){ p.id=uuid(); changed=true; }
+        if(!p.status){ p.status='ว่าง'; changed=true; }
+        if(!p.skill){ p.skill='N'; changed=true; }
+        if(!Array.isArray(p.history)){ p.history=[]; changed=true; }
+      }
       if(changed) savePlayers(players);
+
       let courts=getCourts();
-      for(const c of courts){ if(!c.id){ c.id=uuid(); } if(!c.players) c.players=[]; if(!Array.isArray(c.pairs)) c.pairs=[]; if(c.waiting===undefined) c.waiting=null; if(typeof c.roundNo!=='number') c.roundNo=0; ensurePairs(c); recalcCourtStatus(c); }
+      for(const c of courts){
+        if(!c.id){ c.id=uuid(); }
+        if(!c.players) c.players=[];
+        if(!Array.isArray(c.pairs)) c.pairs=[];
+        if(c.waiting===undefined) c.waiting=null;
+        if(typeof c.roundNo!=='number') c.roundNo=0;
+        ensurePairs(c); recalcCourtStatus(c);
+      }
       saveCourts(courts);
     }
 
     /* ------- Helpers ------- */
-    function ensureAvailableSince(players){ const now=Date.now(); players.forEach(p=>{ if(p.status==='ว่าง'&&!p.availableSince) p.availableSince=now; if(p.status!=='ว่าง'&&p.availableSince)  p.availableSince=null; }); return players; }
+    function ensureAvailableSince(players){
+      const now=Date.now();
+      players.forEach(p=>{
+        if(p.status==='ว่าง'&&!p.availableSince) p.availableSince=now;
+        if(p.status!=='ว่าง'&&p.availableSince)  p.availableSince=null;
+      }); return players;
+    }
     function recalcCourtStatus(c){ if(!c.players||c.players.length===0) c.status='ว่าง'; else if(c.status!=='กำลังเล่น') c.status='พร้อมเล่น'; }
     function ensurePairs(c){
       if(!c.players) c.players=[]; if(!Array.isArray(c.pairs)) c.pairs=[];
@@ -345,21 +569,92 @@
     }
     window.openHistory=openHistory;
 
+    /* ------- Filters + Sorting ------- */
+    let _filter = {q:'', skill:'', status:''};
+    let _sort = {key:'', dir:'asc'};
+
+    const filterSearch=document.getElementById('filter-search');
+    const filterSkill=document.getElementById('filter-skill');
+    const filterStatus=document.getElementById('filter-status');
+    filterSearch.oninput=(e)=>{ _filter.q = e.target.value.trim().toLowerCase(); renderPlayers(); };
+    filterSkill.onchange=(e)=>{ _filter.skill = e.target.value; renderPlayers(); };
+    filterStatus.onchange=(e)=>{ _filter.status = e.target.value; renderPlayers(); };
+
+    function passFilter(p){
+      if(_filter.q && !(p.name||'').toLowerCase().includes(_filter.q)) return false;
+      if(_filter.skill && p.skill!==_filter.skill) return false;
+      if(_filter.status && p.status!==_filter.status) return false;
+      return true;
+    }
+
+    function updateSortUI(){
+      document.querySelectorAll('th.sortable').forEach(th=>{
+        th.classList.remove('active');
+        const icon = th.querySelector('.icon');
+        if(icon) icon.className = 'icon fa-solid fa-sort';
+      });
+      if(!_sort.key) return;
+      const th = document.querySelector(`th.sortable[data-key="${_sort.key}"]`);
+      if(!th) return;
+      th.classList.add('active');
+      const icon = th.querySelector('.icon');
+      if(icon) icon.className = _sort.dir==='asc' ? 'icon fa-solid fa-sort-amount-down' : 'icon fa-solid fa-sort-amount-up';
+    }
+
+    // bind header click
+    document.addEventListener('DOMContentLoaded', ()=>{
+      document.querySelectorAll('th.sortable').forEach(th=>{
+        th.addEventListener('click', ()=>{
+          const key = th.getAttribute('data-key');
+          if(_sort.key === key){ _sort.dir = _sort.dir === 'asc' ? 'desc' : 'asc'; }
+          else { _sort.key = key; _sort.dir = 'asc'; }
+          renderPlayers();
+        });
+      });
+    });
+
     /* ------- Players render ------- */
     let _editPlayerId=null; let _editingForm=false;
     function renderPlayers(){
+      updateSortUI();
       const tbody=document.getElementById('player-table-body'); tbody.innerHTML='';
       const players=ensureAvailableSince(getPlayers()); savePlayers(players);
       const {shuttle,fee}=getPrice();
-      players.sort((a,b)=>{ const order=s=>s==='ว่าง'?0:(s==='ในสนาม'?1:2); const oa=order(a.status), ob=order(b.status);
+
+      const data = players.filter(passFilter).map(p=>{
+        const g = Number(p.gamesPlayed||0);
+        const s = Number(p.shuttlecocksUsed||0);
+        const feeOnce = g > 0 ? fee : 0;
+        const cost = s*shuttle + feeOnce;
+        return {...p, _g:g, _s:s, _c:cost, _name:(p.name||''), _skill:(p.skill||'N'), _status:(p.status||'')};
+      });
+
+      data.sort((a,b)=>{
+        if(_sort.key){
+          let va, vb;
+          switch(_sort.key){
+            case 'name': va=a._name.toLowerCase(); vb=b._name.toLowerCase(); break;
+            case 'skill': va=a._skill; vb=b._skill; break;
+            case 'status': {
+              const order=s=>s==='ว่าง'?0:(s==='ในสนาม'?1:2);
+              va=order(a._status); vb=order(b._status); break;
+            }
+            case 'games': va=a._g; vb=b._g; break;
+            case 'shuttle': va=a._s; vb=b._s; break;
+            case 'cost': va=a._c; vb=b._c; break;
+          }
+          if(va<vb) return _sort.dir==='asc'? -1: 1;
+          if(va>vb) return _sort.dir==='asc'? 1: -1;
+        }
+        // fallback: status, wait time, name
+        const order=s=>s==='ว่าง'?0:(s==='ในสนาม'?1:2);
+        const oa=order(a.status), ob=order(b.status);
         if(oa!==ob) return oa-ob;
         if(a.status==='ว่าง'&&b.status==='ว่าง') return (a.availableSince??Date.now())-(b.availableSince??Date.now());
-        return (a.name||'').localeCompare(b.name||'');
+        return (a._name).localeCompare(b._name);
       });
-      players.forEach((p,i)=>{
-        // Fee applies once only: first game
-        const feeOnce = (p.gamesPlayed||0) > 0 ? fee : 0;
-        const cost=(p.shuttlecocksUsed||0)*shuttle + feeOnce;
+
+      data.forEach((p,i)=>{
         const cls=p.status==='ว่าง'?'available':(p.status==='ในสนาม'?'ready':'playing');
         const info = p.status==='ว่าง'?`<span class="badge">รอ ${minutesSince(p.availableSince)} นาที</span>`:(p.status==='ในสนาม'?`<span class="badge">รอเริ่ม</span>`:'');
         tbody.insertAdjacentHTML('beforeend',`
@@ -369,22 +664,33 @@
             <td class="p-3"><button class="text-indigo-300 hover:underline" onclick="openHistory('${p.id}')">${p.name}</button></td>
             <td class="p-3 text-center"><span class="badge">มือ ${p.skill||'N'}</span></td>
             <td class="p-3 text-center"><span class="status ${cls}">${p.status}</span> ${info}</td>
-            <td class="p-3 text-center">${p.gamesPlayed||0}</td>
-            <td class="p-3 text-center">${p.shuttlecocksUsed||0}</td>
-            <td class="p-3 text-center">${cost}</td>
+            <td class="p-3 text-center">${p._g}</td>
+            <td class="p-3 text-center">${p._s}</td>
+            <td class="p-3 text-center">${p._c}</td>
             <td class="p-3 text-center">
               <button class="icon-btn" title="แก้ไข" onclick="openEditPlayer('${p.id}','${encodeURIComponent(p.name)}')"><i class="fa-solid fa-pen"></i></button>
               <button class="icon-btn" title="ลบ" onclick="deletePlayer('${p.id}')"><i class="fa-solid fa-trash"></i></button>
             </td>
           </tr>`);
       });
+
       const master=document.getElementById('select-all'); master.checked=false;
-      master.onchange=e=>{ document.querySelectorAll('#player-table-body .player-checkbox').forEach(cb=>cb.checked=e.target.checked); };
+      master.onchange=e=>{
+        const check = e.target.checked;
+        document.querySelectorAll('#player-table-body .player-checkbox').forEach(cb=>cb.checked=check);
+      };
+
       document.getElementById('queue-count').textContent = getQueue().matches?.length || 0;
     }
 
+    function selectAllFiltered(){
+      document.querySelectorAll('#player-table-body .player-checkbox').forEach(cb=>cb.checked=true);
+      showToast('เลือกผู้เล่นตามการกรองแล้ว ✓');
+    }
+
     function openEditPlayer(id, safeName){
-      _editPlayerId=id; const players=getPlayers(); const p=players.find(x=>x.id===id);
+      _editPlayerId=id;
+      const players=getPlayers(); const p=players.find(x=>x.id===id);
       show('add-player-modal');
       document.querySelector('#add-player-modal .heading').innerHTML='แก้ไขผู้เล่น';
       document.getElementById('player-name-input').value=decodeURIComponent(safeName||'');
@@ -401,10 +707,10 @@
       let players=getPlayers();
       if(_editingForm){
         const p=players.find(x=>x.id===_editPlayerId);
-        if(p){ p.name=name; p.skill=skill; savePlayers(players); _editingForm=false; hide('add-player-modal'); renderPlayers(); renderCourts(); return; }
+        if(p){ p.name=name; p.skill=skill; savePlayers(players); _editingForm=false; hide('add-player-modal'); renderPlayers(); renderCourts(); showToast('บันทึกผู้เล่นแล้ว ✓'); return; }
       }
       players.push({id:uuid(), name, skill, status:'ว่าง', gamesPlayed:0, shuttlecocksUsed:0, availableSince:Date.now(), history:[]});
-      savePlayers(players); hide('add-player-modal'); renderPlayers(); renderQueue();
+      savePlayers(players); hide('add-player-modal'); renderPlayers(); renderQueue(); showToast('เพิ่มผู้เล่นแล้ว ✓');
       document.querySelector('#add-player-modal .heading').innerHTML='เพิ่มผู้เล่น';
       const submitBtn = document.querySelector('#add-player-form button[type="submit"]');
       submitBtn.textContent = 'เพิ่ม'; submitBtn.classList.remove('btn-green'); submitBtn.classList.add('btn-primary');
@@ -413,6 +719,7 @@
     function deletePlayer(id){
       if(!confirm('ลบผู้เล่นนี้ออกจากระบบ?')) return;
       let players=getPlayers(); const courts=getCourts();
+      const before = {players: JSON.parse(JSON.stringify(players)), courts: JSON.parse(JSON.stringify(courts)), queue: getQueue()};
       for(const c of courts){
         c.players=(c.players||[]).filter(pid=>pid!==id);
         if(Array.isArray(c.pairs)) c.pairs=c.pairs.filter(pr=>!pr.includes(id));
@@ -422,6 +729,8 @@
       const q=getQueue(); q.matches=(q.matches||[]).filter(mt=> !mt.pairs.some(pr=>pr.includes(id))); saveQueue(q);
       players=players.filter(x=>x.id!==id); savePlayers(players);
       renderPlayers(); renderCourts(); renderQueue();
+      setUndo('ลบผู้เล่น', ()=>{ savePlayers(before.players); saveCourts(before.courts); saveQueue(before.queue); renderPlayers(); renderCourts(); renderQueue(); });
+      showToast('ลบผู้เล่นแล้ว', 'เลิกทำ', triggerUndo);
     }
 
     /* ------- Courts ------- */
@@ -441,7 +750,10 @@
         const card=document.createElement('div'); card.className='panel p-5';
         card.innerHTML=`
           <div class="flex items-center justify-between mb-2">
-            <div class="flex items-center gap-2"><div class="badge">สนาม</div><div class="text-lg font-semibold">${c.name}</div></div>
+            <div class="flex items-center gap-2">
+              <div class="badge">สนาม</div>
+              <div class="text-lg font-semibold">${c.name}</div>
+            </div>
             <span class="status ${cls}">${ used===0 ? 'ว่าง' : (c.status==='กำลังเล่น'?'กำลังเล่น':'พร้อมเล่น') }</span>
           </div>
           <div class="muted text-xs mb-2">ตาปัจจุบัน: ${c.roundNo||0}</div>
@@ -463,16 +775,24 @@
       if(!c.players||c.players.length===0){ alert('ยังไม่มีผู้เล่นในสนาม'); return; }
       if((c.pairs?.length||0) < 2){ alert('โปรดตั้งคู่ให้ครบ 2 คู่ก่อนเริ่ม'); return; }
       if(c.status==='กำลังเล่น') return;
+      const beforePlayers=JSON.parse(JSON.stringify(players));
+      const beforeCourts=JSON.parse(JSON.stringify(courts));
       pushHistory(c, players);
       c.players.forEach(pid=>{ const p=byId.get(pid); if(p){ p.status='กำลังเล่น'; p.availableSince=null; p.gamesPlayed=(p.gamesPlayed||0)+1; p.shuttlecocksUsed=(p.shuttlecocksUsed||0)+1; } });
       c.status='กำลังเล่น'; savePlayers(players); saveCourts(courts); renderPlayers(); renderCourts();
+      setUndo('เริ่มเกม', ()=>{ savePlayers(beforePlayers); saveCourts(beforeCourts); renderPlayers(); renderCourts(); });
+      showToast('เริ่มเกมแล้ว ✓','เลิกทำ', triggerUndo);
     }
     function endGame(courtId){
       const courts=getCourts(), players=getPlayers(), byId=mapById(players);
       const c=courts.find(x=>x.id===courtId); if(!c) return;
+      const beforePlayers=JSON.parse(JSON.stringify(players));
+      const beforeCourts=JSON.parse(JSON.stringify(courts));
       (c.players||[]).forEach(pid=>{ const p=byId.get(pid); if(p){ p.status='ว่าง'; p.availableSince=Date.now(); }});
       c.players=[]; c.pairs=[]; c.waiting=null; c.status='ว่าง';
       savePlayers(players); saveCourts(courts); renderPlayers(); renderCourts();
+      setUndo('จบเกม', ()=>{ savePlayers(beforePlayers); saveCourts(beforeCourts); renderPlayers(); renderCourts(); });
+      showToast('จบเกมแล้ว ✓','เลิกทำ', triggerUndo);
     }
     function openConfirmShuttlecock(courtId){
       const courts=getCourts(), players=getPlayers(), byId=mapById(players);
@@ -486,14 +806,17 @@
       const courtId=window._shuttleCourtId; if(!courtId) return;
       const courts=getCourts(), players=getPlayers(), byId=mapById(players);
       const c=courts.find(x=>x.id===courtId); if(!c) return;
+      const before=JSON.parse(JSON.stringify(players));
       (c.players||[]).forEach(pid=>{ const p=byId.get(pid); if(p) p.shuttlecocksUsed=(p.shuttlecocksUsed||0)+1; });
       savePlayers(players); renderPlayers(); hide('confirm-shuttle-modal');
+      setUndo('เพิ่มลูกแบด', ()=>{ savePlayers(before); renderPlayers(); });
+      showToast('เพิ่มลูกแบดแล้ว ✓','เลิกทำ', triggerUndo);
     }
 
     /* ------- Assign to court ------- */
     let _assignIds=[];
     function openAssignModal(){
-      _assignIds = Array.from(document.querySelectorAll('.player-checkbox:checked')).map(cb=>cb.getAttribute('data-player-id')).filter(Boolean);
+      _assignIds = Array.from(document.querySelectorAll('#player-table-body .player-checkbox:checked')).map(cb=>cb.getAttribute('data-player-id')).filter(Boolean);
       if(_assignIds.length===0){ alert('กรุณาเลือกผู้เล่นอย่างน้อย 1 คน'); return; }
       buildAssignCourtList(); document.getElementById('assign-auto').checked=false; show('assign-modal');
     }
@@ -512,6 +835,7 @@
       const auto=document.getElementById('assign-auto').checked;
       const players=getPlayers(), courts=getCourts(), byId=mapById(players);
       const eligible=_assignIds.filter(id=>byId.get(id)); if(eligible.length===0){ alert('ไม่พบผู้เล่นที่เลือก'); return; }
+      const beforePlayers=JSON.parse(JSON.stringify(players)); const beforeCourts=JSON.parse(JSON.stringify(courts));
       const place=(c,pId)=>{
         if(!Array.isArray(c.players)) c.players=[]; const cap=c.capacity??4;
         if(c.players.length>=cap || c.players.includes(pId)) return false;
@@ -529,6 +853,8 @@
       }
       if(added===0){ alert('สนามเต็ม หรือไม่มีผู้เล่นที่เพิ่มได้'); return; }
       savePlayers(players); saveCourts(courts); renderPlayers(); renderCourts(); hide('assign-modal');
+      setUndo('เพิ่มผู้เล่นลงสนาม', ()=>{ savePlayers(beforePlayers); saveCourts(beforeCourts); renderPlayers(); renderCourts(); });
+      showToast(`เพิ่มผู้เล่นลงสนาม ${added} คน ✓`,'เลิกทำ', triggerUndo);
     }
 
     /* ------- Manage court (swap + move/delete/replace) ------- */
@@ -563,26 +889,28 @@
         if(!_pairSelect){ _pairSelect={pairIdx, slotIdx}; host.classList.add('ring-2','ring-indigo-400'); return; }
         const a=_pairSelect, b={pairIdx, slotIdx};
         if(a.pairIdx===b.pairIdx && a.slotIdx===b.slotIdx){ host.classList.remove('ring-2','ring-indigo-400'); _pairSelect=null; return; }
+        const beforeCourts=JSON.parse(JSON.stringify(getCourts()));
         const tmp=_manageCtx.slots[a.pairIdx][a.slotIdx];
         _manageCtx.slots[a.pairIdx][a.slotIdx]=_manageCtx.slots[b.pairIdx][b.slotIdx];
         _manageCtx.slots[b.pairIdx][b.slotIdx]=tmp;
-        _pairSelect=null; autoSaveManagePairs();
+        _pairSelect=null; autoSaveManagePairs(beforeCourts);
       }
       ['pairA-0','pairA-1','pairB-0','pairB-1'].forEach((id,i)=>{ const el=document.getElementById(id); if(el){ const p=(i<2?0:1), s=(i%2); el.onclick=()=>manageSelectSlot(p,s); }});
 
-      function autoSaveManagePairs(){
+      function autoSaveManagePairs(beforeCourts=null){
         const courts=getCourts(); const cc=courts.find(x=>x.id===_manageCtx.courtId); if(!cc) return;
         const pairs=[];
         if(_manageCtx.slots[0][0]&&_manageCtx.slots[0][1]) pairs.push([_manageCtx.slots[0][0],_manageCtx.slots[0][1]]);
         if(_manageCtx.slots[1][0]&&_manageCtx.slots[1][1]) pairs.push([_manageCtx.slots[1][0],_manageCtx.slots[1][1]]);
         cc.pairs=pairs; ensurePairs(cc); recalcCourtStatus(cc); saveCourts(courts); renderCourts(); openManage(_manageCtx.courtId);
+        if(beforeCourts){ setUndo('สลับสลอต', ()=>{ saveCourts(beforeCourts); renderCourts(); openManage(_manageCtx.courtId); }); showToast('บันทึกการสลับแล้ว ✓','เลิกทำ', triggerUndo); }
       }
 
       // build action list
       const list=document.getElementById('manage-list'); list.innerHTML='';
       if(!c.players||c.players.length===0){ list.innerHTML='<div class="muted">ไม่มีผู้เล่นในสนามนี้</div>'; }
       else{
-        const options=courts.map(ct=>`<option value="${ct.id}" ${ct.id===c.id?'disabled':''}>${ct.name}${ct.id===c.id?' (สนามนี้)':''}</option>`).join('');
+        const options=getCourts().map(ct=>`<option value="${ct.id}" ${ct.id===c.id?'disabled':''}>${ct.name}${ct.id===c.id?' (สนามนี้)':''}</option>`).join('');
         c.players.forEach(pid=>{
           const p=byId.get(pid); if(!p) return;
           const row=document.createElement('div'); row.className='flex items-center gap-3 border-b border-[var(--border)] py-2';
@@ -597,8 +925,8 @@
             <button class="icon-btn" title="แทนที่ด้วยผู้เล่นว่าง"><i class="fa-solid fa-user-pen"></i></button>
           `;
           const [sel, btnMove, btnRemove, btnReplace] = [row.querySelector('select'), ...row.querySelectorAll('button')];
-          btnMove.onclick = ()=> movePlayer(pid, c.id, sel.value);
-          btnRemove.onclick = ()=> removePlayerFromCourt(pid, c.id);
+          btnMove.onclick = ()=> movePlayer(pid, c.id, sel.value, true);
+          btnRemove.onclick = ()=> removePlayerFromCourt(pid, c.id, true);
           btnReplace.onclick = ()=> { openFreePicker(pid, c.id); };
           list.appendChild(row);
         });
@@ -635,6 +963,8 @@
       const c=courts.find(x=>x.id===courtId), target=byId.get(targetPid), newcomer=byId.get(freePid);
       if(!c||!target||!newcomer) return;
       if(targetPid===freePid) return;
+      const beforePlayers=JSON.parse(JSON.stringify(players));
+      const beforeCourts=JSON.parse(JSON.stringify(courts));
       c.players = (c.players||[]);
       if(!c.players.includes(freePid)) c.players.push(freePid);
       if(Array.isArray(c.pairs)){ c.pairs = c.pairs.map(pr=> pr.map(id=> id===targetPid ? freePid : id)); }
@@ -644,23 +974,31 @@
       target.status = 'ว่าง'; target.availableSince = Date.now();
       ensurePairs(c); recalcCourtStatus(c);
       savePlayers(players); saveCourts(courts); renderPlayers(); renderCourts(); openManage(courtId);
+      setUndo('แทนที่ผู้เล่น', ()=>{ savePlayers(beforePlayers); saveCourts(beforeCourts); renderPlayers(); renderCourts(); openManage(courtId); });
+      showToast('แทนที่ผู้เล่นแล้ว ✓','เลิกทำ', triggerUndo);
     }
     function addFreeToCourt(courtId, freePid){
       const courts=getCourts(), players=getPlayers(), byId=mapById(players);
       const c=courts.find(x=>x.id===courtId), newcomer=byId.get(freePid);
       if(!c||!newcomer) return;
+      const beforePlayers=JSON.parse(JSON.stringify(players));
+      const beforeCourts=JSON.parse(JSON.stringify(courts));
       const cap=c.capacity??4; c.players=c.players||[];
       if(c.players.length>=cap){ alert('สนามเต็ม'); return; }
       if(!c.players.includes(freePid)) c.players.push(freePid);
       newcomer.status = (c.status==='กำลังเล่น') ? 'กำลังเล่น' : 'ในสนาม'; newcomer.availableSince = null;
       ensurePairs(c); recalcCourtStatus(c);
       savePlayers(players); saveCourts(courts); renderPlayers(); renderCourts(); openManage(courtId);
+      setUndo('เพิ่มผู้เล่นว่างเข้าสนาม', ()=>{ savePlayers(beforePlayers); saveCourts(beforeCourts); renderPlayers(); renderCourts(); openManage(courtId); });
+      showToast('เพิ่มผู้เล่นเข้าสนามแล้ว ✓','เลิกทำ', triggerUndo);
     }
 
-    function movePlayer(pid, fromId, toId){
+    function movePlayer(pid, fromId, toId, withToast=false){
       const courts=getCourts(), players=getPlayers(), byId=mapById(players);
       const from=courts.find(x=>x.id===fromId), to=courts.find(x=>x.id===toId), p=byId.get(pid);
       if(!from||!to||!p) return;
+      const beforePlayers=JSON.parse(JSON.stringify(players));
+      const beforeCourts=JSON.parse(JSON.stringify(courts));
       from.players=(from.players||[]).filter(x=>x!==pid);
       if(Array.isArray(from.pairs)) from.pairs=from.pairs.filter(pr=>!pr.includes(pid));
       if(from.waiting===pid) from.waiting=null; ensurePairs(from); recalcCourtStatus(from);
@@ -668,14 +1006,18 @@
       if(!to.players.includes(pid)) to.players.push(pid);
       p.status=(to.status==='กำลังเล่น')?'กำลังเล่น':'ในสนาม'; p.availableSince=null; ensurePairs(to); recalcCourtStatus(to);
       savePlayers(players); saveCourts(courts); renderPlayers(); renderCourts(); openManage(toId);
+      if(withToast){ setUndo('ย้ายผู้เล่น', ()=>{ savePlayers(beforePlayers); saveCourts(beforeCourts); renderPlayers(); renderCourts(); openManage(fromId); }); showToast('ย้ายผู้เล่นแล้ว ✓','เลิกทำ', triggerUndo); }
     }
-    function removePlayerFromCourt(pid, cid){
+    function removePlayerFromCourt(pid, cid, withToast=false){
       const courts=getCourts(), players=getPlayers(), byId=mapById(players);
       const c=courts.find(x=>x.id===cid), p=byId.get(pid); if(!c||!p) return;
+      const beforePlayers=JSON.parse(JSON.stringify(players));
+      const beforeCourts=JSON.parse(JSON.stringify(courts));
       c.players=(c.players||[]).filter(id=>id!==pid);
       if(Array.isArray(c.pairs)) c.pairs=c.pairs.filter(pr=>!pr.includes(pid));
       if(c.waiting===pid) c.waiting=null; ensurePairs(c); recalcCourtStatus(c);
       p.status='ว่าง'; p.availableSince=Date.now(); savePlayers(players); saveCourts(courts); renderPlayers(); renderCourts(); openManage(cid);
+      if(withToast){ setUndo('ลบออกจากสนาม', ()=>{ savePlayers(beforePlayers); saveCourts(beforeCourts); renderPlayers(); renderCourts(); openManage(cid); }); showToast('ลบผู้เล่นออกจากสนามแล้ว ✓','เลิกทำ', triggerUndo); }
     }
 
     /* ------- Queue ------- */
@@ -710,11 +1052,11 @@
             <span class="chip">${n(D)} <span class="tag">มือ ${s(D)}</span></span>
           </div>`;
         const [cross1,cross2,editBtn,sendBtn,delBtn]=row.querySelectorAll('.icon-btn');
-        cross1.onclick=()=>{ const Q=getQueue(); const P=Q.matches[idx].pairs; const [a,b]=P[0],[c,d]=P[1]; Q.matches[idx].pairs=[[a,c],[b,d]]; saveQueue(Q); renderQueue(); };
-        cross2.onclick=()=>{ const Q=getQueue(); const P=Q.matches[idx].pairs; const [a,b]=P[0],[c,d]=P[1]; Q.matches[idx].pairs=[[a,d],[b,c]]; saveQueue(Q); renderQueue(); };
+        cross1.onclick=()=>{ const Q=getQueue(); const P=Q.matches[idx].pairs; const [a,b]=P[0],[c,d]=P[1]; Q.matches[idx].pairs=[[a,c],[b,d]]; saveQueue(Q); renderQueue(); showToast('สลับคู่แบบ 1–3 / 2–4 ✓'); };
+        cross2.onclick=()=>{ const Q=getQueue(); const P=Q.matches[idx].pairs; const [a,b]=P[0],[c,d]=P[1]; Q.matches[idx].pairs=[[a,d],[b,c]]; saveQueue(Q); renderQueue(); showToast('สลับคู่แบบ 1–4 / 2–3 ✓'); };
         editBtn.onclick =()=> openQueueEdit(idx);
         sendBtn.onclick =()=> openQueueSendModal(idx);
-        delBtn.onclick  =()=>{ const Q=getQueue(); Q.matches.splice(idx,1); saveQueue(Q); renderQueue(); };
+        delBtn.onclick  =()=>{ const Q=getQueue(); const before=JSON.parse(JSON.stringify(Q)); Q.matches.splice(idx,1); saveQueue(Q); renderQueue(); setUndo('ลบคิว', ()=>{ saveQueue(before); renderQueue(); }); showToast('ลบคิวแล้ว ✓','เลิกทำ', triggerUndo); };
         host.appendChild(row);
       });
     }
@@ -723,13 +1065,16 @@
       const free=players.filter(p=>p.status==='ว่าง').sort((a,b)=>(a.availableSince??0)-(b.availableSince??0)).map(p=>p.id);
       if(free.length<4){ alert('ผู้เล่นว่างน้อยกว่า 4 คน'); return; }
       const matches=[]; for(let i=0;i+3<free.length;i+=4){ matches.push({pairs:[[free[i],free[i+1]],[free[i+2],free[i+3]]]}); }
-      saveQueue({matches}); renderQueue();
+      const before=getQueue(); saveQueue({matches}); renderQueue();
+      setUndo('จัดคิวอัตโนมัติ', ()=>{ saveQueue(before); renderQueue(); });
+      showToast(`สร้างคิวอัตโนมัติ ${matches.length} คิว ✓`,'เลิกทำ', triggerUndo);
     }
-    function clearQueueMatches(){ saveQueue({matches:[]}); renderQueue(); }
+    function clearQueueMatches(){ const before=getQueue(); saveQueue({matches:[]}); renderQueue(); setUndo('ล้างคิว', ()=>{ saveQueue(before); renderQueue(); }); showToast('ล้างคิวแล้ว ✓','เลิกทำ', triggerUndo); }
     function openManualMatch(pre=null, mode='create', editIndex=null){
       _manualMode=mode; _manualEditIndex=(mode==='edit'?editIndex:null);
       _manualSel = (Array.isArray(pre)&&pre.length===4)? [...pre] : [];
-      renderManualList(); updateManualSlots(); updateManualStage(); show('queue-manual-modal');
+      renderManualList(); updateManualSlots(); updateManualStage();
+      show('queue-manual-modal');
       document.getElementById('btn-pair-default').onclick=()=>setManualPairs('AB_CD');
       document.getElementById('btn-pair-acbd').onclick =()=>setManualPairs('AC_BD');
       document.getElementById('btn-pair_adbc').onclick =()=>setManualPairs('AD_BC');
@@ -783,16 +1128,21 @@
       if(_manualSel.length!==4) return;
       const [A,B,C,D]=_manualSel;
       let pairs; if(_manualPairsPreview.mode==='AC_BD') pairs=[[A,C],[B,D]]; else if(_manualPairsPreview.mode==='AD_BC') pairs=[[A,D],[B,C]]; else pairs=[[A,B],[C,D]];
-      const q=getQueue(); q.matches=q.matches||[];
+      const q=getQueue(); const before=JSON.parse(JSON.stringify(q)); q.matches=q.matches||[];
       const sameSet=(mt)=>{ const s=new Set([A,B,C,D]); const t=new Set(mt.pairs.flat()); if(s.size!==t.size) return false; for(const x of s){ if(!t.has(x)) return false; } return true; };
       if(_manualMode==='edit'){
         const i=_manualEditIndex; if(i==null||!q.matches[i]) return;
         if(q.matches.some((mt,idx)=>idx!==i&&sameSet(mt))){ alert('คิวแบบนี้มีอยู่แล้ว'); return; }
-        q.matches[i].pairs=pairs; saveQueue(q); hide('queue-manual-modal'); renderQueue(); return;
+        q.matches[i].pairs=pairs; saveQueue(q); hide('queue-manual-modal'); renderQueue();
+        setUndo('แก้ไขคิว', ()=>{ saveQueue(before); renderQueue(); });
+        showToast('บันทึกคิวแล้ว ✓','เลิกทำ', triggerUndo);
+        return;
       }
       if(q.matches.some(sameSet)){ alert('คิวชุดนี้มีอยู่แล้ว'); return; }
       q.matches.push({pairs}); saveQueue(q); renderQueue();
       _manualSel=[]; renderManualList(); updateManualSlots(); updateManualStage();
+      setUndo('เพิ่มคิว', ()=>{ saveQueue(before); renderQueue(); });
+      showToast('เพิ่มคิวแล้ว ✓','เลิกทำ', triggerUndo);
     }
 
     /* Queue send */
@@ -809,7 +1159,7 @@
     }
     function confirmSendQueueMatch(){
       const chosen=document.querySelector('input[name="queue-send-court"]:checked'); if(!chosen){ alert('เลือกสนามก่อน'); return; }
-      const courtId=chosen.value; const q=getQueue(); const courts=getCourts(); const c=courts.find(x=>x.id===courtId); if(!c) return;
+      const courtId=chosen.value; const q=getQueue(); const before=JSON.parse(JSON.stringify(q)); const courts=getCourts(); const c=courts.find(x=>x.id===courtId); if(!c) return;
       const players=getPlayers(), byId=mapById(players); const mt=q.matches[_queueSendIndex];
       if((c.capacity??4) - (c.players?.length||0) < 4){ alert('ที่ว่างไม่พอ'); return; }
       mt.pairs.flat().forEach(pid=>{ if(!c.players.includes(pid)) c.players.push(pid); const p=byId.get(pid); if(p){ p.status=(c.status==='กำลังเล่น')?'กำลังเล่น':'ในสนาม'; p.availableSince=null; } });
@@ -817,22 +1167,65 @@
       ensurePairs(c); recalcCourtStatus(c);
       q.matches.splice(_queueSendIndex,1); saveQueue(q); saveCourts(courts); savePlayers(players);
       hide('queue-send-modal'); renderCourts(); renderPlayers(); renderQueue();
+      setUndo('ส่งคิวลงสนาม', ()=>{ saveQueue(before); saveCourts(courts); renderCourts(); renderQueue(); });
+      showToast('ส่งคิวลงสนามแล้ว ✓','เลิกทำ', triggerUndo);
     }
 
-    /* Forms: add court */
+    /* Export/Import */
+    function openDataModal(){ show('data-modal'); document.getElementById('export-textarea').value=''; }
+    function exportData(){
+      const data = {
+        version: 'v8-sort-headers-full',
+        exportedAt: new Date().toISOString(),
+        players: getPlayers(),
+        courts: getCourts(),
+        queue: getQueue()
+      };
+      const json = JSON.stringify(data, null, 2);
+      const blob = new Blob([json], {type: 'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `court-manager-backup-${Date.now()}.json`; a.click();
+      URL.revokeObjectURL(url);
+      const ta = document.getElementById('export-textarea'); if(ta) ta.value = json;
+      showToast('ดาวน์โหลดไฟล์สำรองแล้ว ✓');
+    }
+    function importDataFile(file){
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = (e)=>{
+        try{
+          const obj = JSON.parse(e.target.result);
+          if(!obj || typeof obj !== 'object') throw new Error('ไฟล์ไม่ถูกต้อง');
+          const before = {players:getPlayers(), courts:getCourts(), queue:getQueue()};
+          savePlayers(obj.players||[]);
+          saveCourts(obj.courts||[]);
+          saveQueue(obj.queue||{matches:[]});
+          renderPlayers(); renderCourts(); renderQueue();
+          showToast('นำเข้าข้อมูลเรียบร้อย ✓','เลิกทำ', ()=>{ savePlayers(before.players); saveCourts(before.courts); saveQueue(before.queue); renderPlayers(); renderCourts(); renderQueue(); });
+        }catch(err){ alert('นำเข้าไม่สำเร็จ: '+err.message); }
+      };
+      reader.readAsText(file, 'utf-8');
+    }
+
+    /* Init */
+    function init(){ migrate(); renderCourts(); renderPlayers(); renderQueue(); updatePriceDisplay(); setInterval(renderPlayers, 30000); }
+    function clearAllCourts(){ if(confirm('ล้างข้อมูลทั้งหมด?')){ localStorage.removeItem('players'); localStorage.removeItem('courts'); localStorage.removeItem('queue_matches'); renderCourts(); renderPlayers(); renderQueue(); updatePriceDisplay(); showToast('ล้างข้อมูลทั้งหมดแล้ว'); } }
+    init();
+  
+    /* Forms: add court (restored) */
     document.getElementById('add-court-form').addEventListener('submit',e=>{
       e.preventDefault();
       const name=document.getElementById('court-name-input').value.trim();
       const capacity=getNumberOrZero(document.getElementById('court-capacity-input').value)||4;
       const courts=getCourts(); if(courts.some(c=>(c.name||'').toLowerCase()===name.toLowerCase())){ alert('ชื่อซ้ำ'); return; }
+      const before=JSON.stringify(courts);
       courts.push({id:uuid(), name, status:'ว่าง', players:[], pairs:[], waiting:null, roundNo:0, capacity});
       saveCourts(courts); hide('add-court-modal'); renderCourts(); e.target.reset();
+      setUndo('เพิ่มสนาม', ()=>{ saveCourts(JSON.parse(before)); renderCourts(); });
+      showToast('เพิ่มสนามแล้ว ✓','เลิกทำ', triggerUndo);
     });
 
-    /* Init */
-    function init(){ migrate(); renderCourts(); renderPlayers(); renderQueue(); updatePriceDisplay(); setInterval(renderPlayers, 30000); }
-    function clearAllCourts(){ if(confirm('ล้างข้อมูลทั้งหมด?')){ localStorage.removeItem('players'); localStorage.removeItem('courts'); localStorage.removeItem('queue_matches'); renderCourts(); renderPlayers(); renderQueue(); updatePriceDisplay(); } }
-    init();
   </script>
 </body>
 </html>
