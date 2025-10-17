@@ -523,20 +523,161 @@
   </div>
 
   <script>
-    /* ------- Utilities / Storage ------- */
+    
+/* ------- Utilities / Storage ------- */
     const uuid=()=> (crypto?.randomUUID?crypto.randomUUID():'id-'+Math.random().toString(36).slice(2)+Date.now());
     const show=id=>{const el=document.getElementById(id); if(el){el.classList.remove('hidden'); el.classList.add('flex');}};
     const hide=id=>{const el=document.getElementById(id); if(el){el.classList.add('hidden'); el.classList.remove('flex');}};
     const getNumberOrZero=v=>{const n=parseFloat(v);return Number.isFinite(n)?n:0;};
-    const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
-    const load=(k,def)=>{try{return JSON.parse(localStorage.getItem(k)??JSON.stringify(def))}catch{return def}};
-    const savePlayers=v=>save('players',v), getPlayers=()=>load('players',[]);
-    const saveCourts =v=>save('courts',v),  getCourts =()=>load('courts',[]);
-    const saveQueue  =v=>save('queue_matches',v), getQueue=()=>load('queue_matches',{matches:[]});
-    const mapById = arr => { const m=new Map(); arr.forEach(x=>m.set(x.id,x)); return m; };
-    const minutesSince=ts=>!ts?0:(Math.floor((Date.now()-ts)/60000)||'<1');
+    // NOTE: We keep localStorage utils as fallback only
+    const saveLocal=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+    const loadLocal=(k,def)=>{try{return JSON.parse(localStorage.getItem(k)??JSON.stringify(def))}catch{return def}};
 
+    // ========= JSONBin Storage Adapter =========
+    const JSONBIN_CONFIG = {
+      enabled: true,
+      apiKey: "$2a$10$CaEp0Q0Iq1Y4Stz/MkvbI.B45GqWcmagq2tp7QuzkgiEEzA.wjePW",
+      binId: '68f233ddd0ea881f40a7e141',              // ใส่ Bin ID หลังจากสร้างครั้งแรก (จะล็อกไว้ไม่สร้างใหม่)
+      name:  'court-manager-state'
+    };
+
+    let _cache = { players:null, courts:null, queue:null, price:null, match_log:[], loaded:false };
+    let _saveTimer = null;
+
+    const JB_HEADERS = (extra={})=>({
+      'Content-Type':'application/json',
+      'X-Master-Key': JSONBIN_CONFIG.apiKey,
+      ...extra
+    });
+
+    async function jbCreateBin(payload){
+      const res = await fetch('https://api.jsonbin.io/v3/b', {
+        method:'POST', headers: JB_HEADERS({'X-Bin-Name': JSONBIN_CONFIG.name}), body: JSON.stringify(payload)
+      });
+      if(!res.ok) throw new Error('Create bin failed '+res.status);
+      const json = await res.json();
+      try{ console.info('JSONBin created. Bin ID =', json?.metadata?.id); }catch(_){}
+      return json?.metadata?.id;
+    }
+    async function jbGetLatest(binId){
+      const res = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, { headers: JB_HEADERS() });
+      if(!res.ok) throw new Error('Get latest failed '+res.status);
+      const json = await res.json();
+      return json?.record;
+    }
+    async function jbPut(binId, payload){
+      const res = await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
+        method:'PUT', headers: JB_HEADERS(), body: JSON.stringify(payload)
+      });
+      if(!res.ok) throw new Error('PUT failed '+res.status);
+      return res.json();
+    }
+
+    function makeInitialStateFromLocal(){
+      return {
+        players: loadLocal('players',[]),
+        courts:  loadLocal('courts',[]),
+        queue:   loadLocal('queue_matches',{matches:[]}),
+        price: {
+          shuttle: parseFloat(localStorage.getItem('shuttlecockPrice')??'20'),
+          fee:     parseFloat(localStorage.getItem('courtRentalFee')??'0')
+        },
+        match_log: loadLocal('match_log',[])
+      };
+    }
+    function hydrateCacheFromRemote(data){
+      _cache.players = data?.players||[];
+      _cache.courts  = data?.courts ||[];
+      _cache.queue   = data?.queue  ||{matches:[]};
+      _cache.price   = data?.price  ||{shuttle:20, fee:0};
+      _cache.match_log = data?.match_log || [];
+    }
+    function syncLocalFromCache(){
+      saveLocal('players', _cache.players);
+      saveLocal('courts',  _cache.courts);
+      saveLocal('queue_matches', _cache.queue);
+      localStorage.setItem('shuttlecockPrice', _cache.price.shuttle);
+      localStorage.setItem('courtRentalFee',  _cache.price.fee);
+      saveLocal('match_log', _cache.match_log);
+    }
+
+    async function storageInit(){
+      if(!JSONBIN_CONFIG.enabled){ _cache.loaded=true; return; }
+      if(JSONBIN_CONFIG.binId){
+        try{
+          const data = await jbGetLatest(JSONBIN_CONFIG.binId);
+          hydrateCacheFromRemote(data); _cache.loaded=true; syncLocalFromCache(); return;
+        }catch(e){ console.warn('JSONBin get fail → fallback/create', e); }
+      }
+      const initial = makeInitialStateFromLocal();
+      try{
+        const newBinId = await jbCreateBin(initial);
+        JSONBIN_CONFIG.binId = newBinId;
+        hydrateCacheFromRemote(initial); _cache.loaded=true; syncLocalFromCache();
+      }catch(e){
+        console.warn('Create bin fail → fallback local', e);
+        hydrateCacheFromRemote(initial); _cache.loaded=true;
+      }
+    }
+
+    function commitRemote(){
+      if(!JSONBIN_CONFIG.enabled || !JSONBIN_CONFIG.binId) return;
+      clearTimeout(_saveTimer);
+      _saveTimer = setTimeout(async ()=>{
+        try{
+          const payload = {
+            players:_cache.players||[],
+            courts:_cache.courts||[],
+            queue:_cache.queue||{matches:[]},
+            price:_cache.price||{shuttle:20,fee:0},
+            match_log:_cache.match_log||[]
+          };
+          await jbPut(JSONBIN_CONFIG.binId, payload);
+        }catch(e){ console.warn('Remote save fail', e); }
+      }, 700);
+    }
+
+    // ---- Public getters/setters (replace the originals) ----
+    const savePlayers = v=>{ _cache.players=v; saveLocal('players',v); commitRemote(); };
+    const getPlayers  = ()=> _cache.players ?? loadLocal('players',[]);
+    const saveCourts  = v=>{ _cache.courts =v; saveLocal('courts',v);  commitRemote(); };
+    const getCourts   = ()=> _cache.courts  ?? loadLocal('courts',[]);
+    const saveQueue   = v=>{ _cache.queue  =v; saveLocal('queue_matches',v); commitRemote(); };
+    const getQueue    = ()=> _cache.queue   ?? loadLocal('queue_matches',{matches:[]});
+
+    const save = saveLocal;     // keep generic for other helpers
+    const load = loadLocal;
+
+    function getPrice(){
+      return _cache.price ?? {
+        shuttle: parseFloat(localStorage.getItem('shuttlecockPrice')??'20'),
+        fee:     parseFloat(localStorage.getItem('courtRentalFee')??'0')
+      };
+    }
+    function updatePriceDisplay(){
+      const p=getPrice();
+      document.getElementById('shuttlecock-price-display').textContent=p.shuttle;
+      document.getElementById('court-price').textContent=p.fee;
+    }
+
+    // Hook settings form to update remote price as well
+    document.addEventListener('DOMContentLoaded',()=>{
+      const form = document.getElementById('settings-form');
+      if(!form) return;
+      form.addEventListener('submit', e=>{
+        e.preventDefault();
+        const shuttle = parseFloat(document.getElementById('shuttlecock-price').value||'0');
+        const fee     = parseFloat(document.getElementById('court-rental-fee').value||'0');
+        localStorage.setItem('shuttlecockPrice', shuttle);
+        localStorage.setItem('courtRentalFee', fee);
+        _cache.price = {shuttle, fee};
+        hide('settings-modal'); updatePriceDisplay(); renderPlayers();
+        commitRemote();
+        showToast('บันทึกราคาเรียบร้อย ✓');
+      }, {capture:true});
+    });
     /* ------- Toast + Undo ------- */
+/* ------- Toast + Undo ------- */
     let _undo = null; // {do:fn, undo:fn, label:string}
     function showToast(msg, undoLabel=null, undoHandler=null, timeoutMs=6000){
       const cont=document.getElementById('toast-container');
@@ -1492,7 +1633,7 @@
 
     /* Init */
     
-function init(){
+async function init(){ await storageInit(); 
   try{ migrate(); }catch(e){}
   try{ renderCourts(); }catch(e){}
   try{ renderPlayers(); }catch(e){}
