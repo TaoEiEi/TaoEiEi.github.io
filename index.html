@@ -36,6 +36,31 @@
     .subtle{font-size:.85rem;color:var(--muted)}
     .pair-box{border:1px dashed var(--border); border-radius:14px; padding:.75rem; background:rgba(255,255,255,.02)}
     .pair-title{font-size:.9rem;color:#c7d2fe;font-weight:700;letter-spacing:.2px}
+    select.soft{
+	  -webkit-appearance: none;
+	  -moz-appearance: none;
+	  appearance: none;
+	  background: rgba(255,255,255,.02);
+	  color: #e5e7eb;
+	  border: 1px solid var(--border);
+	  border-radius: 12px;
+	  padding-right: 2.25rem; /* เว้นที่ให้ไอคอนลูกศร */
+	  background-image:
+		url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="%23c7d2fe" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z"/></svg>');
+	  background-repeat: no-repeat;
+	  background-position: right .7rem center;
+	  background-size: 1rem;
+	}
+	select.soft:focus{
+	  outline: none;
+	  box-shadow: 0 0 0 2px rgba(99,102,241,.45);
+	  border-color: rgba(99,102,241,.55);
+	}
+	select.soft option{
+	  background: #0f172a;  /* สีแผงดรอปดาวน์ */
+	  color: #e5e7eb;
+	}
+	select.soft::-ms-expand{ display: none; } /* สำหรับ IE/Edge เก่า */
   </style>
 </head>
 <body>
