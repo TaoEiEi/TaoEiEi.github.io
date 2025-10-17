@@ -3,22 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Badminton Court Manager — v8 (Clickable Header Sort, Full Modals)</title>
-  <script src="https://cdn.tailwindcss.com">
-    /* Forms: add court (restored) */
-    document.getElementById('add-court-form').addEventListener('submit',e=>{
-      e.preventDefault();
-      const name=document.getElementById('court-name-input').value.trim();
-      const capacity=getNumberOrZero(document.getElementById('court-capacity-input').value)||4;
-      const courts=getCourts(); if(courts.some(c=>(c.name||'').toLowerCase()===name.toLowerCase())){ alert('ชื่อซ้ำ'); return; }
-      const before=JSON.stringify(courts);
-      courts.push({id:uuid(), name, status:'ว่าง', players:[], pairs:[], waiting:null, roundNo:0, capacity});
-      saveCourts(courts); hide('add-court-modal'); renderCourts(); e.target.reset();
-      setUndo('เพิ่มสนาม', ()=>{ saveCourts(JSON.parse(before)); renderCourts(); });
-      showToast('เพิ่มสนามแล้ว ✓','เลิกทำ', triggerUndo);
-    });
-
-  </script>
+  <title>Badminton Court Manager — v8 (Toast + Undo + Export/Import + Filters)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
   <style>
     :root{
@@ -59,13 +45,8 @@
     .subtle{font-size:.85rem;color:var(--muted)}
     .pair-box{border:1px dashed var(--border); border-radius:14px; padding:.75rem; background:rgba(255,255,255,.02)}
     .pair-title{font-size:.9rem;color:#c7d2fe;font-weight:700;letter-spacing:.2px}
-    /* sorting UI */
-    th.sortable{cursor:pointer; user-select:none;}
-    th.sortable .label{display:inline-flex;align-items:center;gap:.35rem}
-    th.sortable .icon{opacity:.55}
-    th.sortable.active .icon{opacity:1}
-    
-    /* Dark select styling (force dark dropdown list) */
+
+    /* Dark select styling */
     select.soft{
       -webkit-appearance: none;
       -moz-appearance: none;
@@ -81,24 +62,91 @@
       background-position: right .7rem center;
       background-size: 1rem;
     }
-    select.soft:focus{
-      outline:none;
-      box-shadow:0 0 0 2px rgba(99,102,241,.45);
-      border-color:rgba(99,102,241,.55);
-    }
-    /* Important: set the dropdown panel colors */
-    select.soft option, select.soft optgroup{
-      background:#0f172a;
-      color:#e5e7eb;
-    }
-    /* Hide default arrow on old IE/Edge */
+    select.soft:focus{ outline:none; box-shadow:0 0 0 2px rgba(99,102,241,.45); border-color:rgba(99,102,241,.55); }
+    select.soft option{ background:#0f172a; color:#e5e7eb; }
     select.soft::-ms-expand{ display:none; }
 
+    
+    /* ===== Right Queue Slidebar (no-shift) ===== */
+    :root{ --qsW: 320px; --headerH: 84px; --qsCollapsed: 96px; }
+    .queue-slidebar{
+      position: fixed; right: 0; top: var(--headerH);
+      width: var(--qsW); z-index: 60;
+    }
+    .queue-slidebar .panel{
+      border-top-right-radius: 0; border-bottom-right-radius: 0; border-right: none;
+      box-shadow: -12px 0 24px rgba(0,0,0,.35);
+    }
+    .queue-slidebar .qs-header{ display:flex; align-items:center; justify-content:space-between; gap:.5rem; padding:.85rem 1rem; border-bottom:1px solid var(--border); }
+    .queue-slidebar .qs-body{ padding:.75rem; }
+    .queue-slidebar .qs-list{ max-height: calc(100vh - 190px); overflow: auto; }
+    .queue-slidebar.collapsed{ width: var(--qsCollapsed); }
+    .queue-slidebar.collapsed .qs-title,
+    .queue-slidebar.collapsed .qs-actions,
+    .queue-slidebar.collapsed .qs-body{ display:none; }
+    .qs-toggle{
+      position:absolute; left:-24px; top:50%; transform: translateY(-50%);
+      height: 42px; padding: 0 .9rem; border-radius: 9999px;
+      display:inline-flex; gap:.45rem; align-items:center; justify-content:center;
+      background: radial-gradient(120% 120% at 30% 20%, rgba(99,102,241,.35), rgba(99,102,241,.18)), #0b1220;
+      border:1px solid rgba(99,102,241,.55); box-shadow: 0 10px 24px rgba(2,6,23,.45); cursor:pointer;
+    }
+    .qs-toggle i{ font-size:14px; color:#e5e7eb; }
+    .qs-toggle .qs-label{ display:none; font-weight:700; letter-spacing:.3px; }
+    .queue-slidebar.collapsed .qs-toggle .qs-label{ display:inline; }
+
+    /* Mobile: keep queue inline (fallback) */
+    @media (max-width: 1279px){
+      .queue-slidebar{ position: static; width: auto; }
+      .qs-toggle{ position: absolute; left: 12px; top: 12px; transform:none; }
+    }
+
+    /* ===== Left History Slidebar ===== */
+    :root{ --hsW: 320px; }
+    .history-slidebar{
+      position: fixed; left: 0; top: var(--headerH); width: var(--hsW); z-index: 60;
+    }
+    .history-slidebar .panel{
+      border-top-left-radius: 0; border-bottom-left-radius: 0; border-left:none;
+      box-shadow: 12px 0 24px rgba(0,0,0,.35);
+    }
+    .history-slidebar .hs-header{ display:flex; align-items:center; justify-content:space-between; gap:.5rem; padding:.85rem 1rem; border-bottom:1px solid var(--border); }
+    .history-slidebar .hs-body{ padding:.75rem; }
+    .history-slidebar .hs-list{ max-height: calc(100vh - 190px); overflow: auto; }
+    .history-slidebar.collapsed{ width: 88px; }
+    .history-slidebar.collapsed .hs-title,
+    .history-slidebar.collapsed .hs-actions,
+    .history-slidebar.collapsed .hs-body{ display:none; }
+    .hs-toggle{
+      position:absolute; right:-21px; top:50%; transform: translateY(-50%);
+      width:42px; height:42px; border-radius: 9999px;
+      display:inline-flex; align-items:center; justify-content:center;
+      background: radial-gradient(120% 120% at 30% 20%, rgba(99,102,241,.35), rgba(99,102,241,.18)), #0b1220;
+      border:1px solid rgba(99,102,241,.55); box-shadow: 0 10px 24px rgba(2,6,23,.45); cursor:pointer;
+    }
+    .hs-toggle i{ font-size:14px; color:#e5e7eb; }
+
+    /* Hide left history on small screens */
+    @media (max-width: 1279px){
+      .history-slidebar{ display:none; }
+    }
+
+    
+    .hs-toggle .hs-label{ display:none; font-weight:700; letter-spacing:.3px; margin-left:.5rem; color:#e5e7eb; }
+    .history-slidebar.collapsed .hs-toggle .hs-label{ display:inline; }
+    
     /* Toast */
     #toast-container{ position:fixed; right:16px; bottom:16px; display:flex; flex-direction:column; gap:10px; z-index:9999; }
     .toast{ background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03)); border:1px solid var(--border); border-radius:12px; padding:.75rem 1rem; min-width:260px; display:flex; align-items:center; gap:.6rem; box-shadow:0 10px 30px rgba(2,6,23,.35); }
     .toast .msg{ flex:1; font-size:.9rem; }
     .toast .undo{ border:1px solid var(--border); padding:.3rem .6rem; border-radius:10px; }
+  
+    /* Sort caret */
+    th.sortable{ cursor:pointer; user-select:none; }
+    th.sortable .sort-caret{ display:inline-block; width:0; height:0; margin-left:.35rem; border-left:5px solid transparent; border-right:5px solid transparent; border-top:6px solid var(--muted); transform: translateY(-1px); opacity:.8; }
+    th.sortable.desc .sort-caret{ border-top:none; border-bottom:6px solid var(--muted); transform: translateY(2px); }
+    th.sortable.active{ color:#e2e8f0; }
+
   </style>
 </head>
 <body>
@@ -122,8 +170,7 @@
     <div class="divider"></div>
   </header>
 
-  <main class="max-w-7xl mx-auto px-5 py-8">
-
+  <main class="max-w-7xl mx-auto px-5 py-8 space-y-8">
     <!-- Overview -->
     <section class="grid sm:grid-cols-3 gap-4">
       <div class="panel p-5">
@@ -147,7 +194,7 @@
     </section>
 
     <!-- Courts -->
-    <section class="space-y-3 mt-8">
+    <section class="space-y-3">
       <div class="flex items-center justify-between">
         <div class="heading">สนาม</div>
       </div>
@@ -155,7 +202,7 @@
     </section>
 
     <!-- Players -->
-    <section class="space-y-3 mt-8">
+    <section class="space-y-3">
       <div class="flex items-center justify-between">
         <div class="heading">ผู้เล่น</div>
         <div class="flex flex-wrap gap-2">
@@ -181,12 +228,12 @@
             <tr>
               <th class="text-left p-3"><input id="select-all" type="checkbox" class="accent-indigo-400"></th>
               <th class="text-center p-3">#</th>
-              <th class="text-left p-3 sortable" data-key="name"><span class="label">ชื่อ <i class="icon fa-solid fa-sort"></i></span></th>
-              <th class="text-center p-3 sortable" data-key="skill"><span class="label">มือ <i class="icon fa-solid fa-sort"></i></span></th>
-              <th class="text-center p-3 sortable" data-key="status"><span class="label">สถานะ <i class="icon fa-solid fa-sort"></i></span></th>
-              <th class="text-center p-3 sortable" data-key="games"><span class="label">เกม <i class="icon fa-solid fa-sort"></i></span></th>
-              <th class="text-center p-3 sortable" data-key="shuttle"><span class="label">ลูกแบด <i class="icon fa-solid fa-sort"></i></span></th>
-              <th class="text-center p-3 sortable" data-key="cost"><span class="label">ค่าใช้จ่าย <i class="icon fa-solid fa-sort"></i></span></th>
+              <th class="text-left p-3">ชื่อ</th>
+              <th class="text-center p-3">มือ</th>
+              <th class="text-center p-3">สถานะ</th>
+              <th class="text-center p-3 sortable" data-key="games">เกม <span class="sort-caret"></span></th>
+              <th class="text-center p-3 sortable" data-key="shuttles">ลูกแบด <span class="sort-caret"></span></th>
+              <th class="text-center p-3 sortable" data-key="cost">ค่าใช้จ่าย <span class="sort-caret"></span></th>
               <th class="text-center p-3">จัดการ</th>
             </tr>
           </thead>
@@ -194,19 +241,41 @@
         </table>
       </div>
     </section>
+  </main>
 
-    <!-- Queue -->
-    <section class="space-y-3 mt-8">
-      <div class="flex items-center justify-between">
-        <div class="heading">คิว (4 คน / 2 คู่)</div>
-        <div class="flex gap-2">
+  <aside id="history-slidebar" class="history-slidebar">
+    <div class="panel relative">
+      <button class="hs-toggle" onclick="toggleHistorySidebar()" title="ย่อ/ขยายประวัติ" aria-label="ย่อ/ขยายประวัติ"><i class="fa-solid fa-angles-left"></i><span class="hs-label">ประวัติ</span></button>
+      <div class="hs-header">
+        <div class="hs-title">ประวัติรวม</div>
+        <div class="hs-actions flex gap-2">
+          <button class="btn btn-ghost" onclick="clearMatchLog()"><i class="fa-solid fa-eraser"></i> ล้าง</button>
+        </div>
+      </div>
+      <div class="hs-body">
+        <div id="history-all-list-side" class="hs-list text-sm"></div>
+      </div>
+    </div>
+  </aside>
+
+
+  <aside id="queue-slidebar" class="queue-slidebar">
+    <div class="panel relative">
+      <button class="qs-toggle" onclick="toggleQueueSidebar()" title="ย่อ/ขยายคิว" aria-label="ย่อ/ขยายคิว">
+        <i class="fa-solid fa-angles-right"></i><span class="qs-label">คิว</span>
+      </button>
+      <div class="qs-header">
+        <div class="qs-title">คิว (4 คน / 2 คู่)</div>
+        <div class="qs-actions flex gap-2">
           <button class="btn" onclick="clearQueueMatches()"><i class="fa-solid fa-broom"></i> ล้างคิว</button>
         </div>
       </div>
-      <div id="queue-container" class="space-y-2"></div>
-    </section>
+      <div class="qs-body">
+        <div id="queue-container" class="qs-list space-y-2"></div>
+      </div>
+    </div>
+  </aside>
 
-  </main>
 
   <!-- Toast container -->
   <div id="toast-container"></div>
@@ -348,7 +417,11 @@
       </div>
       <div class="soft p-3">
         <div class="flex items-center justify-between">
-          <div class="pair-title">รายชื่อในสนามนี้</div>
+          \1
+          <div class="flex items-center gap-2">
+            <select id="bulk-move-select" class="soft px-2 py-1 text-sm"></select>
+            <button id="bulk-move-btn" class="btn"><i class="fa-solid fa-people-arrows"></i> ย้ายทั้งหมด</button>
+          </div>
           <button class="btn btn-green" onclick="openFreePicker(null, _manageCtx?.courtId)"><i class="fa-solid fa-user-plus"></i> เพิ่มผู้เล่นว่างเข้าสนาม</button>
         </div>
         <div id="manage-list" class="space-y-2 mt-3 max-h-[45vh] overflow-auto"></div>
@@ -464,7 +537,7 @@
     const minutesSince=ts=>!ts?0:(Math.floor((Date.now()-ts)/60000)||'<1');
 
     /* ------- Toast + Undo ------- */
-    let _undo = null; // {undoFn}
+    let _undo = null; // {do:fn, undo:fn, label:string}
     function showToast(msg, undoLabel=null, undoHandler=null, timeoutMs=6000){
       const cont=document.getElementById('toast-container');
       const el=document.createElement('div'); el.className='toast';
@@ -474,13 +547,13 @@
       const close=()=>{ if(el.parentNode) el.parentNode.removeChild(el); };
       closeBtn.onclick=close;
       if(undoLabel && undoHandler){ undoBtn.onclick=()=>{ try{ undoHandler(); } finally { close(); } }; }
-      setTimeout(close, timeoutMs);
+      const t=setTimeout(close, timeoutMs);
     }
     function setUndo(label, undoFn){ _undo = {label, undoFn}; }
     function triggerUndo(){ if(_undo?.undoFn){ _undo.undoFn(); _undo=null; } }
 
     /* ------- Price ------- */
-    function getPrice(){return {shuttle:parseFloat(localStorage.getItem('shuttlecockPrice')??'20'), fee:parseFloat(localStorage.getItem('courtRentalFee')??'0')}}
+    function getPrice(){return {shuttle:parseFloat(localStorage.getItem('shuttlecockPrice')??'20'), fee:parseFloat(localStorage.getItem('courtRentalFee')??'0')}};
     function updatePriceDisplay(){const p=getPrice(); document.getElementById('shuttlecock-price-display').textContent=p.shuttle; document.getElementById('court-price').textContent=p.fee;}
 
     document.getElementById('settings-form').addEventListener('submit',e=>{
@@ -514,6 +587,107 @@
       saveCourts(courts);
     }
 
+    
+    /* ===== Slidebars + History (safe hooks) ===== */
+    // Persist collapsed state
+    function applyQueueSidebarState(){
+      const el = document.getElementById('queue-slidebar'); if(!el) return;
+      const collapsed = localStorage.getItem('queueSidebarCollapsed') === '1';
+      el.classList.toggle('collapsed', collapsed);
+      updateQueueBadge();
+    }
+    function toggleQueueSidebar(){
+      const el = document.getElementById('queue-slidebar'); if(!el) return;
+      const collapsed = el.classList.contains('collapsed');
+      el.classList.toggle('collapsed', !collapsed);
+      localStorage.setItem('queueSidebarCollapsed', (!collapsed)?'1':'0');
+      updateQueueBadge();
+    }
+    function updateQueueBadge(){
+      const el = document.querySelector('#queue-slidebar .qs-label');
+      if(!el) return;
+      const n = (getQueue()?.matches?.length)||0;
+      el.textContent = `คิว (${n})`;
+    }
+
+    function applyHistorySidebarState(){
+      const el = document.getElementById('history-slidebar'); if(!el) return;
+      const collapsed = localStorage.getItem('historySidebarCollapsed') === '1';
+      el.classList.toggle('collapsed', collapsed);
+    }
+    function toggleHistorySidebar(){
+      const el = document.getElementById('history-slidebar'); if(!el) return;
+      const collapsed = el.classList.contains('collapsed');
+      el.classList.toggle('collapsed', !collapsed);
+      localStorage.setItem('historySidebarCollapsed', (!collapsed)?'1':'0');
+    }
+
+    // Global match log helpers
+    const saveMatchLog = v => save('match_log', v);
+    const getMatchLog  = () => load('match_log', []);
+
+    // Append with dedupe (use signature + 4s window) and global seq
+    function appendMatchLog(court){
+      if(!court) return;
+      const ev = { ts: Date.now(), courtId: court.id, courtName: court.name, round: court.roundNo||0, pairs: (court.pairs||[]).map(pr=>[...pr]) };
+      const makeSig = (e)=>{
+        try{ return `${e.courtId||''}|${(e.pairs||[]).flat().filter(Boolean).map(String).sort().join(',')}`; }catch(_){ return `${e.courtId||''}|?`; }
+      };
+      ev._sig = makeSig(ev);
+
+      const log = getMatchLog();
+      const last = log.length ? log[log.length-1] : null;
+      const lastSig = last ? (last._sig || makeSig(last)) : null;
+      const recent = last && (Math.abs((ev.ts)-(last.ts||0)) <= 4000);
+      const sameSig = last && (lastSig === ev._sig);
+      if(recent && sameSig){ return; } // skip duplicate
+
+      const lastSeq = (log.length>0 && typeof (last && last.seq)==='number') ? last.seq : log.length;
+      ev.seq = lastSeq + 1;
+      log.push(ev); saveMatchLog(log);
+      try{ renderAllHistorySidebar(); }catch(e){}
+    }
+
+    function renderAllHistorySidebar(){
+      const host = document.getElementById('history-all-list-side'); if(!host) return;
+      host.innerHTML='';
+      const players=getPlayers(), byId=mapById(players);
+      const raw = getMatchLog().slice();
+      if(raw.length===0){ host.innerHTML='<div class="muted">ยังไม่มีประวัติ</div>'; return; }
+      const log = raw.slice().sort((a,b)=>(b.ts||0)-(a.ts||0));
+      const fmt=ts=>{const d=new Date(ts),pad=n=>String(n).padStart(2,'0');return `${pad(d.getHours())}:${pad(d.getMinutes())} • ${pad(d.getDate())}/${d.getMonth()+1}/${d.getFullYear()}`};
+      log.forEach(ev=>{
+        const pairs = ev.pairs||[[],[]];
+        const [A,B,C,D] = [pairs?.[0]?.[0], pairs?.[0]?.[1], pairs?.[1]?.[0], pairs?.[1]?.[1]];
+        const n=id=>byId.get(id)?.name||'—', s=id=>byId.get(id)?.skill||'N';
+        const row=document.createElement('div'); row.className='border-b border-[var(--border)] py-2';
+        row.innerHTML = `<div class="font-semibold">ลำดับ ${ev.seq||'?'} • ${ev.courtName||'—'}</div>
+            <div class="muted">
+              <span class="chip">${n(A)} <span class="tag">มือ ${s(A)}</span></span>
+              <span class="muted">×</span>
+              <span class="chip">${n(B)} <span class="tag">มือ ${s(B)}</span></span>
+              <span class="muted">เจอ</span>
+              <span class="chip">${n(C)} <span class="tag">มือ ${s(C)}</span></span>
+              <span class="muted">×</span>
+              <span class="chip">${n(D)} <span class="tag">มือ ${s(D)}</span></span>
+            </div>
+            <div class="muted text-xs">${fmt(ev.ts)}</div>`;
+        host.appendChild(row);
+      });
+    }
+
+    // Safe hook into pushHistory (called when startGame runs) — do not change original logic
+    try{
+      const _pushHistory_orig = pushHistory;
+      pushHistory = function(court, players){
+        _pushHistory_orig(court, players);
+        try{ appendMatchLog(court); }catch(e){}
+      };
+    }catch(e){ /* if not found, ignore */ }
+
+
+    
+    function clearMatchLog(){ try{ save('match_log', []); renderAllHistorySidebar?.(); showToast('ล้างประวัติรวมแล้ว ✓'); }catch(e){ alert('ล้างประวัติไม่สำเร็จ: '+e.message);} }
     /* ------- Helpers ------- */
     function ensureAvailableSince(players){
       const now=Date.now();
@@ -569,10 +743,8 @@
     }
     window.openHistory=openHistory;
 
-    /* ------- Filters + Sorting ------- */
+    /* ------- Filters ------- */
     let _filter = {q:'', skill:'', status:''};
-    let _sort = {key:'', dir:'asc'};
-
     const filterSearch=document.getElementById('filter-search');
     const filterSkill=document.getElementById('filter-skill');
     const filterStatus=document.getElementById('filter-status');
@@ -587,74 +759,141 @@
       return true;
     }
 
-    function updateSortUI(){
-      document.querySelectorAll('th.sortable').forEach(th=>{
-        th.classList.remove('active');
-        const icon = th.querySelector('.icon');
-        if(icon) icon.className = 'icon fa-solid fa-sort';
+    
+    /* Sorting headers setup */
+    let _sort = {key:null, dir:1};
+    function setupSortableHeaders(){
+      const map = {'เกม':'games','ลูกแบด':'shuttles','ค่าใช้จ่าย':'cost'};
+      const ths = document.querySelectorAll('thead th');
+      ths.forEach(th=>{
+        const label = (th.textContent||'').trim();
+        if(map[label]){
+          th.classList.add('sortable');
+          th.setAttribute('data-key', map[label]);
+          if(!th.querySelector('.sort-caret')){
+            const span=document.createElement('span'); span.className='sort-caret'; th.appendChild(span);
+          }
+        }
       });
-      if(!_sort.key) return;
-      const th = document.querySelector(`th.sortable[data-key="${_sort.key}"]`);
-      if(!th) return;
-      th.classList.add('active');
-      const icon = th.querySelector('.icon');
-      if(icon) icon.className = _sort.dir==='asc' ? 'icon fa-solid fa-sort-amount-down' : 'icon fa-solid fa-sort-amount-up';
-    }
-
-    // bind header click
-    document.addEventListener('DOMContentLoaded', ()=>{
-      document.querySelectorAll('th.sortable').forEach(th=>{
-        th.addEventListener('click', ()=>{
+      const thead=document.querySelector('thead');
+      if(!thead.__sortBound){
+        thead.addEventListener('click', e=>{
+          const th = e.target.closest('th.sortable'); if(!th) return;
           const key = th.getAttribute('data-key');
-          if(_sort.key === key){ _sort.dir = _sort.dir === 'asc' ? 'desc' : 'asc'; }
-          else { _sort.key = key; _sort.dir = 'asc'; }
+          if(_sort.key===key){ _sort.dir = -_sort.dir; } else { _sort.key = key; _sort.dir = 1; }
+          localStorage.setItem('playerSort', JSON.stringify(_sort));
           renderPlayers();
         });
+        thead.__sortBound = true;
+      }
+      try{ const s=JSON.parse(localStorage.getItem('playerSort')||'null'); if(s) _sort=s; }catch{}
+      applySortHeaders();
+    }
+    function applySortHeaders(){
+      const ths = document.querySelectorAll('thead th.sortable');
+      ths.forEach(th=>{
+        th.classList.remove('active','desc');
+        const key=th.getAttribute('data-key');
+        if(key===_sort.key){
+          th.classList.add('active');
+          if(_sort.dir===-1) th.classList.add('desc');
+        }
       });
-    });
+    }
 
+    
+    /* Sort handlers */
+    function attachSortHandlers(){
+      const thead = document.querySelector('thead');
+      if(!thead) return;
+      thead.addEventListener('click', (e)=>{
+        const th = e.target.closest('th.sortable'); if(!th) return;
+        const key = th.getAttribute('data-key');
+        if(!window._sort) window._sort = {key:null, dir:1};
+        if(_sort.key===key){ _sort.dir = -_sort.dir; } else { _sort.key = key; _sort.dir = 1; }
+        try{ localStorage.setItem('playerSort', JSON.stringify(_sort)); }catch{}
+        renderPlayers();
+      });
+    }
+    function applySortHeaders(){
+      const ths = document.querySelectorAll('thead th.sortable');
+      ths.forEach(th=>{
+        th.classList.remove('active','desc');
+        const key = th.getAttribute('data-key');
+        if(window._sort && key===_sort.key){
+          th.classList.add('active');
+          if(_sort.dir===-1) th.classList.add('desc');
+        }
+      });
+    }
+    (function restoreSort(){
+      try{ const s = JSON.parse(localStorage.getItem('playerSort')||'null'); if(s) window._sort=s; }catch{ window._sort={key:null, dir:1}; }
+    })();
+    
     /* ------- Players render ------- */
     let _editPlayerId=null; let _editingForm=false;
     function renderPlayers(){
-      updateSortUI();
       const tbody=document.getElementById('player-table-body'); tbody.innerHTML='';
       const players=ensureAvailableSince(getPlayers()); savePlayers(players);
       const {shuttle,fee}=getPrice();
 
-      const data = players.filter(passFilter).map(p=>{
-        const g = Number(p.gamesPlayed||0);
-        const s = Number(p.shuttlecocksUsed||0);
-        const feeOnce = g > 0 ? fee : 0;
-        const cost = s*shuttle + feeOnce;
-        return {...p, _g:g, _s:s, _c:cost, _name:(p.name||''), _skill:(p.skill||'N'), _status:(p.status||'')};
-      });
+      const data = players.filter(passFilter);
+      // ---- robust sort block ----
+      if(!_sort){ window._sort = {key:null, dir:1}; }
+      const getVal = (p)=>{
+        if(_sort.key==='games') return p.gamesPlayed||0;
+        if(_sort.key==='shuttles') return p.shuttlecocksUsed||0;
+        if(_sort.key==='cost'){ const {shuttle, fee}=getPrice(); const feeOnce=(p.gamesPlayed||0)>0?fee:0; return (p.shuttlecocksUsed||0)*shuttle + feeOnce; }
+        return 0;
+      };
+      if(_sort.key){
+        data.sort((a,b)=>{
+          const va=getVal(a), vb=getVal(b);
+          if(va===vb) return (a.name||'').localeCompare(b.name||'');
+          return (va<vb? -1:1) * (_sort.dir||1);
+        });
+      } else {
+        data.sort((a,b)=>{
+          const order=s=>s==='ว่าง'?0:(s==='ในสนาม'?1:2);
+          const oa=order(a.status), ob=order(b.status);
+          if(oa!==ob) return oa-ob;
+          if(a.status==='ว่าง'&&b.status==='ว่าง') return (a.availableSince??Date.now())-(b.availableSince??Date.now());
+          return (a.name||'').localeCompare(b.name||'');
+        });
+      }
+      // update header states
+      if(typeof applySortHeaders==='function') applySortHeaders();
+        
 
-      data.sort((a,b)=>{
-        if(_sort.key){
-          let va, vb;
-          switch(_sort.key){
-            case 'name': va=a._name.toLowerCase(); vb=b._name.toLowerCase(); break;
-            case 'skill': va=a._skill; vb=b._skill; break;
-            case 'status': {
-              const order=s=>s==='ว่าง'?0:(s==='ในสนาม'?1:2);
-              va=order(a._status); vb=order(b._status); break;
-            }
-            case 'games': va=a._g; vb=b._g; break;
-            case 'shuttle': va=a._s; vb=b._s; break;
-            case 'cost': va=a._c; vb=b._c; break;
+      // Apply sort if set
+      if(window._sort && _sort.key){
+        const getVal = (p)=>{
+          if(_sort.key==='games') return p.gamesPlayed||0;
+          if(_sort.key==='shuttles') return p.shuttlecocksUsed||0;
+          if(_sort.key==='cost'){
+            const feeOnce = (p.gamesPlayed||0)>0? fee:0;
+            return (p.shuttlecocksUsed||0)*shuttle + feeOnce;
           }
-          if(va<vb) return _sort.dir==='asc'? -1: 1;
-          if(va>vb) return _sort.dir==='asc'? 1: -1;
-        }
-        // fallback: status, wait time, name
-        const order=s=>s==='ว่าง'?0:(s==='ในสนาม'?1:2);
-        const oa=order(a.status), ob=order(b.status);
-        if(oa!==ob) return oa-ob;
-        if(a.status==='ว่าง'&&b.status==='ว่าง') return (a.availableSince??Date.now())-(b.availableSince??Date.now());
-        return (a._name).localeCompare(b._name);
-      });
+          return 0;
+        };
+        data.sort((a,b)=>{
+          const va=getVal(a), vb=getVal(b);
+          if(va===vb) return (a.name||'').localeCompare(b.name||'');
+          return (_sort.dir||1) * (va - vb);
+        });
+      }else{
+        data.sort((a,b)=>{
+          const order=s=>s==='ว่าง'?0:(s==='ในสนาม'?1:2);
+          const oa=order(a.status), ob=order(b.status);
+          if(oa!==ob) return oa-ob;
+          if(a.status==='ว่าง'&&b.status==='ว่าง') return (a.availableSince??Date.now())-(b.availableSince??Date.now());
+          return (a.name||'').localeCompare(b.name||'');
+        });
+      }
 
       data.forEach((p,i)=>{
+        const feeOnce = (p.gamesPlayed||0) > 0 ? fee : 0;
+        const cost=(p.shuttlecocksUsed||0)*shuttle + feeOnce;
         const cls=p.status==='ว่าง'?'available':(p.status==='ในสนาม'?'ready':'playing');
         const info = p.status==='ว่าง'?`<span class="badge">รอ ${minutesSince(p.availableSince)} นาที</span>`:(p.status==='ในสนาม'?`<span class="badge">รอเริ่ม</span>`:'');
         tbody.insertAdjacentHTML('beforeend',`
@@ -664,9 +903,9 @@
             <td class="p-3"><button class="text-indigo-300 hover:underline" onclick="openHistory('${p.id}')">${p.name}</button></td>
             <td class="p-3 text-center"><span class="badge">มือ ${p.skill||'N'}</span></td>
             <td class="p-3 text-center"><span class="status ${cls}">${p.status}</span> ${info}</td>
-            <td class="p-3 text-center">${p._g}</td>
-            <td class="p-3 text-center">${p._s}</td>
-            <td class="p-3 text-center">${p._c}</td>
+            <td class="p-3 text-center">${p.gamesPlayed||0}</td>
+            <td class="p-3 text-center">${p.shuttlecocksUsed||0}</td>
+            <td class="p-3 text-center">${cost}</td>
             <td class="p-3 text-center">
               <button class="icon-btn" title="แก้ไข" onclick="openEditPlayer('${p.id}','${encodeURIComponent(p.name)}')"><i class="fa-solid fa-pen"></i></button>
               <button class="icon-btn" title="ลบ" onclick="deletePlayer('${p.id}')"><i class="fa-solid fa-trash"></i></button>
@@ -681,7 +920,8 @@
       };
 
       document.getElementById('queue-count').textContent = getQueue().matches?.length || 0;
-    }
+      if(typeof applySortHeaders==='function') applySortHeaders();
+}
 
     function selectAllFiltered(){
       document.querySelectorAll('#player-table-body .player-checkbox').forEach(cb=>cb.checked=true);
@@ -910,7 +1150,9 @@
       const list=document.getElementById('manage-list'); list.innerHTML='';
       if(!c.players||c.players.length===0){ list.innerHTML='<div class="muted">ไม่มีผู้เล่นในสนามนี้</div>'; }
       else{
-        const options=getCourts().map(ct=>`<option value="${ct.id}" ${ct.id===c.id?'disabled':''}>${ct.name}${ct.id===c.id?' (สนามนี้)':''}</option>`).join('');
+        const options=courts.map(ct=>`<option value="${ct.id}" ${ct.id===c.id?'disabled':''}>${ct.name}${ct.id===c.id?' (สนามนี้)':''}</option>`).join('');
+          const bulkSel=document.getElementById('bulk-move-select'); if(bulkSel){ bulkSel.innerHTML=options; }
+          const bulkBtn=document.getElementById('bulk-move-btn'); if(bulkBtn){ bulkBtn.onclick=()=>{ const target=bulkSel?.value; if(!target){ alert('กรุณาเลือกสนามปลายทาง'); return;} if(target===c.id){ alert('สนามปลายทางต้องต่างจากสนามต้นทาง'); return;} bulkMoveAll(c.id, target); }; }
         c.players.forEach(pid=>{
           const p=byId.get(pid); if(!p) return;
           const row=document.createElement('div'); row.className='flex items-center gap-3 border-b border-[var(--border)] py-2';
@@ -993,6 +1235,32 @@
       showToast('เพิ่มผู้เล่นเข้าสนามแล้ว ✓','เลิกทำ', triggerUndo);
     }
 
+    
+    function bulkMoveAll(fromId, toId){
+      const courts=getCourts(), players=getPlayers(), byId=mapById(players);
+      const from=courts.find(x=>x.id===fromId), to=courts.find(x=>x.id===toId);
+      if(!from||!to){ alert('ไม่พบสนามต้นทาง/ปลายทาง'); return; }
+      const beforePlayers=JSON.parse(JSON.stringify(players));
+      const beforeCourts =JSON.parse(JSON.stringify(courts));
+      const cap=to.capacity??4; to.players=to.players||[];
+      const ids=(from.players||[]).slice();
+      if(ids.length===0){ alert('ไม่มีผู้เล่นในสนามต้นทาง'); return; }
+      let moved=0;
+      for(const pid of ids){
+        if((to.players?.length||0)>=(to.capacity??4)) break;
+        from.players=(from.players||[]).filter(x=>x!==pid);
+        if(Array.isArray(from.pairs)) from.pairs=from.pairs.filter(pr=>!pr.includes(pid));
+        if(from.waiting===pid) from.waiting=null; ensurePairs(from); recalcCourtStatus(from);
+        if(!Array.isArray(to.players)) to.players=[]; if(!to.players.includes(pid)) to.players.push(pid);
+        const p=byId.get(pid); if(p){ p.status=(to.status==='กำลังเล่น')?'กำลังเล่น':'ในสนาม'; p.availableSince=null; }
+        ensurePairs(to); recalcCourtStatus(to);
+        moved++;
+      }
+      savePlayers(players); saveCourts(courts); renderPlayers(); renderCourts(); if(_manageCtx?.courtId){ openManage(_manageCtx.courtId); }
+      setUndo('ย้ายผู้เล่นทั้งหมด', ()=>{ savePlayers(beforePlayers); saveCourts(beforeCourts); renderPlayers(); renderCourts(); if(_manageCtx?.courtId){ openManage(_manageCtx.courtId); } });
+      showToast(`ย้ายทั้งหมดแล้ว ${moved} คน ✓`,'เลิกทำ', triggerUndo);
+    }
+
     function movePlayer(pid, fromId, toId, withToast=false){
       const courts=getCourts(), players=getPlayers(), byId=mapById(players);
       const from=courts.find(x=>x.id===fromId), to=courts.find(x=>x.id===toId), p=byId.get(pid);
@@ -1026,6 +1294,7 @@
       const host=document.getElementById('queue-container'); host.innerHTML='';
       const q=getQueue(), players=getPlayers(), byId=mapById(players);
       const count = q.matches?.length || 0; document.getElementById('queue-count').textContent = count;
+      updateQueueBadge?.();
       if(!q.matches || q.matches.length===0){ host.innerHTML='<div class="muted">ยังไม่มีคิว</div>'; return; }
       q.matches.forEach((mt,idx)=>{
         const [[A,B],[C,D]] = mt.pairs;
@@ -1171,11 +1440,24 @@
       showToast('ส่งคิวลงสนามแล้ว ✓','เลิกทำ', triggerUndo);
     }
 
+    /* Forms: add court */
+    document.getElementById('add-court-form').addEventListener('submit',e=>{
+      e.preventDefault();
+      const name=document.getElementById('court-name-input').value.trim();
+      const capacity=getNumberOrZero(document.getElementById('court-capacity-input').value)||4;
+      const courts=getCourts(); if(courts.some(c=>(c.name||'').toLowerCase()===name.toLowerCase())){ alert('ชื่อซ้ำ'); return; }
+      const before=JSON.parse(JSON.stringify(courts));
+      courts.push({id:uuid(), name, status:'ว่าง', players:[], pairs:[], waiting:null, roundNo:0, capacity});
+      saveCourts(courts); hide('add-court-modal'); renderCourts(); e.target.reset();
+      setUndo('เพิ่มสนาม', ()=>{ saveCourts(before); renderCourts(); });
+      showToast('เพิ่มสนามแล้ว ✓','เลิกทำ', triggerUndo);
+    });
+
     /* Export/Import */
     function openDataModal(){ show('data-modal'); document.getElementById('export-textarea').value=''; }
     function exportData(){
       const data = {
-        version: 'v8-sort-headers-full',
+        version: 'v8',
         exportedAt: new Date().toISOString(),
         players: getPlayers(),
         courts: getCourts(),
@@ -1209,23 +1491,22 @@
     }
 
     /* Init */
-    function init(){ migrate(); renderCourts(); renderPlayers(); renderQueue(); updatePriceDisplay(); setInterval(renderPlayers, 30000); }
+    
+function init(){
+  try{ migrate(); }catch(e){}
+  try{ renderCourts(); }catch(e){}
+  try{ renderPlayers(); }catch(e){}
+  try{ renderQueue(); }catch(e){}
+  try{ updatePriceDisplay(); }catch(e){}
+  try{ attachSortHandlers(); }catch(e){}
+  try{ applyQueueSidebarState?.(); }catch(e){}
+  try{ applyHistorySidebarState?.(); }catch(e){}
+  try{ renderAllHistorySidebar?.(); }catch(e){}
+  try{ setInterval(renderPlayers, 30000); }catch(e){}
+}
+
     function clearAllCourts(){ if(confirm('ล้างข้อมูลทั้งหมด?')){ localStorage.removeItem('players'); localStorage.removeItem('courts'); localStorage.removeItem('queue_matches'); renderCourts(); renderPlayers(); renderQueue(); updatePriceDisplay(); showToast('ล้างข้อมูลทั้งหมดแล้ว'); } }
     init();
-  
-    /* Forms: add court (restored) */
-    document.getElementById('add-court-form').addEventListener('submit',e=>{
-      e.preventDefault();
-      const name=document.getElementById('court-name-input').value.trim();
-      const capacity=getNumberOrZero(document.getElementById('court-capacity-input').value)||4;
-      const courts=getCourts(); if(courts.some(c=>(c.name||'').toLowerCase()===name.toLowerCase())){ alert('ชื่อซ้ำ'); return; }
-      const before=JSON.stringify(courts);
-      courts.push({id:uuid(), name, status:'ว่าง', players:[], pairs:[], waiting:null, roundNo:0, capacity});
-      saveCourts(courts); hide('add-court-modal'); renderCourts(); e.target.reset();
-      setUndo('เพิ่มสนาม', ()=>{ saveCourts(JSON.parse(before)); renderCourts(); });
-      showToast('เพิ่มสนามแล้ว ✓','เลิกทำ', triggerUndo);
-    });
-
   </script>
 </body>
 </html>
