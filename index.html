@@ -147,7 +147,130 @@
     th.sortable.desc .sort-caret{ border-top:none; border-bottom:6px solid var(--muted); transform: translateY(2px); }
     th.sortable.active{ color:#e2e8f0; }
 
-  </style>
+  
+/* === PATCH: Mobile Overlay & Gestures === */
+@media (max-width: 1279px){
+  /* Override prior rule that hid the history bar */
+  .history-slidebar{ display:block !important; }
+
+  /* Make both panels full-height overlays that slide in/out */
+  .history-slidebar, .queue-slidebar{
+    position: fixed !important;
+    top: var(--headerH) !important;
+    height: calc(100vh - var(--headerH)) !important;
+    background: transparent !important;
+    /* pointer-events removed to avoid blocking interactions/rendering on some devices */
+  }
+
+  .history-slidebar .panel, .queue-slidebar .panel{
+    height: 100% !important;
+    border-radius: 16px 16px 0 0;
+  }
+
+  /* Widths on mobile */
+  .history-slidebar{ width: 88vw !important; max-width: 420px; left: 0; transform: translateX(-105%); transition: transform .25s ease; }
+  .queue-slidebar{   width: 88vw !important; max-width: 420px; right: 0; transform: translateX(105%);  transition: transform .25s ease; }
+
+  /* When open, slide in and allow interaction */
+  .history-slidebar.open, .queue-slidebar.open{
+    transform: translateX(0) !important;
+    pointer-events: auto;
+  }
+
+  /* Dim backdrop when a panel is open */
+  .overlay-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(2,6,23,.45);
+    backdrop-filter: blur(2px);
+    z-index: 60; /* behind panels (which are >=70 now) */
+  }
+
+  /* Edge handles (always visible on mobile) */
+  .edge-handle{
+    position: fixed;
+    top: calc(var(--headerH) + 35vh);
+    width: 26px; height: 72px;
+    border-radius: 9999px 0 0 9999px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: radial-gradient(120% 120% at 30% 20%, rgba(99,102,241,.35), rgba(99,102,241,.18)), #0b1220;
+    border:1px solid rgba(99,102,241,.55);
+    box-shadow: 0 10px 24px rgba(2,6,23,.45);
+    z-index: 61;
+    opacity: .9;
+  }
+  .edge-handle i{ font-size:14px; color:#e5e7eb; }
+  .edge-left  { left: 2px;  border-radius: 0 9999px 9999px 0; }
+  .edge-right { right: 2px; }
+
+  /* Hide built-in toggles on mobile (we use edge handles instead) */
+  .qs-toggle, .hs-toggle{ display: none !important; }
+}
+
+
+/* === PATCH v9: Mobile overlay visibility & stacking === */
+@media (max-width: 1279px){
+  .history-slidebar, .queue-slidebar{
+    z-index: 70 !important; /* above backdrop */
+    background: none !important; /* let inner .panel supply background */
+  }
+  .history-slidebar .panel, .queue-slidebar .panel{
+    background: var(--panel, #0f172a) !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+  /* Ensure containers can shrink in narrow widths */
+  .queue-slidebar .qs-body, .history-slidebar .hs-body{ min-width: 0; }
+  .queue-slidebar .qs-list, .history-slidebar .hs-list{ min-width: 0; }
+}
+
+/* === PATCH v12: Responsive tables (mobile horizontal scroll + sticky cost column) === */
+.rtable {
+  position: relative;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+.rtable.dragging { cursor: grabbing; }
+
+@media (max-width: 767px){
+  .rtable > table {
+    table-layout: auto;
+    border-collapse: separate;
+    border-spacing: 0;
+    min-width: 720px; /* allow horizontal scroll if columns overflow */
+  }
+  .rtable > table thead th{
+    position: sticky; top: 0; z-index: 2;
+    background: #0f172a;
+  }
+  /* Make first column sticky on the left (usually 'ชื่อ/รหัส') */
+  .rtable > table td.sticky-left,
+  .rtable > table th.sticky-left{
+    position: sticky; left: 0; z-index: 3;
+    background: #0f172a;
+  }
+  /* Keep the 'ค่าใช้จ่าย/จำนวนเงิน' column always visible on the right */
+  .rtable > table td.sticky-right,
+  .rtable > table th.sticky-right{
+    position: sticky; right: 0; z-index: 3;
+    background: #0f172a;
+    box-shadow: -6px 0 10px rgba(2,6,23,.35);
+  }
+  /* Compact cell padding and font-size for mobile */
+  .rtable > table td, .rtable > table th{ padding: 8px 10px; font-size: 14px; }
+}
+
+/* Subtle cue when table can scroll */
+.rtable::after{
+  content: "เลื่อนตาราง ↔";
+  position: absolute; bottom: 6px; right: 12px;
+  font-size: 12px; color: #9CA3AF; background: rgba(17,24,39,.85);
+  padding: 4px 8px; border-radius: 9999px; pointer-events: none;
+  opacity: 0; transform: translateY(6px);
+  transition: opacity .25s ease, transform .25s ease;
+}
+.rtable.can-scroll::after{ opacity: 1; transform: translateY(0); }
+</style>
 </head>
 <body>
   <!-- Topbar -->
@@ -275,6 +398,11 @@
       </div>
     </div>
   </aside>
+  <!-- PATCH: Mobile edge handles + backdrop host -->
+  <div id="overlay-backdrop" class="overlay-backdrop hidden"></div>
+  <button id="edge-left"  class="edge-handle edge-left"  aria-label="เปิดประวัติ"><i class="fa-solid fa-angles-right"></i></button>
+  <button id="edge-right" class="edge-handle edge-right" aria-label="เปิดคิว"><i class="fa-solid fa-angles-left"></i></button>
+
 
 
   <!-- Toast container -->
@@ -1507,6 +1635,292 @@ function init(){
 
     function clearAllCourts(){ if(confirm('ล้างข้อมูลทั้งหมด?')){ localStorage.removeItem('players'); localStorage.removeItem('courts'); localStorage.removeItem('queue_matches'); renderCourts(); renderPlayers(); renderQueue(); updatePriceDisplay(); showToast('ล้างข้อมูลทั้งหมดแล้ว'); } }
     init();
+
+    // Defensive mobile refresh: some mobile browsers delay layout; re-render shortly after init
+    try{
+      if (window.matchMedia('(max-width: 1279px)').matches){
+        setTimeout(()=>{ try{ renderQueue(); }catch(e){} try{ renderAllHistorySidebar?.(); }catch(e){} }, 150);
+      }
+    }catch{}
+    
   </script>
+<script>
+/* === PATCH: Mobile overlay + edge swipe gestures === */
+(function(){
+  const mqMobile = window.matchMedia("(max-width: 1279px)");
+  const qs = document.getElementById('queue-slidebar');
+  const hs = document.getElementById('history-slidebar');
+  const backdrop = document.getElementById('overlay-backdrop');
+  const edgeL = document.getElementById('edge-left');
+  const edgeR = document.getElementById('edge-right');
+
+  function isMobile(){ return mqMobile.matches; }
+  function openPanel(el){ if(!el) return; el.classList.remove('collapsed'); el.classList.add('open'); backdrop?.classList.remove('hidden'); }
+  function closePanel(el){ if(!el) return; el.classList.remove('open'); if(!(qs?.classList.contains('open')||hs?.classList.contains('open'))) backdrop?.classList.add('hidden'); }
+
+  // Preserve desktop behavior; on mobile we force collapsed state & use overlay
+  function syncInitial(){
+    if(!isMobile()){
+      // desktop: hide backdrop and ensure panels follow existing collapsed logic
+      backdrop?.classList.add('hidden');
+      return;
+    }
+    // mobile: both panels start closed
+    closePanel(qs); closePanel(hs);
+    qs?.classList.remove('collapsed'); hs?.classList.remove('collapsed');
+  }
+  syncInitial(); mqMobile.addEventListener('change', syncInitial);
+
+  // Edge handle taps
+  edgeL?.addEventListener('click', ()=> openPanel(hs));
+  edgeR?.addEventListener('click', ()=> openPanel(qs));
+  backdrop?.addEventListener('click', ()=>{ closePanel(hs); closePanel(qs); });
+
+  // Swipe detection
+  let touch = {startX:0, startY:0, active:false, target:null, dir:null};
+
+  function onTouchStart(e){
+    if(!isMobile()) return;
+    const t = e.touches[0];
+    const w = window.innerWidth;
+    const fromLeftEdge  = t.clientX < 18;
+    const fromRightEdge = t.clientX > (w - 18);
+    const insideQueue   = e.target.closest?.('#queue-slidebar');
+    const insideHistory = e.target.closest?.('#history-slidebar');
+
+    touch.startX = t.clientX;
+    touch.startY = t.clientY;
+    touch.active = fromLeftEdge || fromRightEdge || !!insideQueue || !!insideHistory;
+    touch.target = insideQueue ? qs : (insideHistory ? hs : (fromLeftEdge ? hs : (fromRightEdge ? qs : null)));
+    touch.dir = null;
+  }
+
+  function onTouchMove(e){
+    if(!touch.active || !touch.target) return;
+    const t = e.touches[0];
+    const dx = t.clientX - touch.startX;
+    const dy = t.clientY - touch.startY;
+    if(Math.abs(dy) > Math.abs(dx)){ return; } // ignore vertical swipes
+
+    // Determine intent: if dragging panel outward -> close, if dragging from edge inward -> open
+    const targetIsQueue = touch.target === qs;
+    if(targetIsQueue){
+      // queue sits right: open with dx<0 from right edge; close with dx>0 when open
+      touch.dir = dx < 0 ? 'open' : 'close';
+    }else{
+      // history sits left: open with dx>0 from left edge; close with dx<0 when open
+      touch.dir = dx > 0 ? 'open' : 'close';
+    }
+  }
+
+  function onTouchEnd(e){
+    if(!touch.active || !touch.target) return;
+    const threshold = 40; // px
+    const end = e.changedTouches[0];
+    const dx = end.clientX - touch.startX;
+
+    const targetIsQueue = touch.target === qs;
+    const wantOpen = (targetIsQueue ? dx < -threshold : dx > threshold);
+    const wantClose = (targetIsQueue ? dx > threshold : dx < -threshold);
+
+    if(wantOpen) openPanel(touch.target);
+    else if(wantClose) closePanel(touch.target);
+
+    touch.active=false; touch.target=null; touch.dir=null;
+  }
+
+  window.addEventListener('touchstart', onTouchStart, {passive:true});
+  window.addEventListener('touchmove',  onTouchMove,  {passive:true});
+  window.addEventListener('touchend',   onTouchEnd,   {passive:true});
+
+  // Expose helpers so existing buttons can also work on mobile seamlessly
+  window.openQueuePanel = ()=> openPanel(qs);
+  window.openHistoryPanel = ()=> openPanel(hs);
+  window.closePanels = ()=> { closePanel(qs); closePanel(hs); };
+
+  // Ensure queue badge updates still work
+  try{ updateQueueBadge(); }catch{}
+})();
+
+</script>
+<script>
+/* === PATCH v10: Ensure queue/history render on mobile when panels open === */
+(function(){
+  const mqMobile = window.matchMedia("(max-width: 1279px)");
+  const qs = document.getElementById('queue-slidebar');
+  const hs = document.getElementById('history-slidebar');
+
+  function tryRenderQueue(){
+    try{ 
+      if (typeof renderQueue === 'function') renderQueue();
+      else if (typeof renderQueueSidebar === 'function') renderQueueSidebar();
+      else if (typeof drawQueue === 'function') drawQueue();
+      else if (typeof updateQueueUI === 'function') updateQueueUI();
+    }catch(e){ /* ignore */ }
+  }
+  function tryRenderHistory(){
+    try{ 
+      if (typeof renderAllHistorySidebar === 'function') renderAllHistorySidebar();
+      else if (typeof renderHistory === 'function') renderHistory();
+      else if (typeof drawHistory === 'function') drawHistory();
+      else if (typeof updateHistoryUI === 'function') updateHistoryUI();
+    }catch(e){ /* ignore */ }
+  }
+
+  // Periodic retries shortly after load (helps slow mobile layout)
+  if (mqMobile.matches){
+    let attempts = 0;
+    const t = setInterval(()=>{
+      attempts++;
+      tryRenderQueue(); tryRenderHistory();
+      if (attempts >= 10) clearInterval(t); // ~5s if 500ms
+    }, 500);
+  }
+
+  // Observe when 'open' class toggles on either panel, then render
+  function watchOpen(el, cb){
+    if (!el) return;
+    const obs = new MutationObserver(muts=>{
+      for (const m of muts){
+        if (m.type === 'attributes' && m.attributeName === 'class'){
+          const isOpen = el.classList.contains('open');
+          if (isOpen) cb();
+        }
+      }
+    });
+    obs.observe(el, { attributes: true, attributeFilter: ['class'] });
+  }
+  watchOpen(qs, tryRenderQueue);
+  watchOpen(hs, tryRenderHistory);
+
+  // Also render on first user interaction within the panel area
+  function prime(el, cb){
+    if(!el) return;
+    const once = ()=>{ cb(); el.removeEventListener('pointerdown', once, true); };
+    el.addEventListener('pointerdown', once, true);
+  }
+  prime(qs, tryRenderQueue);
+  prime(hs, tryRenderHistory);
+
+  // Fallback: if containers exist but empty, force a microtask to allow any data fetch to populate first
+  setTimeout(()=>{ tryRenderQueue(); tryRenderHistory(); }, 120);
+})();
+
+</script>
+
+<script>
+/* === PATCH v10b: Force-remove 'collapsed' on mobile when opening panels === */
+(function(){
+  const mqMobile = window.matchMedia("(max-width: 1279px)");
+  const qs = document.getElementById('queue-slidebar');
+  const hs = document.getElementById('history-slidebar');
+  function deCollapse(el){ if(el && mqMobile.matches) el.classList.remove('collapsed'); }
+  ['click','touchend'].forEach(ev=>{
+    document.addEventListener(ev, e=>{
+      if(!mqMobile.matches) return;
+      const t=e.target;
+      if(t.closest?.('.qs-toggle,[data-open="queue"],[data-toggle="queue"],#edge-right,#queue-slidebar')) deCollapse(qs);
+      if(t.closest?.('.hs-toggle,[data-open="history"],[data-toggle="history"],#edge-left,#history-slidebar')) deCollapse(hs);
+    }, true);
+  });
+})();
+</script>
+<script>
+/* === PATCH v12: Enhance tables on mobile (wrap + drag + sticky cost) === */
+(function(){
+  const COST_HEADERS = ['ค่าใช้จ่าย','ราคา','จำนวนเงิน','ยอด','รวม','Amount','Total','Cost','Charge','Price'];
+  const isMobile = () => window.matchMedia('(max-width: 767px)').matches;
+
+  function wrapTables(){
+    document.querySelectorAll('table').forEach(tbl=>{
+      if (tbl.closest('.rtable')) return; // already wrapped
+      const wrap = document.createElement('div');
+      wrap.className = 'rtable';
+      tbl.parentNode.insertBefore(wrap, tbl);
+      wrap.appendChild(tbl);
+      cueIfScrollable(wrap);
+      enableDragScroll(wrap);
+      if (isMobile()) stickify(tbl);
+    });
+  }
+
+  function cueIfScrollable(wrap){
+    // Show cue only if content overflows
+    requestAnimationFrame(()=>{
+      if (wrap.scrollWidth > wrap.clientWidth + 12) wrap.classList.add('can-scroll');
+      else wrap.classList.remove('can-scroll');
+    });
+  }
+
+  function enableDragScroll(wrap){
+    let isDown=false, startX=0, scrollL=0;
+    wrap.addEventListener('pointerdown', e=>{
+      isDown=true; startX=e.clientX; scrollL=wrap.scrollLeft;
+      wrap.setPointerCapture?.(e.pointerId);
+      wrap.classList.add('dragging');
+    });
+    wrap.addEventListener('pointermove', e=>{
+      if(!isDown) return;
+      const dx = e.clientX - startX;
+      wrap.scrollLeft = scrollL - dx;
+    });
+    ['pointerup','pointercancel','pointerleave'].forEach(ev=> wrap.addEventListener(ev, ()=>{
+      isDown=false; wrap.classList.remove('dragging');
+    }));
+    window.addEventListener('resize', ()=> cueIfScrollable(wrap));
+  }
+
+  function stickify(tbl){
+    // Make first *visible* column sticky-left
+    const rows = Array.from(tbl.rows);
+    if (!rows.length) return;
+    const head = tbl.tHead || tbl.createTHead();
+    const headerCells = head.rows[0]?.cells ? Array.from(head.rows[0].cells) : Array.from(rows[0].cells);
+    // detect cost column index by header text
+    let costIdx = -1;
+    headerCells.forEach((th, idx)=>{
+      const txt = (th.textContent||'').trim();
+      if (COST_HEADERS.some(h => txt.includes(h))) costIdx = idx;
+    });
+    // Apply sticky-left to the first column
+    rows.forEach(r=>{
+      if (r.cells[0]) r.cells[0].classList.add('sticky-left');
+    });
+    // Apply sticky-right to the detected cost column
+    if (costIdx >= 0){
+      rows.forEach(r=>{
+        if (r.cells[costIdx]) r.cells[costIdx].classList.add('sticky-right');
+      });
+    }
+  }
+
+  // Run on load and on panel open (when overlays reveal tables)
+  function run(){
+    wrapTables();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
+  else run();
+
+  // Also observe DOM changes (in case tables are re-rendered dynamically)
+  const obs = new MutationObserver((muts)=>{
+    let should = false;
+    for (const m of muts){
+      if (m.addedNodes && m.addedNodes.length){
+        should = true; break;
+      }
+    }
+    if (should) run();
+  });
+  obs.observe(document.documentElement, {childList:true, subtree:true});
+
+  // Re-apply when mobile panels open
+  ['queue-slidebar','history-slidebar'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    new MutationObserver(()=>{ if (el.classList.contains('open')) run(); }).observe(el, { attributes:true, attributeFilter:['class'] });
+  });
+})();
+
+</script>
 </body>
 </html>
