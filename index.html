@@ -147,31 +147,53 @@
     th.sortable.active{ color:#e2e8f0; }
 	
 	/* === Fix: modal scroll on mobile & long name overflow === */
-.modal { padding: 16px; overflow-y: auto; }                     /* ให้พื้นหลัง modal เลื่อนได้เมื่อจอเล็ก */
-.modal-card {
-  max-height: 88vh;                                             /* จำกัดความสูงรวมของการ์ด */
-  display: flex; flex-direction: column; overflow: hidden;      /* เตรียมพื้นที่ภายในให้เลื่อนส่วนเนื้อหา */
-}
+	.modal { padding: 16px; overflow-y: auto; }                     /* ให้พื้นหลัง modal เลื่อนได้เมื่อจอเล็ก */
+	.modal-card {
+	  max-height: 88vh;                                             /* จำกัดความสูงรวมของการ์ด */
+	  display: flex; flex-direction: column; overflow: hidden;      /* เตรียมพื้นที่ภายในให้เลื่อนส่วนเนื้อหา */
+	}
 
-/* เฉพาะหน้าจอเล็ก ให้การ์ดกินความกว้างเต็ม ๆ */
-@media (max-width: 640px){
-  .modal-card { width: 100vw; max-width: none; border-radius: 12px; }
-}
+	/* เฉพาะหน้าจอเล็ก ให้การ์ดกินความกว้างเต็ม ๆ */
+	@media (max-width: 640px){
+	  .modal-card { width: 100vw; max-width: none; border-radius: 12px; }
+	}
 
-/* พื้นที่เลื่อนภายใน “จัดการผู้เล่นสนาม” */
-#manage-modal .scroll-area {
-  flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
-}
+	/* พื้นที่เลื่อนภายใน “จัดการผู้เล่นสนาม” */
+	#manage-modal .scroll-area {
+	  flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
+	}
 
-/* ป้องกันชื่อผู้เล่นล้นขอบใน slot */
-#manage-modal .slot { min-width: 0; overflow: hidden; }         /* ให้ flex สามารถหดได้ */
-#manage-modal .slot * { min-width: 0; }                         /* กัน element ลูกฝืนความกว้าง */
-#manage-modal .slot .name,
-#manage-modal .slot .chip,
-#manage-modal .slot span {
-  display: inline-block; max-width: 100%;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
+	/* ป้องกันชื่อผู้เล่นล้นขอบใน slot */
+	#manage-modal .slot { min-width: 0; overflow: hidden; }         /* ให้ flex สามารถหดได้ */
+	#manage-modal .slot * { min-width: 0; }                         /* กัน element ลูกฝืนความกว้าง */
+	#manage-modal .slot .name,
+	#manage-modal .slot .chip,
+	#manage-modal .slot span {
+	  display: inline-block; max-width: 100%;
+	  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+	}
+
+	/* ปุ่มดูเรียบร้อยบนมือถือ */
+	#manage-modal .controls { width: 100%; }
+
+	/* ให้ปุ่มจัดวางไอคอน/ตัวหนังสือสวยขึ้นทุกขนาดจอ */
+	#manage-modal .btn {
+	  display: inline-flex;
+	  align-items: center;
+	  justify-content: center;
+	  gap: .5rem;              /* ระยะห่างไอคอน-ข้อความ */
+	  line-height: 1.2;
+	  min-height: 40px;        /* ไม่เตี้ยเกินไปบนมือถือ */
+	}
+
+	/* กัน select ไปดันปุ่ม */
+	#manage-modal select { min-width: 0; }
+
+	/* เฉพาะจอเล็ก: ให้ทุกชิ้นเป็นเต็มความกว้าง */
+	@media (max-width: 640px){
+	  #manage-modal .left > * { width: 100%; }
+	}
+
 
 
 
@@ -222,14 +244,21 @@
 		  </button>
         </div>
       </div>
-	  <div class="panel p-5">
+		<div class="panel p-5">
 		  <div class="subtle">ประวัติทั้งหมด</div>
 		  <div class="text-2xl font-bold"><span id="history-count">0</span> รายการ</div>
-		  <button class="btn btn-primary mt-3" onclick="openHistoryAllModal()">
-			<i class="fa-solid fa-clock-rotate-left"></i>
-			<span class="hidden sm:inline">ดูประวัติทั้งหมด</span>
-		  </button>
-	  </div>
+		  <div class="flex flex-wrap gap-2 mt-3">
+			<button class="btn btn-primary" onclick="openHistoryAllModal()">
+			  <i class="fa-solid fa-clock-rotate-left"></i>
+			  <span class="hidden sm:inline">ดูประวัติทั้งหมด</span>
+			</button>
+			<button class="btn btn-ghost text-red-400 hover:text-red-300 hover:bg-red-500/10" onclick="clearMatchLogFromCard()">
+			  <i class="fa-solid fa-trash-can"></i>
+			  <span class="hidden sm:inline">ล้างประวัติ</span>
+			</button>
+		  </div>
+		</div>
+		</div>
     </section>
 
     <!-- Courts -->
@@ -487,14 +516,19 @@
 
 		<!-- ส่วนล่างให้เลื่อน -->
 		<div class="soft p-3 scroll-area">
-		  <div class="flex items-center justify-between">
-			<div class="flex items-center gap-2">
-			  <select id="bulk-move-select" class="soft px-2 py-1 text-sm"></select>
-			  <button id="bulk-move-btn" class="btn"><i class="fa-solid fa-people-arrows"></i> ย้ายทั้งหมด</button>
-			</div>
-			<button class="btn btn-green" onclick="openFreePicker(null, _manageCtx?.courtId)">
-			  <i class="fa-solid fa-user-plus"></i> เพิ่มผู้เล่นว่างเข้าสนาม
-			</button>
+			<div class="controls flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
+			  <div class="left flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+				<select id="bulk-move-select" class="soft px-2 py-2 text-sm w-full sm:w-56"></select>
+				<button id="bulk-move-btn" class="btn inline-flex items-center justify-center gap-2 w-full sm:w-auto">
+				  <i class="fa-solid fa-people-arrows"></i>
+				  <span>ย้ายทั้งหมด</span>
+				</button>
+			  </div>
+			  <button class="btn btn-green inline-flex items-center justify-center gap-2 w-full sm:w-auto"
+					  onclick="openFreePicker(null, _manageCtx?.courtId)">
+				<i class="fa-solid fa-user-plus"></i>
+				<span>เพิ่มผู้เล่นว่างเข้าสนาม</span>
+			  </button>
 		  </div>
 		  <div id="manage-list" class="space-y-2 mt-3"></div>
 		</div>
@@ -717,8 +751,8 @@
 
       const lastSeq = (log.length>0 && typeof (last && last.seq)==='number') ? last.seq : log.length;
       ev.seq = lastSeq + 1;
-      log.push(ev); saveMatchLog(log);
-      try{ renderAllHistorySidebar(); }catch(e){}
+		log.push(ev); saveMatchLog(log);
+		try{ renderAllHistorySidebar(); updateHistoryCount(); }catch(e){}
     }
 
     function renderAllHistorySidebar(){
@@ -759,8 +793,20 @@
     }catch(e){ /* if not found, ignore */ }
 
 
-    
-    function clearMatchLog(){ try{ save('match_log', []); renderAllHistorySidebar?.(); showToast('ล้างประวัติรวมแล้ว ✓'); }catch(e){ alert('ล้างประวัติไม่สำเร็จ: '+e.message);} }
+    function clearMatchLogFromCard(){
+	  if(!confirm('ยืนยันการล้างประวัติทั้งหมด?\n(จะไม่สามารถกู้คืนได้)')) return;
+	  clearMatchLog();
+	}
+	function clearMatchLog(){
+	  try{
+		save('match_log', []);
+		renderAllHistorySidebar?.();
+		updateHistoryCount(); // 👈 เพิ่มบรรทัดนี้
+		showToast('ล้างประวัติรวมแล้ว ✓');
+	  }catch(e){
+		alert('ล้างประวัติไม่สำเร็จ: '+e.message);
+	  }
+	}
     /* ------- Helpers ------- */
     function ensureAvailableSince(players){
       const now=Date.now();
@@ -1767,6 +1813,13 @@ function deleteCourt(courtId) {
 
   showToast('ลบสนามแล้ว ✓', 'เลิกทำ', triggerUndo);
 }
+
+function updateHistoryCount() {
+  const count = getMatchLog().length;
+  document.getElementById('history-count').textContent = count;
+}
+
+
 
     /* Init */
     
