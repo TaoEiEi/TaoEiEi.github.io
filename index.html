@@ -130,22 +130,37 @@
     @media (max-width: 1279px){
       .history-slidebar{ display:none; }
     }
-	/* ===== Manage Modal Scroll Fix ===== */
+	/* ===== Manage Modal Layout Fix (Mobile + Desktop) ===== */
 	#manage-modal .modal-card {
-	  max-height: 90vh;
 	  display: flex;
 	  flex-direction: column;
+	  max-height: 90vh;
+	}
+	#manage-modal .soft:nth-child(1) {
+	  /* ส่วนคู่ A / คู่ B */
+	  flex-shrink: 0;
+	  padding: 1rem;
 	}
 	#manage-modal .soft:nth-child(2) {
-	  flex: 1;
+	  /* ส่วนล่าง: ปุ่ม + รายการผู้เล่น */
 	  display: flex;
 	  flex-direction: column;
+	  flex: 1;
+	  overflow: hidden;
+	  padding: 0 1rem 1rem;
+	}
+	#manage-modal .soft:nth-child(2) > .flex {
+	  /* ปุ่ม "ย้ายทั้งหมด" + "เพิ่มผู้เล่นว่าง" */
+	  flex-shrink: 0;
+	  margin-bottom: 0.75rem;
+	  gap: 0.5rem;
 	}
 	#manage-modal #manage-list {
+	  /* รายการผู้เล่นด้านล่าง */
 	  overflow-y: auto;
 	  flex: 1;
+	  padding-right: 4px; /* ชดเชย scrollbar */
 	}
-
     
     .hs-toggle .hs-label{ display:none; font-weight:700; letter-spacing:.3px; margin-left:.5rem; color:#e5e7eb; }
     .history-slidebar.collapsed .hs-toggle .hs-label{ display:inline; }
@@ -1043,13 +1058,18 @@
         const endDis  =(c.status!=='กำลังเล่น')?'opacity-40 pointer-events-none':'';
         const card=document.createElement('div'); card.className='panel p-5';
         card.innerHTML=`
-          <div class="flex items-center justify-between mb-2">
-            <div class="flex items-center gap-2">
-              <div class="badge">สนาม</div>
-              <div class="text-lg font-semibold">${c.name}</div>
-            </div>
-            <span class="status ${cls}">${ used===0 ? 'ว่าง' : (c.status==='กำลังเล่น'?'กำลังเล่น':'พร้อมเล่น') }</span>
-          </div>
+		  <div class="flex items-center justify-between mb-2">
+			<div class="flex items-center gap-2">
+			  <div class="badge">สนาม</div>
+			  <div class="text-lg font-semibold">${c.name}</div>
+			</div>
+			<div class="flex items-center gap-2">
+			  <span class="status ${cls}">${ used===0 ? 'ว่าง' : (c.status==='กำลังเล่น'?'กำลังเล่น':'พร้อมเล่น') }</span>
+			  <button class="icon-btn text-red-400 hover:bg-red-500/10" title="ลบสนามนี้" onclick="deleteCourt('${c.id}')">
+				<i class="fa-solid fa-trash"></i>
+			  </button>
+			</div>
+		  </div>
           <div class="muted text-xs mb-2">ตาปัจจุบัน: ${c.roundNo||0}</div>
           <div class="mb-3 text-sm"><span class="muted">ผู้เล่น (${used}/${cap})</span><div class="mt-1 font-medium">${label}</div></div>
           <div class="w-full bg-white/5 rounded-full h-1.5 mb-4"><div class="bg-indigo-400 h-1.5 rounded-full" style="width:${percent}%"></div></div>
@@ -1698,6 +1718,51 @@
 	  document.getElementById('history-count').textContent = log.length;
 	  show('history-all-modal');
 	}
+	
+function deleteCourt(courtId) {
+  if (!confirm('ลบสนามนี้ออกจากระบบ?\n(ผู้เล่นในสนามจะถูกย้ายกลับสู่สถานะ "ว่าง")')) return;
+
+  const courts = getCourts();
+  const players = getPlayers();
+  const byId = mapById(players);
+
+  const c = courts.find(x => x.id === courtId);
+  if (!c) return;
+
+  // เก็บ state ก่อนลบ (สำหรับ undo)
+  const beforeCourts = JSON.parse(JSON.stringify(courts));
+  const beforePlayers = JSON.parse(JSON.stringify(players));
+
+  // ย้ายผู้เล่นในสนามนี้กลับเป็น "ว่าง"
+  (c.players || []).forEach(pid => {
+    const p = byId.get(pid);
+    if (p) {
+      p.status = 'ว่าง';
+      p.availableSince = Date.now();
+    }
+  });
+
+  // ลบสนาม
+  const newCourts = courts.filter(x => x.id !== courtId);
+  saveCourts(newCourts);
+  savePlayers(players);
+
+  // อัปเดต UI
+  renderCourts();
+  renderPlayers();
+  renderQueue(); // คิวอาจอ้างอิงสนามนี้ (แต่ไม่ใช้โดยตรง แต่ render ใหม่เพื่อความปลอดภัย)
+
+  // ตั้ง undo
+  setUndo('ลบสนาม', () => {
+    saveCourts(beforeCourts);
+    savePlayers(beforePlayers);
+    renderCourts();
+    renderPlayers();
+    renderQueue();
+  });
+
+  showToast('ลบสนามแล้ว ✓', 'เลิกทำ', triggerUndo);
+}
 
     /* Init */
     
