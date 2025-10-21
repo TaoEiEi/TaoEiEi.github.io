@@ -130,37 +130,6 @@
     @media (max-width: 1279px){
       .history-slidebar{ display:none; }
     }
-	/* ===== Manage Modal Layout Fix (Mobile + Desktop) ===== */
-	#manage-modal .modal-card {
-	  display: flex;
-	  flex-direction: column;
-	  max-height: 90vh;
-	}
-	#manage-modal .soft:nth-child(1) {
-	  /* ส่วนคู่ A / คู่ B */
-	  flex-shrink: 0;
-	  padding: 1rem;
-	}
-	#manage-modal .soft:nth-child(2) {
-	  /* ส่วนล่าง: ปุ่ม + รายการผู้เล่น */
-	  display: flex;
-	  flex-direction: column;
-	  flex: 1;
-	  overflow: hidden;
-	  padding: 0 1rem 1rem;
-	}
-	#manage-modal .soft:nth-child(2) > .flex {
-	  /* ปุ่ม "ย้ายทั้งหมด" + "เพิ่มผู้เล่นว่าง" */
-	  flex-shrink: 0;
-	  margin-bottom: 0.75rem;
-	  gap: 0.5rem;
-	}
-	#manage-modal #manage-list {
-	  /* รายการผู้เล่นด้านล่าง */
-	  overflow-y: auto;
-	  flex: 1;
-	  padding-right: 4px; /* ชดเชย scrollbar */
-	}
     
     .hs-toggle .hs-label{ display:none; font-weight:700; letter-spacing:.3px; margin-left:.5rem; color:#e5e7eb; }
     .history-slidebar.collapsed .hs-toggle .hs-label{ display:inline; }
@@ -176,6 +145,34 @@
     th.sortable .sort-caret{ display:inline-block; width:0; height:0; margin-left:.35rem; border-left:5px solid transparent; border-right:5px solid transparent; border-top:6px solid var(--muted); transform: translateY(-1px); opacity:.8; }
     th.sortable.desc .sort-caret{ border-top:none; border-bottom:6px solid var(--muted); transform: translateY(2px); }
     th.sortable.active{ color:#e2e8f0; }
+	
+	/* === Fix: modal scroll on mobile & long name overflow === */
+.modal { padding: 16px; overflow-y: auto; }                     /* ให้พื้นหลัง modal เลื่อนได้เมื่อจอเล็ก */
+.modal-card {
+  max-height: 88vh;                                             /* จำกัดความสูงรวมของการ์ด */
+  display: flex; flex-direction: column; overflow: hidden;      /* เตรียมพื้นที่ภายในให้เลื่อนส่วนเนื้อหา */
+}
+
+/* เฉพาะหน้าจอเล็ก ให้การ์ดกินความกว้างเต็ม ๆ */
+@media (max-width: 640px){
+  .modal-card { width: 100vw; max-width: none; border-radius: 12px; }
+}
+
+/* พื้นที่เลื่อนภายใน “จัดการผู้เล่นสนาม” */
+#manage-modal .scroll-area {
+  flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
+}
+
+/* ป้องกันชื่อผู้เล่นล้นขอบใน slot */
+#manage-modal .slot { min-width: 0; overflow: hidden; }         /* ให้ flex สามารถหดได้ */
+#manage-modal .slot * { min-width: 0; }                         /* กัน element ลูกฝืนความกว้าง */
+#manage-modal .slot .name,
+#manage-modal .slot .chip,
+#manage-modal .slot span {
+  display: inline-block; max-width: 100%;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
 
 
   </style>
@@ -459,44 +456,51 @@
     </div>
   </div>
 
-  <!-- Manage Modal -->
-  <div id="manage-modal" class="modal fixed inset-0 hidden items-center justify-center z-50">
-    <div class="modal-card w-[94vw] max-w-3xl p-6">
-      <div class="flex items-center justify-between mb-4">
-        <div class="heading">จัดการผู้เล่นใน <span id="manage-court-name"></span></div>
-        <button class="icon-btn" onclick="hide('manage-modal')"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div class="soft p-3 mb-4">
-        <p class="subtle mb-3">แตะสลอต 2 จุดเพื่อ <span class="font-semibold">สลับตำแหน่ง</span> • บันทึกอัตโนมัติ</p>
-        <div class="grid md:grid-cols-2 gap-3">
-          <div class="pair-box">
-            <div class="pair-title mb-2">คู่ A</div>
-            <div class="space-y-2">
-              <div class="slot" id="pairA-0"></div>
-              <div class="slot" id="pairA-1"></div>
-            </div>
-          </div>
-          <div class="pair-box">
-            <div class="pair-title mb-2">คู่ B</div>
-            <div class="space-y-2">
-              <div class="slot" id="pairB-0"></div>
-              <div class="slot" id="pairB-1"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="soft p-3">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <select id="bulk-move-select" class="soft px-2 py-1 text-sm"></select>
-            <button id="bulk-move-btn" class="btn"><i class="fa-solid fa-people-arrows"></i> ย้ายทั้งหมด</button>
-          </div>
-          <button class="btn btn-green" onclick="openFreePicker(null, _manageCtx?.courtId)"><i class="fa-solid fa-user-plus"></i> เพิ่มผู้เล่นว่างเข้าสนาม</button>
-        </div>
-        <div id="manage-list" class="space-y-2 mt-3"></div>
-      </div>
-    </div>
-  </div>
+	<!-- Manage Modal -->
+	<div id="manage-modal" class="modal fixed inset-0 hidden items-center justify-center z-50 overflow-y-auto p-4">
+	  <div class="modal-card w-[94vw] max-w-3xl p-6">
+		<div class="flex items-center justify-between mb-4">
+		  <div class="heading">จัดการผู้เล่นใน <span id="manage-court-name"></span></div>
+		  <button class="icon-btn" onclick="hide('manage-modal')"><i class="fa-solid fa-xmark"></i></button>
+		</div>
+
+		<!-- ส่วนหัว (คู่ A/B) คงที่ ไม่เลื่อน -->
+		<div class="soft p-3 mb-4">
+		  <p class="subtle mb-3">แตะสลอต 2 จุดเพื่อ <span class="font-semibold">สลับตำแหน่ง</span> • บันทึกอัตโนมัติ</p>
+		  <div class="grid md:grid-cols-2 gap-3">
+			<div class="pair-box">
+			  <div class="pair-title mb-2">คู่ A</div>
+			  <div class="space-y-2">
+				<div class="slot" id="pairA-0"></div>
+				<div class="slot" id="pairA-1"></div>
+			  </div>
+			</div>
+			<div class="pair-box">
+			  <div class="pair-title mb-2">คู่ B</div>
+			  <div class="space-y-2">
+				<div class="slot" id="pairB-0"></div>
+				<div class="slot" id="pairB-1"></div>
+			  </div>
+			</div>
+		  </div>
+		</div>
+
+		<!-- ส่วนล่างให้เลื่อน -->
+		<div class="soft p-3 scroll-area">
+		  <div class="flex items-center justify-between">
+			<div class="flex items-center gap-2">
+			  <select id="bulk-move-select" class="soft px-2 py-1 text-sm"></select>
+			  <button id="bulk-move-btn" class="btn"><i class="fa-solid fa-people-arrows"></i> ย้ายทั้งหมด</button>
+			</div>
+			<button class="btn btn-green" onclick="openFreePicker(null, _manageCtx?.courtId)">
+			  <i class="fa-solid fa-user-plus"></i> เพิ่มผู้เล่นว่างเข้าสนาม
+			</button>
+		  </div>
+		  <div id="manage-list" class="space-y-2 mt-3"></div>
+		</div>
+	  </div>
+	</div>
+
 
   <!-- Free picker -->
   <div id="free-picker-modal" class="modal fixed inset-0 hidden items-center justify-center z-50">
