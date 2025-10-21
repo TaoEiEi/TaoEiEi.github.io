@@ -130,6 +130,21 @@
     @media (max-width: 1279px){
       .history-slidebar{ display:none; }
     }
+	/* ===== Manage Modal Scroll Fix ===== */
+	#manage-modal .modal-card {
+	  max-height: 90vh;
+	  display: flex;
+	  flex-direction: column;
+	}
+	#manage-modal .soft:nth-child(2) {
+	  flex: 1;
+	  display: flex;
+	  flex-direction: column;
+	}
+	#manage-modal #manage-list {
+	  overflow-y: auto;
+	  flex: 1;
+	}
 
     
     .hs-toggle .hs-label{ display:none; font-weight:700; letter-spacing:.3px; margin-left:.5rem; color:#e5e7eb; }
@@ -146,6 +161,7 @@
     th.sortable .sort-caret{ display:inline-block; width:0; height:0; margin-left:.35rem; border-left:5px solid transparent; border-right:5px solid transparent; border-top:6px solid var(--muted); transform: translateY(-1px); opacity:.8; }
     th.sortable.desc .sort-caret{ border-top:none; border-bottom:6px solid var(--muted); transform: translateY(2px); }
     th.sortable.active{ color:#e2e8f0; }
+
 
   </style>
 </head>
@@ -233,8 +249,8 @@
         </div>
       </div>
 
-      <div class="panel overflow-hidden">
-        <table class="table w-full text-sm">
+      <div class="panel overflow-x-auto">
+        <table class="table min-w-full text-sm">
           <thead class="bg-white/5">
             <tr>
               <th class="text-left p-3"><input id="select-all" type="checkbox" class="accent-indigo-400"></th>
@@ -456,14 +472,13 @@
       </div>
       <div class="soft p-3">
         <div class="flex items-center justify-between">
-          \1
           <div class="flex items-center gap-2">
             <select id="bulk-move-select" class="soft px-2 py-1 text-sm"></select>
             <button id="bulk-move-btn" class="btn"><i class="fa-solid fa-people-arrows"></i> ย้ายทั้งหมด</button>
           </div>
           <button class="btn btn-green" onclick="openFreePicker(null, _manageCtx?.courtId)"><i class="fa-solid fa-user-plus"></i> เพิ่มผู้เล่นว่างเข้าสนาม</button>
         </div>
-        <div id="manage-list" class="space-y-2 mt-3 max-h-[45vh] overflow-auto"></div>
+        <div id="manage-list" class="space-y-2 mt-3"></div>
       </div>
     </div>
   </div>
