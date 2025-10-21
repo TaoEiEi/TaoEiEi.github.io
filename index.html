@@ -187,10 +187,21 @@
           <div class="text-2xl font-bold"><span id="queue-count">0</span> คิว</div>
         </div>
         <div class="flex gap-2">
-          <button class="btn btn-green" onclick="buildQueueMatchesFromAvailable()"><i class="fa-solid fa-shuffle"></i><span class="hidden sm:inline">จัดคิวอัตโนมัติ</span></button>
-          <button class="btn btn-primary" onclick="openManualMatch()"><i class="fa-solid fa-hand-pointer"></i><span class="hidden sm:inline">จับคู่ด้วยมือ</span></button>
+		  <button class="btn btn-primary" onclick="openManualMatch()"><i class="fa-solid fa-hand-pointer"></i><span class="hidden sm:inline">จับคู่ด้วยมือ</span></button>
+          <button class="btn btn-green" onclick="openQueueModal()">
+		  <i class="fa-solid fa-list-check"></i>
+		  <span class="hidden sm:inline">ดูคิว</span>
+		  </button>
         </div>
       </div>
+	  <div class="panel p-5">
+		  <div class="subtle">ประวัติทั้งหมด</div>
+		  <div class="text-2xl font-bold"><span id="history-count">0</span> รายการ</div>
+		  <button class="btn btn-primary mt-3" onclick="openHistoryAllModal()">
+			<i class="fa-solid fa-clock-rotate-left"></i>
+			<span class="hidden sm:inline">ดูประวัติทั้งหมด</span>
+		  </button>
+	  </div>
     </section>
 
     <!-- Courts -->
@@ -243,7 +254,7 @@
     </section>
   </main>
 
-  <aside id="history-slidebar" class="history-slidebar">
+  <aside id="history-slidebar" class="history-slidebar hidden">
     <div class="panel relative">
       <button class="hs-toggle" onclick="toggleHistorySidebar()" title="ย่อ/ขยายประวัติ" aria-label="ย่อ/ขยายประวัติ"><i class="fa-solid fa-angles-left"></i><span class="hs-label">ประวัติ</span></button>
       <div class="hs-header">
@@ -259,7 +270,7 @@
   </aside>
 
 
-  <aside id="queue-slidebar" class="queue-slidebar">
+  <aside id="queue-slidebar" class="queue-slidebar hidden">
     <div class="panel relative">
       <button class="qs-toggle" onclick="toggleQueueSidebar()" title="ย่อ/ขยายคิว" aria-label="ย่อ/ขยายคิว">
         <i class="fa-solid fa-angles-right"></i><span class="qs-label">คิว</span>
@@ -357,6 +368,34 @@
       </form>
     </div>
   </div>
+  <!-- History All Modal -->
+	<div id="history-all-modal" class="modal fixed inset-0 hidden items-center justify-center z-50">
+	  <div class="modal-card w-[92vw] max-w-lg p-6">
+		<div class="flex items-center justify-between mb-4">
+		  <div class="heading">ประวัติทั้งหมด</div>
+		  <button class="icon-btn" onclick="hide('history-all-modal')"><i class="fa-solid fa-xmark"></i></button>
+		</div>
+		<div id="history-all-content" class="soft p-3 max-h-[60vh] overflow-auto"></div>
+		<div class="flex justify-end gap-2 mt-4">
+		  <button class="btn" onclick="hide('history-all-modal')">ปิด</button>
+		</div>
+	  </div>
+	</div>
+  
+  <!-- Queue Modal (Popup) -->
+	<div id="queue-modal" class="modal fixed inset-0 hidden items-center justify-center z-50">
+	  <div class="modal-card w-[92vw] max-w-lg p-6">
+		<div class="flex items-center justify-between mb-4">
+		  <div class="heading">คิวทั้งหมด</div>
+		  <button class="icon-btn" onclick="hide('queue-modal')"><i class="fa-solid fa-xmark"></i></button>
+		</div>
+		<div id="queue-modal-content" class="soft p-3 max-h-[60vh] overflow-auto"></div>
+		<div class="flex justify-end gap-2 mt-4">
+		  <button class="btn btn-primary" onclick="buildQueueMatchesFromAvailable()">สร้างคิวอัตโนมัติ</button>
+		  <button class="btn" onclick="hide('queue-modal')">ปิด</button>
+		</div>
+	  </div>
+	</div>
 
   <!-- Manual Queue Modal -->
   <div id="queue-manual-modal" class="modal fixed inset-0 hidden items-center justify-center z-50">
@@ -1329,6 +1368,58 @@
         host.appendChild(row);
       });
     }
+	function openQueueModal() {
+	  const content = document.getElementById('queue-modal-content');
+	  const q = getQueue();
+	  const players = getPlayers();
+	  const byId = mapById(players);
+
+	  if (!q.matches || q.matches.length === 0) {
+		content.innerHTML = '<div class="muted text-center py-4">ยังไม่มีคิว</div>';
+	  } else {
+		let html = '';
+		q.matches.forEach((mt, idx) => {
+		  const [[A, B], [C, D]] = mt.pairs;
+		  const n = id => byId.get(id)?.name || '—';
+		  const s = id => byId.get(id)?.skill || 'N';
+		  html += `
+			<div class="panel p-4 mb-3">
+			  <div class="flex items-center justify-between">
+				<div class="font-semibold">คิวที่ ${idx + 1}</div>
+				<div class="flex gap-1">
+				  <button class="icon-btn" title="สลับเป็น 1–3/2–4" onclick="swapQueuePairs(${idx}, 'acbd')">
+					<i class="fa-solid fa-arrows-left-right-to-line"></i>
+				  </button>
+				  <button class="icon-btn" title="สลับเป็น 1–4/2–3" onclick="swapQueuePairs(${idx}, 'adbc')">
+					<i class="fa-solid fa-shuffle"></i>
+				  </button>
+				  <button class="icon-btn" title="แก้ไข" onclick="openQueueEditInModal(${idx})">
+					<i class="fa-solid fa-pen"></i>
+				  </button>
+				  <button class="icon-btn" title="ส่งลงสนาม" onclick="openQueueSendModalFromPopup(${idx})">
+					<i class="fa-solid fa-paper-plane"></i>
+				  </button>
+				  <button class="icon-btn" title="ลบ" onclick="deleteQueueMatchFromPopup(${idx})">
+					<i class="fa-solid fa-trash"></i>
+				  </button>
+				</div>
+			  </div>
+			  <div class="mt-2 text-sm">
+				<span class="chip">${n(A)} <span class="tag">มือ ${s(A)}</span></span>
+				<span class="muted">×</span>
+				<span class="chip">${n(B)} <span class="tag">มือ ${s(B)}</span></span>
+				<span class="muted">เจอ</span>
+				<span class="chip">${n(C)} <span class="tag">มือ ${s(C)}</span></span>
+				<span class="muted">×</span>
+				<span class="chip">${n(D)} <span class="tag">มือ ${s(D)}</span></span>
+			  </div>
+			</div>
+		  `;
+		});
+		content.innerHTML = html;
+	  }
+	  show('queue-modal');
+	}
     function buildQueueMatchesFromAvailable(){
       const players=getPlayers();
       const free=players.filter(p=>p.status==='ว่าง').sort((a,b)=>(a.availableSince??0)-(b.availableSince??0)).map(p=>p.id);
@@ -1489,6 +1580,109 @@
       };
       reader.readAsText(file, 'utf-8');
     }
+		// === ฟังก์ชันสำหรับ popup ===
+
+	function swapQueuePairs(idx, mode) {
+	  const Q = getQueue();
+	  if (!Q.matches[idx]) return;
+	  const P = Q.matches[idx].pairs;
+	  const [a, b] = P[0], [c, d] = P[1];
+	  if (mode === 'acbd') Q.matches[idx].pairs = [[a, c], [b, d]];
+	  else if (mode === 'adbc') Q.matches[idx].pairs = [[a, d], [b, c]];
+	  saveQueue(Q);
+	  openQueueModal(); // refresh modal
+	  showToast(`สลับคู่แบบ ${mode === 'acbd' ? '1–3 / 2–4' : '1–4 / 2–3'} ✓`);
+	}
+
+	function deleteQueueMatchFromPopup(idx) {
+	  const Q = getQueue();
+	  const before = JSON.parse(JSON.stringify(Q));
+	  Q.matches.splice(idx, 1);
+	  saveQueue(Q);
+	  openQueueModal();
+	  setUndo('ลบคิว', () => {
+		saveQueue(before);
+		openQueueModal();
+	  });
+	  showToast('ลบคิวแล้ว ✓', 'เลิกทำ', triggerUndo);
+	}
+
+	function openQueueEditInModal(idx) {
+	  hide('queue-modal'); // ปิด modal ก่อน
+	  const q = getQueue();
+	  const mt = q.matches?.[idx];
+	  if (!mt) return;
+	  openManualMatch([...mt.pairs[0], ...mt.pairs[1]], 'edit', idx);
+	  const btn = document.getElementById('btn-add-match');
+	  btn.textContent = 'บันทึกคิว';
+	  // เมื่อแก้ไขเสร็จ → ให้กลับมาเปิด modal อีกครั้ง
+	  // เราจะใช้ hook ใน manualAddMatch ด้านล่าง
+	  window._returnToQueueModalAfterEdit = true;
+	}
+
+	function openQueueSendModalFromPopup(idx) {
+	  hide('queue-modal');
+	  openQueueSendModal(idx);
+	  // เมื่อส่งเสร็จ → ไม่ต้องกลับมา (เพราะ renderQueue ปกติ)
+	}
+
+	// === แก้ไข manualAddMatch เพื่อ support การกลับไปที่ popup ===
+	const originalManualAddMatch = manualAddMatch;
+	manualAddMatch = function() {
+	  originalManualAddMatch();
+	  if (window._returnToQueueModalAfterEdit) {
+		window._returnToQueueModalAfterEdit = false;
+		setTimeout(() => openQueueModal(), 300);
+	  }
+	};
+	// ===== History All Modal =====
+	function openHistoryAllModal() {
+	  const content = document.getElementById('history-all-content');
+	  const log = getMatchLog();
+	  const players = getPlayers();
+	  const byId = mapById(players);
+
+	  if (!log || log.length === 0) {
+		content.innerHTML = '<div class="muted text-center py-4">ยังไม่มีประวัติ</div>';
+	  } else {
+		// เรียงจากใหม่ไปเก่า
+		const sorted = [...log].sort((a, b) => (b.ts || 0) - (a.ts || 0));
+		let html = '';
+		sorted.forEach((ev, idx) => {
+		  const pairs = ev.pairs || [[], []];
+		  const [A, B, C, D] = [pairs?.[0]?.[0], pairs?.[0]?.[1], pairs?.[1]?.[0], pairs?.[1]?.[1]];
+		  const n = id => byId.get(id)?.name || '—';
+		  const s = id => byId.get(id)?.skill || 'N';
+		  const fmt = ts => {
+			const d = new Date(ts);
+			const pad = n => String(n).padStart(2, '0');
+			return `${pad(d.getDate())}/${pad(d.getMonth() + 1)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+		  };
+
+		  html += `
+			<div class="panel p-4 mb-3">
+			  <div class="flex items-center justify-between">
+				<div class="font-semibold">ลำดับ ${ev.seq || idx + 1}</div>
+				<div class="muted text-xs">${fmt(ev.ts)}</div>
+			  </div>
+			  <div class="mt-2 text-sm">
+				<div class="muted mb-1">${ev.courtName || '—'}</div>
+				<span class="chip">${n(A)} <span class="tag">มือ ${s(A)}</span></span>
+				<span class="muted">×</span>
+				<span class="chip">${n(B)} <span class="tag">มือ ${s(B)}</span></span>
+				<span class="muted">เจอ</span>
+				<span class="chip">${n(C)} <span class="tag">มือ ${s(C)}</span></span>
+				<span class="muted">×</span>
+				<span class="chip">${n(D)} <span class="tag">มือ ${s(D)}</span></span>
+			  </div>
+			</div>
+		  `;
+		});
+		content.innerHTML = html;
+	  }
+	  document.getElementById('history-count').textContent = log.length;
+	  show('history-all-modal');
+	}
 
     /* Init */
     
@@ -1503,6 +1697,7 @@ function init(){
   try{ applyHistorySidebarState?.(); }catch(e){}
   try{ renderAllHistorySidebar?.(); }catch(e){}
   try{ setInterval(renderPlayers, 30000); }catch(e){}
+  document.getElementById('history-count').textContent = getMatchLog().length;
 }
 
     function clearAllCourts(){ if(confirm('ล้างข้อมูลทั้งหมด?')){ localStorage.removeItem('players'); localStorage.removeItem('courts'); localStorage.removeItem('queue_matches'); renderCourts(); renderPlayers(); renderQueue(); updatePriceDisplay(); showToast('ล้างข้อมูลทั้งหมดแล้ว'); } }
