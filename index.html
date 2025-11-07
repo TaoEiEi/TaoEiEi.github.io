@@ -65,6 +65,8 @@
     select.soft:focus{ outline:none; box-shadow:0 0 0 2px rgba(99,102,241,.45); border-color:rgba(99,102,241,.55); }
     select.soft option{ background:#0f172a; color:#e5e7eb; }
     select.soft::-ms-expand{ display:none; }
+	
+	.paid { background: rgba(100,100,100,.2); color: #9ca3af; border: 1px solid rgba(156,163,175,.3); }
 
     
     /* ===== Right Queue Slidebar (no-shift) ===== */
@@ -616,6 +618,36 @@
       </div>
     </div>
   </div>
+  
+	<!-- Modal เลือกลูก -->
+	<div id="shuttle-type-modal" class="modal fixed inset-0 hidden items-center justify-center z-50">
+	  <div class="modal-card w-[92vw] max-w-md p-6">
+		<div class="flex items-center justify-between mb-4">
+		  <div class="heading">เริ่มเกม — เลือกประเภทลูก</div>
+		  <button class="icon-btn" onclick="hide('shuttle-type-modal')"><i class="fa-solid fa-xmark"></i></button>
+		</div>
+		<div class="space-y-4 mb-5">
+		  <label class="flex items-center gap-3 p-3 soft cursor-pointer rounded-lg">
+			<input type="radio" name="shuttle-type" value="real" checked class="accent-indigo-400">
+			<div>
+			  <div class="font-medium">ลูกจริง</div>
+			  <div class="muted text-sm">คิดเงินตามจำนวนลูกที่ใช้</div>
+			</div>
+		  </label>
+		  <label class="flex items-center gap-3 p-3 soft cursor-pointer rounded-lg">
+			<input type="radio" name="shuttle-type" value="repair" class="accent-indigo-400">
+			<div>
+			  <div class="font-medium">ลูกซ่อม</div>
+			  <div class="muted text-sm">ไม่คิดเงินลูก (ฟรี)</div>
+			</div>
+		  </label>
+		</div>
+		<div class="flex justify-end gap-2">
+		  <button class="btn" onclick="hide('shuttle-type-modal')">ยกเลิก</button>
+		  <button class="btn btn-primary" onclick="handleShuttleTypeSelection()">ยืนยัน</button>
+		</div>
+	  </div>
+	</div>
 
   <!-- Data modal -->
   <div id="data-modal" class="modal fixed inset-0 hidden items-center justify-center z-50">
@@ -968,122 +1000,179 @@
     (function restoreSort(){
       try{ const s = JSON.parse(localStorage.getItem('playerSort')||'null'); if(s) window._sort=s; }catch{ window._sort={key:null, dir:1}; }
     })();
+	
+
     
     /* ------- Players render ------- */
     let _editPlayerId=null; let _editingForm=false;
-    function renderPlayers(){
-      const tbody=document.getElementById('player-table-body'); tbody.innerHTML='';
-      const players=ensureAvailableSince(getPlayers()); savePlayers(players);
-      const {shuttle,fee}=getPrice();
+function renderPlayers(){
+  const tbody = document.getElementById('player-table-body');
+  tbody.innerHTML = '';
+  const players = ensureAvailableSince(getPlayers());
+  savePlayers(players);
+  const {shuttle, fee} = getPrice();
+  const data = players.filter(passFilter);
 
-      const data = players.filter(passFilter);
-      // ---- robust sort block ----
-      if(!_sort){ window._sort = {key:null, dir:1}; }
-      const getVal = (p)=>{
-        if(_sort.key==='games') return p.gamesPlayed||0;
-        if(_sort.key==='shuttles') return p.shuttlecocksUsed||0;
-        if(_sort.key==='cost'){ const {shuttle, fee}=getPrice(); const feeOnce=(p.gamesPlayed||0)>0?fee:0; return (p.shuttlecocksUsed||0)*shuttle + feeOnce; }
-        return 0;
-      };
-      if(_sort.key){
-        data.sort((a,b)=>{
-          const va=getVal(a), vb=getVal(b);
-          if(va===vb) return (a.name||'').localeCompare(b.name||'');
-          return (va<vb? -1:1) * (_sort.dir||1);
-        });
+  // --- จัดเรียง ---
+  if (!window._sort) window._sort = {key: null, dir: 1};
+
+  // ฟังก์ชันตรวจสอบว่า "จ่ายเงินแล้ว" หรือไม่
+  const isPaid = (p) => p.paymentStatus === 'เงินสด' || p.paymentStatus === 'เงินโอน';
+
+  const getVal = (p) => {
+    if (_sort.key === 'games') return p.gamesPlayed || 0;
+    if (_sort.key === 'shuttles') return p.shuttlecocksUsed || 0;
+    if (_sort.key === 'cost') {
+      const feeOnce = (p.gamesPlayed || 0) > 0 ? fee : 0;
+      return (p.shuttlecocksUsed || 0) * shuttle + feeOnce;
+    }
+    return 0;
+  };
+
+  // จัดเรียงหลัก: ผู้ที่ยังไม่จ่าย → ตาม sort เดิม / ผู้ที่จ่ายแล้ว → ล่างสุด
+  data.sort((a, b) => {
+    const aPaid = isPaid(a);
+    const bPaid = isPaid(b);
+
+    // ถ้าทั้งคู่ "จ่ายแล้ว" หรือ "ยังไม่จ่าย" → ใช้ logic เดิม
+    if (aPaid === bPaid) {
+      if (window._sort && _sort.key) {
+        const va = getVal(a), vb = getVal(b);
+        if (va === vb) return (a.name || '').localeCompare(b.name || '');
+        return (va - vb) * (_sort.dir || 1);
       } else {
-        data.sort((a,b)=>{
-          const order=s=>s==='ว่าง'?0:(s==='ในสนาม'?1:2);
-          const oa=order(a.status), ob=order(b.status);
-          if(oa!==ob) return oa-ob;
-          if(a.status==='ว่าง'&&b.status==='ว่าง') return (a.availableSince??Date.now())-(b.availableSince??Date.now());
-          return (a.name||'').localeCompare(b.name||'');
-        });
+        const order = s => s === 'ว่าง' ? 0 : (s === 'ในสนาม' ? 1 : 2);
+        const oa = order(a.status), ob = order(b.status);
+        if (oa !== ob) return oa - ob;
+        if (a.status === 'ว่าง' && b.status === 'ว่าง')
+          return (a.availableSince ?? Date.now()) - (b.availableSince ?? Date.now());
+        return (a.name || '').localeCompare(b.name || '');
       }
-      // update header states
-      if(typeof applySortHeaders==='function') applySortHeaders();
-        
+    }
+    // ถ้าคนใดคนหนึ่งจ่ายแล้ว → ให้อยู่ล่าง
+    return aPaid ? 1 : -1;
+  });
 
-      // Apply sort if set
-      if(window._sort && _sort.key){
-        const getVal = (p)=>{
-          if(_sort.key==='games') return p.gamesPlayed||0;
-          if(_sort.key==='shuttles') return p.shuttlecocksUsed||0;
-          if(_sort.key==='cost'){
-            const feeOnce = (p.gamesPlayed||0)>0? fee:0;
-            return (p.shuttlecocksUsed||0)*shuttle + feeOnce;
-          }
-          return 0;
-        };
-        data.sort((a,b)=>{
-          const va=getVal(a), vb=getVal(b);
-          if(va===vb) return (a.name||'').localeCompare(b.name||'');
-          return (_sort.dir||1) * (va - vb);
-        });
-      }else{
-        data.sort((a,b)=>{
-          const order=s=>s==='ว่าง'?0:(s==='ในสนาม'?1:2);
-          const oa=order(a.status), ob=order(b.status);
-          if(oa!==ob) return oa-ob;
-          if(a.status==='ว่าง'&&b.status==='ว่าง') return (a.availableSince??Date.now())-(b.availableSince??Date.now());
-          return (a.name||'').localeCompare(b.name||'');
-        });
-      }
+  // --- สร้างแถว ---
+  data.forEach((p, i) => {
+    const feeOnce = (p.gamesPlayed || 0) > 0 ? fee : 0;
+    const cost = (p.shuttlecocksUsed || 0) * shuttle + feeOnce;
 
-      data.forEach((p,i)=>{
-        const feeOnce = (p.gamesPlayed||0) > 0 ? fee : 0;
-        const cost=(p.shuttlecocksUsed||0)*shuttle + feeOnce;
-        const cls=p.status==='ว่าง'?'available':(p.status==='ในสนาม'?'ready':'playing');
-        const info = p.status==='ว่าง'?`<span class="badge">รอ ${minutesSince(p.availableSince)} นาที</span>`:(p.status==='ในสนาม'?`<span class="badge">รอเริ่ม</span>`:'');
-        tbody.insertAdjacentHTML('beforeend',`
-          <tr>
-            <td class="p-3"><input type="checkbox" class="player-checkbox accent-indigo-400" data-player-id="${p.id}"></td>
-            <td class="p-3 text-center">${i+1}</td>
-            <td class="p-3"><button class="text-indigo-300 hover:underline" onclick="openHistory('${p.id}')">${p.name}</button></td>
-            <td class="p-3 text-center"><span class="badge">มือ ${p.skill||'N'}</span></td>
-            <td class="p-3 text-center"><span class="status ${cls}">${p.status}</span> ${info}</td>
-            <td class="p-3 text-center">${p.gamesPlayed||0}</td>
-            <td class="p-3 text-center">${p.shuttlecocksUsed||0}</td>
-            <td class="p-3 text-center">${cost}</td>
-			<td class="p-3 text-center">
-			  <select class="soft px-2 py-1 text-sm payment-select" data-player-id="${p.id}">
-				<option value="ยังไม่จ่าย" ${p.paymentStatus==='ยังไม่จ่าย'?'selected':''}>ยังไม่จ่าย</option>
-				<option value="เงินสด" ${p.paymentStatus==='เงินสด'?'selected':''}>เงินสด</option>
-				<option value="เงินโอน" ${p.paymentStatus==='เงินโอน'?'selected':''}>เงินโอน</option>
-			  </select>
-			</td>
-            <td class="p-3 text-center">
-              <button class="icon-btn" title="แก้ไข" onclick="openEditPlayer('${p.id}','${encodeURIComponent(p.name)}')"><i class="fa-solid fa-pen"></i></button>
-              <button class="icon-btn" title="ลบ" onclick="deletePlayer('${p.id}')"><i class="fa-solid fa-trash"></i></button>
-            </td>
-          </tr>`);
+    // กำหนดสถานะที่แสดง
+    let displayStatus = p.status;
+    if (isPaid(p)) {
+      displayStatus = 'จ่ายเงินแล้ว';
+    }
+
+    // กำหนด class สำหรับสี
+    let cls = '';
+    if (isPaid(p)) {
+      cls = 'text-gray-400 bg-gray-800/30 border-gray-600'; // สีเทาจาง ๆ
+    } else {
+      cls = p.status === 'ว่าง' ? 'available' : (p.status === 'ในสนาม' ? 'ready' : 'playing');
+    }
+
+    const info = p.status === 'ว่าง' && !isPaid(p)
+      ? `<span class="badge">รอ ${minutesSince(p.availableSince)} นาที</span>`
+      : (p.status === 'ในสนาม' && !isPaid(p) ? `<span class="badge">รอเริ่ม</span>` : '');
+
+    tbody.insertAdjacentHTML('beforeend', `
+      <tr>
+        <td class="text-left p-3">
+          <input type="checkbox" class="player-select accent-indigo-400" data-id="${p.id}" ${p.selected ? 'checked' : ''}>
+        </td>
+        <td class="text-center p-3">${i + 1}</td>
+        <td class="text-left p-3">
+          <button class="text-indigo-300 hover:underline" onclick="openHistory('${p.id}')">${p.name}</button>
+        </td>
+        <td class="text-center p-3"><span class="badge">มือ ${p.skill || 'N'}</span></td>
+        <td class="text-center p-3"><span class="status ${cls}">${displayStatus}</span> ${info}</td>
+        <td class="text-center p-3">${p.gamesPlayed || 0}</td>
+        <td class="text-center p-3">${p.shuttlecocksUsed || 0}</td>
+        <td class="text-center p-3">${cost}</td>
+        <td class="text-center p-3">
+          <select class="soft px-2 py-1 text-sm payment-select" data-player-id="${p.id}">
+            <option value="ยังไม่จ่าย" ${p.paymentStatus === 'ยังไม่จ่าย' ? 'selected' : ''}>ยังไม่จ่าย</option>
+            <option value="เงินสด" ${p.paymentStatus === 'เงินสด' ? 'selected' : ''}>เงินสด</option>
+            <option value="เงินโอน" ${p.paymentStatus === 'เงินโอน' ? 'selected' : ''}>เงินโอน</option>
+          </select>
+        </td>
+        <td class="text-center p-3">
+          <button class="icon-btn" title="แก้ไข" onclick="openEditPlayer('${p.id}', '${encodeURIComponent(p.name)}')"><i class="fa-solid fa-pen"></i></button>
+          <button class="icon-btn" title="ลบ" onclick="deletePlayer('${p.id}')"><i class="fa-solid fa-trash"></i></button>
+        </td>
+      </tr>
+    `);
+  });
+
+  // --- Select All ---
+  const master = document.getElementById('select-all');
+  if (master) {
+    master.checked = data.every(p => p.selected);
+    master.onchange = e => {
+      const check = e.target.checked;
+      const players = getPlayers();
+      data.forEach(p => {
+        const player = players.find(x => x.id === p.id);
+        if (player) player.selected = check;
       });
+      savePlayers(players);
+      renderPlayers();
+    };
+  }
 
-      const master=document.getElementById('select-all'); master.checked=false;
-      master.onchange=e=>{
-        const check = e.target.checked;
-        document.querySelectorAll('#player-table-body .player-checkbox').forEach(cb=>cb.checked=check);
-      };
+  // --- อัปเดตคิว ---
+  document.getElementById('queue-count').textContent = getQueue().matches?.length || 0;
 
-      document.getElementById('queue-count').textContent = getQueue().matches?.length || 0;
-      if(typeof applySortHeaders==='function') applySortHeaders();
-	  document.getElementById('player-table-body').addEventListener('change', (e) => {
-	  const select = e.target;
-	  if (!select.classList.contains('payment-select')) return;
-	  const playerId = select.getAttribute('data-player-id');
-	  const value = select.value;
+  // --- เรียก setupPlayerSelection() ---
+  setupPlayerSelection();
 
-	  const players = getPlayers();
-	  const p = players.find(x => x.id === playerId);
-	  if (p && p.paymentStatus !== value) {
-		p.paymentStatus = value;
-		savePlayers(players);
-		showToast(`อัปเดตการชำระเงินของ ${p.name} เป็น "${value}" ✓`);
-	  }
-	});
+  // --- อัปเดตหัวตาราง ---
+  if (typeof applySortHeaders === 'function') applySortHeaders();
+}
+	function setupPlayerSelection() {
+  document.querySelectorAll('.player-select').forEach(cb => {
+    cb.onchange = null; // ลบ event เก่า
 
-	}
+    cb.onchange = function() {
+      const pid = this.dataset.id;
+      const players = getPlayers();
+      const p = players.find(x => x.id === pid);
+      if (p) {
+        p.selected = this.checked;
+        savePlayers(players);
+        renderPlayers(); // รีเฟรชเพื่ออัปเดต select-all
+      }
+    };
 
+    // โหลดสถานะจาก localStorage
+    const players = getPlayers();
+    const p = players.find(x => x.id === cb.dataset.id);
+    if (p && p.selected) {
+      cb.checked = true;
+    }
+  });
+}
+	
+function addPlayer() {
+  const name = prompt('ชื่อผู้เล่น');
+  if (!name?.trim()) return;
+  const players = getPlayers();
+  const newId = Date.now().toString();
+  players.push({
+    id: newId,
+    name: name.trim(),
+    status: 'ว่าง',
+    availableSince: Date.now(),
+    gamesPlayed: 0,
+    shuttlecocksUsed: 0,
+    selected: false, // ต้องมี
+    paymentStatus: 'ยังไม่จ่าย'
+  });
+  savePlayers(players);
+  renderPlayers();
+  renderCourts();
+}
     function selectAllFiltered(){
       document.querySelectorAll('#player-table-body .player-checkbox').forEach(cb=>cb.checked=true);
       showToast('เลือกผู้เล่นตามการกรองแล้ว ✓');
@@ -1191,47 +1280,222 @@
 	  }
 	  if (c.status === 'กำลังเล่น') return;
 
-	  // เปิด modal ให้กรอกหมายเลขลูก → ทุกอย่างจะถูกจัดการใน confirmAddShuttlecock()
-	  openConfirmShuttlecockForStart(courtId);
+	  window._startGameCourtId = courtId;
+	  show('shuttle-type-modal');
 	}
 	
+function handleShuttleTypeSelection(){
+  const type = document.querySelector('input[name="shuttle-type"]:checked')?.value || 'real';
+  const courtId = window._startGameCourtId;
+  if (!courtId) return;
+
+  hide('shuttle-type-modal');
+
+  if (type === 'real') {
+    // ไปกรอกหมายเลขลูกแบบเดิม (แต่บอกว่ามาจาก "เริ่มเกม")
+    openConfirmShuttlecockForStart(courtId);
+  } else {
+    // ลูกซ่อม → เริ่มเกมทันที ไม่บวก shuttlecocksUsed
+    startGameWithRepairShuttle(courtId);
+  }
+}
+	
+function startGameWithRepairShuttle(courtId){
+  const courts = getCourts(), players = getPlayers(), byId = mapById(players);
+  const c = courts.find(x => x.id === courtId);
+  if (!c) return;
+
+  const beforePlayers = JSON.parse(JSON.stringify(players));
+  const beforeCourts = JSON.parse(JSON.stringify(courts));
+
+  // เริ่มเกมโดยไม่ใช้ลูกจริง → ไม่บวก shuttlecocksUsed
+  c.status = 'กำลังเล่น';
+  c.shuttlecockNo = 0;
+  c.shuttlecockHistory = [];
+
+  c.players.forEach(pid => {
+    const p = byId.get(pid);
+    if (p) {
+      p.status = 'กำลังเล่น';
+      p.availableSince = null;
+      // ⚠️ ยังไม่นับ gamesPlayed ตอนนี้ (นับตอนจบเกมเหมือนกันทุกกรณี)
+    }
+  });
+
+  // ⚠️ ไม่เรียก pushHistory() หรือ appendMatchLog() ที่นี่!
+
+  savePlayers(players);
+  saveCourts(courts);
+  renderPlayers();
+  renderCourts();
+
+  setUndo('เริ่มเกม (ลูกซ่อม)', () => {
+    savePlayers(beforePlayers);
+    saveCourts(beforeCourts);
+    renderPlayers();
+    renderCourts();
+  });
+  showToast('เริ่มเกมด้วยลูกซ่อม (ไม่คิดเงิน) ✓', 'เลิกทำ', triggerUndo);
+
+  delete window._startGameCourtId;
+}
+	
+    function confirmStartGame(){
+  const courtId = window._startGameCourtId;
+  if (!courtId) return;
+
+  const type = document.querySelector('input[name="shuttle-type"]:checked')?.value || 'real';
+  const courts = getCourts();
+  const players = getPlayers();
+  const byId = mapById(players);
+  const c = courts.find(x => x.id === courtId);
+  if (!c) return;
+
+  const beforePlayers = JSON.parse(JSON.stringify(players));
+  const beforeCourts = JSON.parse(JSON.stringify(courts));
+
+  // ตั้งสถานะเริ่มเกม
+  c.status = 'กำลังเล่น';
+  c.players.forEach(pid => {
+    const p = byId.get(pid);
+    if (p) {
+      p.status = 'กำลังเล่น';
+      p.availableSince = null;
+      p.gamesPlayed = (p.gamesPlayed || 0) + 1;
+      // ⚠️ ถ้าเป็น "ลูกจริง" เท่านั้น ถึงจะบวก shuttlecocksUsed
+      if (type === 'real') {
+        p.shuttlecocksUsed = (p.shuttlecocksUsed || 0) + 1;
+      }
+    }
+  });
+
+  // จัดการลูกแบด
+  if (type === 'real') {
+    // ใช้หมายเลขลูกถัดไป
+    const nextNo = (c.shuttlecockNo || 0) + 1;
+    c.shuttlecockNo = nextNo;
+    c.shuttlecockHistory = [nextNo];
+  } else {
+    // ลูกซ่อม → ไม่บันทึกหมายเลข, ไม่เพิ่มประวัติ
+    c.shuttlecockNo = 0;
+    c.shuttlecockHistory = [];
+  }
+
+  // บันทึกประวัติ
+  pushHistory(c, players);
+  appendMatchLog(c);
+
+  savePlayers(players);
+  saveCourts(courts);
+  renderPlayers();
+  renderCourts();
+  hide('shuttle-type-modal');
+
+  const msg = type === 'real' 
+    ? `เริ่มเกมด้วยลูกจริง ✓` 
+    : `เริ่มเกมด้วยลูกซ่อม (ไม่คิดเงิน) ✓`;
+
+  setUndo('เริ่มเกม', () => {
+    savePlayers(beforePlayers);
+    saveCourts(beforeCourts);
+    renderPlayers();
+    renderCourts();
+  });
+  showToast(msg, 'เลิกทำ', triggerUndo);
+
+  // ล้างตัวแปรชั่วคราว
+  delete window._startGameCourtId;
+}
 	function openConfirmShuttlecockForStart(courtId){
 	  const courts = getCourts(), players = getPlayers(), byId = mapById(players);
 	  const c = courts.find(x => x.id === courtId);
 	  if (!c) return;
 
-	  document.getElementById('confirm-shuttlecourt-name').textContent = c.name || '—';
-	  const names = (c.players || []).map(pid => byId.get(pid)?.name).filter(Boolean).join(', ') || '—';
-	  document.getElementById('confirm-shuttlecourt-players').textContent = names;
+	  // แสดงชื่อสนาม
+	  const courtNameEl = document.getElementById('confirm-shuttlecourt-name');
+	  if (courtNameEl) courtNameEl.textContent = c.name || '—';
 
-	  // แสดงข้อความว่า "เริ่มเกม" แทน "เพิ่มลูก"
-	  document.querySelector('#confirm-shuttle-modal .heading').textContent = 'เริ่มเกม – ใส่หมายเลขลูก';
+	  // แสดงชื่อผู้เล่น
+	  const playerNames = (c.players || [])
+		.map(pid => byId.get(pid)?.name)
+		.filter(Boolean)
+		.join(', ') || '—';
+	  const playersEl = document.getElementById('confirm-shuttlecourt-players');
+	  if (playersEl) playersEl.textContent = playerNames;
 
-	  // เซ็ตค่าเริ่มต้นเป็นลูกถัดไป
-	  const nextNo = (c.shuttlecockNo || 0) + 1;
+	  // เปลี่ยนหัวข้อ modal
+	  const headingEl = document.querySelector('#confirm-shuttle-modal .heading');
+	  if (headingEl) headingEl.textContent = 'เริ่มเกม – ใส่หมายเลขลูก';
+
+	  // ตั้งค่า input: ลูกถัดไป
 	  const input = document.getElementById('shuttle-number-input');
 	  if (input) {
+		const nextNo = (c.shuttlecockNo || 0) + 1;
 		input.value = nextNo;
-		input.style.display = 'block'; // แสดง input (ถ้าซ่อนไว้)
-	  } else {
-		// ถ้ายังไม่มี input → เราจะเพิ่มในขั้นตอนถัดไป
+		input.style.display = 'block';
+		input.focus();
+		input.select(); // เลือกข้อความทั้งหมด → พิมพ์ทับได้เลย
 	  }
 
+	  // ตั้งค่าแฟล็ก
 	  window._shuttleCourtId = courtId;
-	  window._isStartingGame = true; // แฟล็กว่ามาจาก "เริ่มเกม"
+	  window._isStartingGame = true;
+
+	  // เปิด modal
 	  show('confirm-shuttle-modal');
 	}
-    function endGame(courtId){
-      const courts=getCourts(), players=getPlayers(), byId=mapById(players);
-      const c=courts.find(x=>x.id===courtId); if(!c) return;
-      const beforePlayers=JSON.parse(JSON.stringify(players));
-      const beforeCourts=JSON.parse(JSON.stringify(courts));
-      (c.players||[]).forEach(pid=>{ const p=byId.get(pid); if(p){ p.status='ว่าง'; p.availableSince=Date.now(); }});
-      c.players=[]; c.pairs=[]; c.waiting=null; c.status='ว่าง';
-      savePlayers(players); saveCourts(courts); renderPlayers(); renderCourts();
-      setUndo('จบเกม', ()=>{ savePlayers(beforePlayers); saveCourts(beforeCourts); renderPlayers(); renderCourts(); });
-      showToast('จบเกมแล้ว ✓','เลิกทำ', triggerUndo);
-    }
+	function endGame(courtId){
+	  const courts = getCourts(), players = getPlayers(), byId = mapById(players);
+	  const c = courts.find(x => x.id === courtId);
+	  if (!c) return;
+
+	  const beforePlayers = JSON.parse(JSON.stringify(players));
+	  const beforeCourts = JSON.parse(JSON.stringify(courts));
+
+	  // ตรวจสอบว่าเป็นลูกซ่อมหรือไม่ (shuttlecockNo === 0)
+	  const isRepairShuttle = (c.shuttlecockNo === 0);
+
+	  // อัปเดตสถานะผู้เล่น
+	  c.players.forEach(pid => {
+		const p = byId.get(pid);
+		if (p) {
+		  p.status = 'ว่าง';
+		  p.availableSince = Date.now();
+		  p.gamesPlayed = (p.gamesPlayed || 0) + 1; // ✅ นับที่นี่เสมอ
+
+		  // บวก shuttlecocksUsed เฉพาะลูกจริง
+		  if (!isRepairShuttle) {
+			const historyCount = Array.isArray(c.shuttlecockHistory) ? c.shuttlecockHistory.length : 0;
+			const used = historyCount > 0 ? historyCount : 1;
+			p.shuttlecocksUsed = (p.shuttlecocksUsed || 0) + used;
+		  }
+		}
+	  });
+
+	  // ✅ บันทึกประวัติที่นี่ (ครั้งเดียว)
+	  pushHistory(c, players);
+	  appendMatchLog(c);
+
+	  // รีเซ็ตสนาม
+	  c.players = [];
+	  c.pairs = [];
+	  c.waiting = null;
+	  c.status = 'ว่าง';
+	  c.roundNo = (c.roundNo || 0) + 1;
+
+	  savePlayers(players);
+	  saveCourts(courts);
+	  renderPlayers();
+	  renderCourts();
+
+	  setUndo('จบเกม', () => {
+		savePlayers(beforePlayers);
+		saveCourts(beforeCourts);
+		renderPlayers();
+		renderCourts();
+	  });
+	  showToast('จบเกมแล้ว ✓', 'เลิกทำ', triggerUndo);
+	}
 	function openConfirmShuttlecock(courtId){
 	  const courts = getCourts();
 	  const c = courts.find(x => x.id === courtId);
@@ -1249,10 +1513,9 @@
 	  window._shuttleCourtId = courtId;
 	  show('confirm-shuttle-modal');
 	}
-	function confirmAddShuttlecock(){
+		function confirmAddShuttlecock(){
 	  const courtId = window._shuttleCourtId;
 	  if (!courtId) return;
-
 	  const input = document.getElementById('shuttle-number-input');
 	  const newNo = parseInt(input?.value?.trim() || '');
 	  if (!Number.isInteger(newNo) || newNo < 1) {
@@ -1267,78 +1530,84 @@
 	  const beforePlayers = JSON.parse(JSON.stringify(players));
 	  const beforeCourts = JSON.parse(JSON.stringify(courts));
 
-	  // ตั้งหมายเลขลูกใหม่
+	  // ตั้งลูกปัจจุบัน
 	  c.shuttlecockNo = newNo;
 
-	  // จัดการ shuttlecockHistory
+	  // จัดการประวัติลูก
 	  if (window._isStartingGame) {
-		// เริ่มเกม → เริ่มประวัติใหม่
 		c.shuttlecockHistory = [newNo];
 	  } else {
-		// เพิ่มลูกธรรมดา → เพิ่มเข้า array
-		if (!Array.isArray(c.shuttlecockHistory)) {
-		  c.shuttlecockHistory = c.shuttlecockNo ? [c.shuttlecockNo] : [];
-		}
+		if (!Array.isArray(c.shuttlecockHistory)) c.shuttlecockHistory = [];
 		c.shuttlecockHistory.push(newNo);
 	  }
 
-	  // แยกกรณี "เริ่มเกม" vs "เพิ่มลูก"
+	  // --- กรณีเริ่มเกม: แค่เปลี่ยนสถานะ ---
 	  if (window._isStartingGame) {
-		pushHistory(c, players);
 		c.players.forEach(pid => {
 		  const p = byId.get(pid);
 		  if (p) {
 			p.status = 'กำลังเล่น';
 			p.availableSince = null;
-			p.gamesPlayed = (p.gamesPlayed || 0) + 1;
-			p.shuttlecocksUsed = (p.shuttlecocksUsed || 0) + 1;
 		  }
 		});
 		c.status = 'กำลังเล่น';
-	  } else {
-		// เพิ่มลูกธรรมดา → เพิ่ม shuttlecocksUsed ทุกคนในสนาม
-		(c.players || []).forEach(pid => {
+	  } 
+	  // --- กรณีเพิ่มลูก: เพิ่ม shuttlecocksUsed ---
+	  else {
+		c.players.forEach(pid => {
 		  const p = byId.get(pid);
 		  if (p) p.shuttlecocksUsed = (p.shuttlecocksUsed || 0) + 1;
 		});
 
-		// อัปเดต match_log ล่าสุดของสนามนี้ (ถ้ามีเกมกำลังเล่น)
+		// อัปเดต match_log
 		const log = getMatchLog();
 		for (let i = log.length - 1; i >= 0; i--) {
 		  if (log[i].courtId === courtId) {
 			log[i].shuttlecockHistory = [...c.shuttlecockHistory];
-			log[i].shuttlecockNo = newNo; // อัปเดต shuttlecockNo ด้วย
+			log[i].shuttlecockNo = newNo;
 			saveMatchLog(log);
 			break;
 		  }
 		}
 	  }
 
-	  savePlayers(players); saveCourts(courts);
-	  renderPlayers(); renderCourts();
+	  savePlayers(players);
+	  saveCourts(courts);
+	  renderPlayers();
+	  renderCourts();
 	  hide('confirm-shuttle-modal');
 
-	  // รีเซ็ตสถานะ
 	  const isStarting = window._isStartingGame === true;
 	  delete window._shuttleCourtId;
 	  delete window._isStartingGame;
 
 	  const action = isStarting ? 'เริ่มเกม' : 'เพิ่มลูก';
 	  const msg = `${action}แล้ว ✓ (ลูกที่ ${newNo})`;
-	  setUndo(`${action} (ลูกที่ ${newNo})`, () => {
-		savePlayers(beforePlayers); saveCourts(beforeCourts);
-		renderPlayers(); renderCourts();
+	  setUndo(msg, () => {
+		savePlayers(beforePlayers);
+		saveCourts(beforeCourts);
+		renderPlayers();
+		renderCourts();
 	  });
 	  showToast(msg, 'เลิกทำ', triggerUndo);
 	}
-
     /* ------- Assign to court ------- */
     let _assignIds=[];
-    function openAssignModal(){
-      _assignIds = Array.from(document.querySelectorAll('#player-table-body .player-checkbox:checked')).map(cb=>cb.getAttribute('data-player-id')).filter(Boolean);
-      if(_assignIds.length===0){ alert('กรุณาเลือกผู้เล่นอย่างน้อย 1 คน'); return; }
-      buildAssignCourtList(); document.getElementById('assign-auto').checked=false; show('assign-modal');
-    }
+	function openAssignModal(){
+	  // ใช้ .player-select:checked แทน .player-checkbox
+	  _assignIds = Array.from(document.querySelectorAll('#player-table-body .player-select:checked'))
+		.map(cb => cb.dataset.id)
+		.filter(Boolean);
+
+	  if(_assignIds.length === 0){
+		alert('กรุณาเลือกผู้เล่นอย่างน้อย 1 คน');
+		return;
+	  }
+
+	  buildAssignCourtList();
+	  document.getElementById('assign-auto').checked = false;
+	  show('assign-modal');
+	}
     function buildAssignCourtList(){
       const host=document.getElementById('assign-court-list'); host.innerHTML='';
       const courts=getCourts(), players=getPlayers(), byId=mapById(players);
@@ -1375,6 +1644,48 @@
       setUndo('เพิ่มผู้เล่นลงสนาม', ()=>{ savePlayers(beforePlayers); saveCourts(beforeCourts); renderPlayers(); renderCourts(); });
       showToast(`เพิ่มผู้เล่นลงสนาม ${added} คน ✓`,'เลิกทำ', triggerUndo);
     }
+	
+	
+	// เพิ่มใน init() หรือหลัง renderPlayers()
+	document.getElementById('player-table-body').addEventListener('change', (e) => {
+	  const select = e.target;
+	  if (!select.classList.contains('payment-select')) return;
+	  const playerId = select.getAttribute('data-player-id');
+	  const value = select.value;
+	  const players = getPlayers();
+	  const p = players.find(x => x.id === playerId);
+	  if (p && p.paymentStatus !== value) {
+		p.paymentStatus = value;
+
+		// 🔁 อัปเดต "สถานะ" ในผู้เล่น
+		if (value === 'เงินสด' || value === 'เงินโอน') {
+		  p.status = 'จ่ายเงินแล้ว';
+		} else {
+		  // ถ้ายังไม่จ่าย → คืนสถานะเดิม (ว่าง / ในสนาม / กำลังเล่น)
+		  // เราต้องคืนตาม logic เดิม → ใช้ helper
+		  if (p.availableSince !== null && p.status !== 'กำลังเล่น') {
+			p.status = 'ว่าง';
+		  }
+		  // แต่ถ้าเขายังอยู่ในสนาม → ต้องดูจาก courts
+		  const courts = getCourts();
+		  let inCourt = false, isPlaying = false;
+		  for (const c of courts) {
+			if (c.players?.includes(p.id)) {
+			  inCourt = true;
+			  if (c.status === 'กำลังเล่น') isPlaying = true;
+			  break;
+			}
+		  }
+		  if (isPlaying) p.status = 'กำลังเล่น';
+		  else if (inCourt) p.status = 'ในสนาม';
+		  else p.status = 'ว่าง';
+		}
+
+		savePlayers(players);
+		renderPlayers(); // 🔁 รีเรนเดอร์ทั้งตารางเพื่อจัดลำดับใหม่
+		showToast(`อัปเดตการชำระเงินของ ${p.name} เป็น "${value}" ✓`);
+	  }
+	});
 
     /* ------- Manage court (swap + move/delete/replace) ------- */
     let _manageCtx=null; let _replaceTarget=null; let _replaceCourtId=null; let _addCourtId=null;
