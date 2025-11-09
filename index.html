@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Badminton Court Manager — v8 (Tab UI)</title>
+  <title>Badminton Court Manager — v8 (Tabbed UI)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
   <style>
@@ -45,7 +45,6 @@
     .subtle{font-size:.85rem;color:var(--muted)}
     .pair-box{border:1px dashed var(--border); border-radius:14px; padding:.75rem; background:rgba(255,255,255,.02)}
     .pair-title{font-size:.9rem;color:#c7d2fe;font-weight:700;letter-spacing:.2px}
-    /* Dark select styling */
     select.soft{
       -webkit-appearance: none;
       -moz-appearance: none;
@@ -56,7 +55,7 @@
       border-radius: 12px;
       padding-right: 2.25rem;
       background-image:
-        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="%23c7d2fe" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z"/></svg>');
+        url('image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="%23c7d2fe" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z"/></svg>');
       background-repeat: no-repeat;
       background-position: right .7rem center;
       background-size: 1rem;
@@ -65,67 +64,109 @@
     select.soft option{ background:#0f172a; color:#e5e7eb; }
     select.soft::-ms-expand{ display:none; }
     .paid { background: rgba(100,100,100,.2); color: #9ca3af; border: 1px solid rgba(156,163,175,.3); }
-    /* Tab */
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
-    .tab-btn { 
-      padding: 0.5rem 1rem; 
-      border-radius: 10px; 
-      background: rgba(255,255,255,.02); 
-      border: 1px solid var(--border);
-      color: #cbd5e1;
-      font-weight: 600;
-    }
-    .tab-btn:hover { background: rgba(99,102,241,.1); color: #e5e7eb; }
-    .tab-btn.active { 
-      background: rgba(99,102,241,.2); 
-      border-color: rgba(99,102,241,.4);
-      color: white;
-    }
-    /* Toast */
     #toast-container{ position:fixed; right:16px; bottom:16px; display:flex; flex-direction:column; gap:10px; z-index:9999; }
     .toast{ background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03)); border:1px solid var(--border); border-radius:12px; padding:.75rem 1rem; min-width:260px; display:flex; align-items:center; gap:.6rem; box-shadow:0 10px 30px rgba(2,6,23,.35); }
     .toast .msg{ flex:1; font-size:.9rem; }
     .toast .undo{ border:1px solid var(--border); padding:.3rem .6rem; border-radius:10px; }
-    /* Responsive */
-    @media (max-width: 768px) {
-      .tab-btn span { display: none; }
-      .tab-btn i { margin-right: 0; }
+    th.sortable{ cursor:pointer; user-select:none; }
+    th.sortable .sort-caret{ display:inline-block; width:0; height:0; margin-left:.35rem; border-left:5px solid transparent; border-right:5px solid transparent; border-top:6px solid var(--muted); transform: translateY(-1px); opacity:.8; }
+    th.sortable.desc .sort-caret{ border-top:none; border-bottom:6px solid var(--muted); transform: translateY(2px); }
+    th.sortable.active{ color:#e2e8f0; }
+    .modal { padding: 16px; overflow-y: auto; }
+    .modal-card {
+      max-height: 88vh;
+      display: flex; flex-direction: column; overflow: hidden;
     }
+    @media (max-width: 640px){
+      .modal-card { width: 100vw; max-width: none; border-radius: 12px; }
+    }
+    #manage-modal .scroll-area {
+      flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    }
+    #manage-modal .slot { min-width: 0; overflow: hidden; }
+    #manage-modal .slot * { min-width: 0; }
+    #manage-modal .slot .name,
+    #manage-modal .slot .chip,
+    #manage-modal .slot span {
+      display: inline-block; max-width: 100%;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    #manage-modal .controls { width: 100%; }
+    #manage-modal .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: .5rem;
+      line-height: 1.2;
+      min-height: 40px;
+    }
+    #manage-modal select { min-width: 0; }
+    @media (max-width: 640px){
+      #manage-modal .left > * { width: 100%; }
+    }
+    .tab-nav {
+      display: flex;
+      gap: 1rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1rem;
+      margin-bottom: 1.5rem;
+      overflow-x: auto;
+    }
+    .tab-btn {
+      padding: 0.5rem 1rem;
+      border-radius: 10px;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--muted);
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .tab-btn:hover { color: #e5e7eb; }
+    .tab-btn.active {
+      color: #c7d2fe;
+      border-color: var(--border);
+      background: rgba(255,255,255,.03);
+    }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
   </style>
 </head>
 <body>
-  <!-- Topbar + Tab Navigation -->
+  <!-- Topbar -->
   <header class="sticky top-0 z-40 backdrop-blur supports-[backdrop-filter]:bg-white/0">
-    <div class="max-w-7xl mx-auto px-5 py-4">
-      <div class="flex items-center justify-between mb-4">
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-xl bg-white/5 border border-[var(--border)] flex items-center justify-center">
-            <i class="fa-solid fa-table-tennis-paddle-ball text-indigo-300"></i>
-          </div>
-          <h1 class="text-2xl font-bold title-grad">Court Manager</h1>
+    <div class="max-w-7xl mx-auto px-5 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-white/5 border border-[var(--border)] flex items-center justify-center">
+          <i class="fa-solid fa-table-tennis-paddle-ball text-indigo-300"></i>
         </div>
-        <div class="flex gap-2">
-          <button class="btn btn-ghost" onclick="show('settings-modal')"><i class="fa-solid fa-sliders"></i><span class="hidden sm:inline">กำหนดราคา</span></button>
-          <button class="btn" onclick="openDataModal()"><i class="fa-solid fa-database"></i><span class="hidden sm:inline">สำรอง/นำเข้า</span></button>
-          <button class="btn text-red-400" onclick="clearAllCourts()"><i class="fa-solid fa-trash"></i></button>
-        </div>
+        <h1 class="text-2xl font-bold title-grad">Court Manager</h1>
       </div>
-      <!-- Tab Menu -->
-      <nav class="flex flex-wrap gap-2 border-b border-[var(--border)] pb-2">
-        <button class="tab-btn active" data-tab="dashboard"><i class="fa-solid fa-chart-line"></i> <span>แดชบอร์ด</span></button>
-        <button class="tab-btn" data-tab="courts"><i class="fa-solid fa-table-cells"></i> <span>สนาม</span></button>
-        <button class="tab-btn" data-tab="players"><i class="fa-solid fa-users"></i> <span>ผู้เล่น</span></button>
-        <button class="tab-btn" data-tab="queue"><i class="fa-solid fa-list-check"></i> <span>คิว</span></button>
-        <button class="tab-btn" data-tab="history"><i class="fa-solid fa-clock-rotate-left"></i> <span>ประวัติ</span></button>
-      </nav>
+      <div class="flex gap-2">
+        <button class="btn btn-ghost" onclick="show('settings-modal')"><i class="fa-solid fa-sliders"></i><span class="hidden sm:inline">กำหนดราคา</span></button>
+        <button class="btn btn-ghost" onclick="show('add-player-modal')"><i class="fa-solid fa-user-plus"></i><span class="hidden sm:inline">เพิ่มผู้เล่น</span></button>
+        <button class="btn btn-ghost" onclick="show('add-court-modal')"><i class="fa-solid fa-plus"></i><span class="hidden sm:inline">เพิ่มสนาม</span></button>
+        <button class="btn" onclick="openDataModal()"><i class="fa-solid fa-database"></i><span class="hidden sm:inline">สำรอง/นำเข้า</span></button>
+        <button class="btn" onclick="clearAllCourts()"><i class="fa-solid fa-trash"></i></button>
+      </div>
     </div>
+    <div class="divider"></div>
   </header>
 
   <main class="max-w-7xl mx-auto px-5 py-6">
-    <!-- Tab: Dashboard -->
-    <div id="tab-dashboard" class="tab-content active">
-      <section class="grid sm:grid-cols-3 gap-4 mb-8">
+    <!-- Tab Navigation -->
+    <nav class="tab-nav">
+      <button class="tab-btn active" data-tab="overview">ภาพรวม</button>
+      <button class="tab-btn" data-tab="courts">สนาม</button>
+      <button class="tab-btn" data-tab="players">ผู้เล่น</button>
+      <button class="tab-btn" data-tab="queue">คิว</button>
+      <button class="tab-btn" data-tab="history">ประวัติ</button>
+    </nav>
+
+    <!-- Overview Tab -->
+    <div id="tab-overview" class="tab-content active">
+      <div class="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <div class="panel p-5">
           <div class="subtle">ราคาลูกแบด</div>
           <div class="text-2xl font-bold"><span id="shuttlecock-price-display">20</span> บาท</div>
@@ -137,100 +178,112 @@
         <div class="panel p-5">
           <div class="subtle">คิวทั้งหมด</div>
           <div class="text-2xl font-bold"><span id="queue-count">0</span> คิว</div>
-          <div class="flex gap-2 mt-2">
-            <button class="btn btn-primary" onclick="openManualMatch()"><i class="fa-solid fa-hand-pointer"></i> จับคู่ด้วยมือ</button>
-            <button class="btn btn-green" onclick="openQueueModal()"><i class="fa-solid fa-list-check"></i> ดูคิว</button>
+          <div class="flex gap-2 mt-3">
+            <button class="btn btn-primary" onclick="openManualMatch()"><i class="fa-solid fa-hand-pointer"></i><span class="hidden sm:inline">จับคู่ด้วยมือ</span></button>
+            <button class="btn btn-green" onclick="openQueueModal()"><i class="fa-solid fa-list-check"></i><span class="hidden sm:inline">ดูคิว</span></button>
           </div>
         </div>
         <div class="panel p-5">
           <div class="subtle">ประวัติทั้งหมด</div>
           <div class="text-2xl font-bold"><span id="history-count">0</span> รายการ</div>
-          <div class="flex gap-2 mt-2">
-            <button class="btn btn-primary" onclick="openHistoryAllModal()"><i class="fa-solid fa-clock-rotate-left"></i> ดูประวัติทั้งหมด</button>
-            <button class="btn btn-ghost text-red-400 hover:text-red-300 hover:bg-red-500/10" onclick="clearMatchLogFromCard()"><i class="fa-solid fa-trash-can"></i> ล้างประวัติ</button>
+          <div class="flex flex-wrap gap-2 mt-3">
+            <button class="btn btn-primary" onclick="openHistoryAllModal()">
+              <i class="fa-solid fa-clock-rotate-left"></i>
+              <span class="hidden sm:inline">ดูประวัติทั้งหมด</span>
+            </button>
+            <button class="btn btn-ghost text-red-400 hover:text-red-300 hover:bg-red-500/10" onclick="clearMatchLogFromCard()">
+              <i class="fa-solid fa-trash-can"></i>
+              <span class="hidden sm:inline">ล้างประวัติ</span>
+            </button>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Courts Tab -->
+    <div id="tab-courts" class="tab-content">
+      <section class="space-y-3">
+        <div class="heading">สนาม</div>
+        <div id="court-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+      </section>
+    </div>
+
+    <!-- Players Tab -->
+    <div id="tab-players" class="tab-content">
+      <section class="space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="heading">ผู้เล่น</div>
+          <div class="flex flex-wrap gap-2">
+            <input id="filter-search" class="soft px-3 py-2" placeholder="ค้นหาชื่อ...">
+            <select id="filter-skill" class="soft px-3 py-2">
+              <option value="">ทุกมือ</option>
+              <option>BG</option><option>N</option><option>S</option><option>P-</option><option>P</option><option>P+</option><option>C</option>
+            </select>
+            <select id="filter-status" class="soft px-3 py-2">
+              <option value="">ทุกสถานะ</option>
+              <option value="ว่าง">ว่าง</option>
+              <option value="ในสนาม">ในสนาม</option>
+              <option value="กำลังเล่น">กำลังเล่น</option>
+            </select>
+            <button class="btn" onclick="selectAllFiltered()"><i class="fa-regular fa-square-check"></i> เลือกทั้งหมด(ตามที่กรอง)</button>
+            <button class="btn" onclick="openAssignModal()"><i class="fa-solid fa-arrow-right"></i> เพิ่มผู้เล่นที่เลือกลงสนาม</button>
+          </div>
+        </div>
+        <div class="panel overflow-x-auto">
+          <table class="table min-w-full text-sm">
+            <thead class="bg-white/5">
+              <tr>
+                <th class="text-left p-3"><input id="select-all" type="checkbox" class="accent-indigo-400"></th>
+                <th class="text-center p-3">#</th>
+                <th class="text-left p-3">ชื่อ</th>
+                <th class="text-center p-3">มือ</th>
+                <th class="text-center p-3">สถานะ</th>
+                <th class="text-center p-3 sortable" data-key="games">เกม <span class="sort-caret"></span></th>
+                <th class="text-center p-3 sortable" data-key="shuttles">ลูกแบด <span class="sort-caret"></span></th>
+                <th class="text-center p-3 sortable" data-key="cost">ค่าใช้จ่าย <span class="sort-caret"></span></th>
+                <th class="text-center p-3">สถานะการชำระเงิน</th>
+                <th class="text-center p-3">จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="player-table-body"></tbody>
+          </table>
         </div>
       </section>
     </div>
 
-    <!-- Tab: Courts -->
-    <div id="tab-courts" class="tab-content">
-      <div class="flex items-center justify-between mb-4">
-        <div class="heading">สนาม</div>
-        <button class="btn btn-green" onclick="show('add-court-modal')"><i class="fa-solid fa-plus"></i> เพิ่มสนาม</button>
-      </div>
-      <div id="court-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
-    </div>
-
-    <!-- Tab: Players -->
-    <div id="tab-players" class="tab-content">
-      <div class="flex items-center justify-between mb-4">
-        <div class="heading">ผู้เล่น</div>
-        <button class="btn btn-primary" onclick="show('add-player-modal')"><i class="fa-solid fa-user-plus"></i> เพิ่มผู้เล่น</button>
-      </div>
-      <div class="flex flex-wrap gap-2 mb-4">
-        <input id="filter-search" class="soft px-3 py-2" placeholder="ค้นหาชื่อ...">
-        <select id="filter-skill" class="soft px-3 py-2">
-          <option value="">ทุกมือ</option>
-          <option>BG</option><option>N</option><option>S</option><option>P-</option><option>P</option><option>P+</option><option>C</option>
-        </select>
-        <select id="filter-status" class="soft px-3 py-2">
-          <option value="">ทุกสถานะ</option>
-          <option value="ว่าง">ว่าง</option>
-          <option value="ในสนาม">ในสนาม</option>
-          <option value="กำลังเล่น">กำลังเล่น</option>
-        </select>
-        <button class="btn" onclick="selectAllFiltered()"><i class="fa-regular fa-square-check"></i> เลือกทั้งหมด(ตามที่กรอง)</button>
-        <button class="btn" onclick="openAssignModal()"><i class="fa-solid fa-arrow-right"></i> เพิ่มผู้เล่นที่เลือกลงสนาม</button>
-      </div>
-      <div class="panel overflow-x-auto">
-        <table class="table min-w-full text-sm">
-          <thead class="bg-white/5">
-            <tr>
-              <th class="text-left p-3"><input id="select-all" type="checkbox" class="accent-indigo-400"></th>
-              <th class="text-center p-3">#</th>
-              <th class="text-left p-3">ชื่อ</th>
-              <th class="text-center p-3">มือ</th>
-              <th class="text-center p-3">สถานะ</th>
-              <th class="text-center p-3 sortable" data-key="games">เกม <span class="sort-caret"></span></th>
-              <th class="text-center p-3 sortable" data-key="shuttles">ลูกแบด <span class="sort-caret"></span></th>
-              <th class="text-center p-3 sortable" data-key="cost">ค่าใช้จ่าย <span class="sort-caret"></span></th>
-              <th class="text-center p-3">สถานะการชำระเงิน</th>
-              <th class="text-center p-3">จัดการ</th>
-            </tr>
-          </thead>
-          <tbody id="player-table-body"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Tab: Queue -->
+    <!-- Queue Tab -->
     <div id="tab-queue" class="tab-content">
-      <div class="flex items-center justify-between mb-4">
-        <div class="heading">คิว</div>
+      <div class="flex justify-between items-center mb-4">
+        <div class="heading">คิวทั้งหมด</div>
         <div class="flex gap-2">
-          <button class="btn" onclick="buildQueueMatchesFromAvailable()"><i class="fa-solid fa-robot"></i> จับคู่อัตโนมัติ</button>
           <button class="btn btn-primary" onclick="openManualMatch()"><i class="fa-solid fa-hand-pointer"></i> จับคู่ด้วยมือ</button>
-          <button class="btn btn-ghost text-red-400" onclick="clearQueueMatches()"><i class="fa-solid fa-broom"></i> ล้างคิว</button>
+          <button class="btn btn-green" onclick="buildQueueMatchesFromAvailable()"><i class="fa-solid fa-wand-magic-sparkles"></i> สร้างคิวอัตโนมัติ</button>
+          <button class="btn" onclick="clearQueueMatches()"><i class="fa-solid fa-broom"></i> ล้างคิว</button>
         </div>
       </div>
-      <div id="queue-container" class="space-y-2"></div>
+      <div class="panel p-4">
+        <div id="queue-tab-content" class="space-y-3"></div>
+      </div>
     </div>
 
-    <!-- Tab: History -->
+    <!-- History Tab -->
     <div id="tab-history" class="tab-content">
-      <div class="flex items-center justify-between mb-4">
+      <div class="flex justify-between items-center mb-4">
         <div class="heading">ประวัติทั้งหมด</div>
-        <button class="btn btn-ghost text-red-400 hover:text-red-300 hover:bg-red-500/10" onclick="clearMatchLog()"><i class="fa-solid fa-trash-can"></i> ล้างประวัติ</button>
+        <button class="btn btn-ghost text-red-400 hover:text-red-300 hover:bg-red-500/10" onclick="clearMatchLogFromCard()">
+          <i class="fa-solid fa-trash-can"></i> ล้างประวัติ
+        </button>
       </div>
-      <div id="history-all-content-side" class="soft p-4 max-h-[70vh] overflow-auto"></div>
+      <div class="panel p-4">
+        <div id="history-tab-content" class="space-y-3"></div>
+      </div>
     </div>
   </main>
 
   <!-- Toast container -->
   <div id="toast-container"></div>
 
-  <!-- Settings / Add Court / Add Player -->
+  <!-- All Modals (unchanged from original) -->
   <div id="settings-modal" class="modal fixed inset-0 hidden items-center justify-center z-50">
     <div class="modal-card w-[92vw] max-w-md p-6">
       <div class="flex items-center justify-between mb-4">
@@ -253,7 +306,6 @@
       </form>
     </div>
   </div>
-
   <div id="add-court-modal" class="modal fixed inset-0 hidden items-center justify-center z-50">
     <div class="modal-card w-[92vw] max-w-md p-6">
       <div class="flex items-center justify-between mb-4">
@@ -276,7 +328,6 @@
       </form>
     </div>
   </div>
-
   <div id="add-player-modal" class="modal fixed inset-0 hidden items-center justify-center z-50">
     <div class="modal-card w-[92vw] max-w-md p-6">
       <div class="flex items-center justify-between mb-4">
@@ -307,8 +358,6 @@
       </form>
     </div>
   </div>
-
-  <!-- History All Modal -->
   <div id="history-all-modal" class="modal fixed inset-0 hidden items-center justify-center z-50">
     <div class="modal-card w-[92vw] max-w-lg p-6">
       <div class="flex items-center justify-between mb-4">
@@ -321,8 +370,6 @@
       </div>
     </div>
   </div>
-
-  <!-- Queue Modal (Popup) -->
   <div id="queue-modal" class="modal fixed inset-0 hidden items-center justify-center z-50">
     <div class="modal-card w-[92vw] max-w-lg p-6">
       <div class="flex items-center justify-between mb-4">
@@ -336,8 +383,6 @@
       </div>
     </div>
   </div>
-
-  <!-- Manual Queue Modal -->
   <div id="queue-manual-modal" class="modal fixed inset-0 hidden items-center justify-center z-50 overflow-y-auto p-4">
     <div class="modal-card w-[94vw] max-w-4xl max-h-[90vh] p-0 overflow-auto">
       <div class="px-6 py-4 border-b border-[var(--border)] flex items-center justify-between">
@@ -367,8 +412,6 @@
       </div>
     </div>
   </div>
-
-  <!-- Manage Modal -->
   <div id="manage-modal" class="modal fixed inset-0 hidden items-center justify-center z-50 overflow-y-auto p-4">
     <div class="modal-card w-[94vw] max-w-3xl p-6">
       <div class="flex items-center justify-between mb-4">
@@ -413,8 +456,6 @@
       </div>
     </div>
   </div>
-
-  <!-- Free picker -->
   <div id="free-picker-modal" class="modal fixed inset-0 hidden items-center justify-center z-50">
     <div class="modal-card w-[92vw] max-w-md p-6">
       <div class="flex items-center justify-between mb-3">
@@ -425,8 +466,6 @@
       <div id="free-list" class="soft p-3 max-h-[55vh] overflow-auto text-sm"></div>
     </div>
   </div>
-
-  <!-- History -->
   <div id="history-modal" class="modal fixed inset-0 hidden items-center justify-center z-50">
     <div class="modal-card w-[92vw] max-w-lg p-6">
       <div class="flex items-center justify-between mb-3">
@@ -436,8 +475,6 @@
       <div id="history-list" class="soft p-3 max-h-[60vh] overflow-auto"></div>
     </div>
   </div>
-
-  <!-- Assign / Shuttle / Queue send -->
   <div id="assign-modal" class="modal fixed inset-0 hidden items-center justify-center z-50">
     <div class="modal-card w-[94vw] max-w-2xl p-6">
       <div class="flex items-center justify-between mb-4">
@@ -456,7 +493,6 @@
       </div>
     </div>
   </div>
-
   <div id="confirm-shuttle-modal" class="modal fixed inset-0 hidden items-center justify-center z-50">
     <div class="modal-card w-[92vw] max-w-md p-6">
       <div class="flex items-center justify-between mb-3">
@@ -477,7 +513,6 @@
       </div>
     </div>
   </div>
-
   <div id="queue-send-modal" class="modal fixed inset-0 hidden items-center justify-center z-50">
     <div class="modal-card w-[92vw] max-w-md p-6">
       <div class="flex items-center justify-between mb-3">
@@ -492,8 +527,6 @@
       </div>
     </div>
   </div>
-
-  <!-- Modal เลือกลูก -->
   <div id="shuttle-type-modal" class="modal fixed inset-0 hidden items-center justify-center z-50">
     <div class="modal-card w-[92vw] max-w-md p-6">
       <div class="flex items-center justify-between mb-4">
@@ -522,8 +555,6 @@
       </div>
     </div>
   </div>
-
-  <!-- Data modal -->
   <div id="data-modal" class="modal fixed inset-0 hidden items-center justify-center z-50">
     <div class="modal-card w-[92vw] max-w-lg p-6">
       <div class="flex items-center justify-between mb-3">
@@ -542,7 +573,114 @@
   </div>
 
   <script>
-    /* ------- Utilities / Storage ------- */
+    // =================== TAB NAVIGATION ===================
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tabId = btn.getAttribute('data-tab');
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(`tab-${tabId}`).classList.add('active');
+        if (tabId === 'queue') renderQueueTab();
+        if (tabId === 'history') renderHistoryTab();
+      });
+    });
+
+    function renderQueueTab() {
+      const content = document.getElementById('queue-tab-content');
+      const q = getQueue();
+      const players = getPlayers();
+      const byId = mapById(players);
+      if (!q.matches || q.matches.length === 0) {
+        content.innerHTML = '<div class="muted text-center py-4">ยังไม่มีคิว</div>';
+        return;
+      }
+      let html = '';
+      q.matches.forEach((mt, idx) => {
+        const [[A, B], [C, D]] = mt.pairs;
+        const n = id => byId.get(id)?.name || '—';
+        const s = id => byId.get(id)?.skill || 'N';
+        html += `
+          <div class="panel p-4">
+            <div class="flex items-center justify-between">
+              <div class="font-semibold">คิวที่ ${idx + 1}</div>
+              <div class="flex gap-1">
+                <button class="icon-btn" title="สลับเป็น 1–3/2–4" onclick="swapQueuePairs(${idx}, 'acbd')">
+                  <i class="fa-solid fa-arrows-left-right-to-line"></i>
+                </button>
+                <button class="icon-btn" title="สลับเป็น 1–4/2–3" onclick="swapQueuePairs(${idx}, 'adbc')">
+                  <i class="fa-solid fa-shuffle"></i>
+                </button>
+                <button class="icon-btn" title="แก้ไข" onclick="openQueueEdit(${idx})">
+                  <i class="fa-solid fa-pen"></i>
+                </button>
+                <button class="icon-btn" title="ส่งลงสนาม" onclick="openQueueSendModal(${idx})">
+                  <i class="fa-solid fa-paper-plane"></i>
+                </button>
+                <button class="icon-btn" title="ลบ" onclick="deleteQueueMatch(${idx})">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
+            </div>
+            <div class="mt-2 text-sm">
+              <span class="chip">${n(A)} <span class="tag">มือ ${s(A)}</span></span>
+              <span class="muted">×</span>
+              <span class="chip">${n(B)} <span class="tag">มือ ${s(B)}</span></span>
+              <span class="muted">เจอ</span>
+              <span class="chip">${n(C)} <span class="tag">มือ ${s(C)}</span></span>
+              <span class="muted">×</span>
+              <span class="chip">${n(D)} <span class="tag">มือ ${s(D)}</span></span>
+            </div>
+          </div>
+        `;
+      });
+      content.innerHTML = html;
+    }
+
+    function renderHistoryTab() {
+      const content = document.getElementById('history-tab-content');
+      const log = getMatchLog();
+      const players = getPlayers();
+      const byId = mapById(players);
+      if (!log || log.length === 0) {
+        content.innerHTML = '<div class="muted text-center py-4">ยังไม่มีประวัติ</div>';
+        return;
+      }
+      const sorted = [...log].sort((a, b) => (b.ts || 0) - (a.ts || 0));
+      let html = '';
+      sorted.forEach((ev, idx) => {
+        const pairs = ev.pairs || [[], []];
+        const [A, B, C, D] = [pairs?.[0]?.[0], pairs?.[0]?.[1], pairs?.[1]?.[0], pairs?.[1]?.[1]];
+        const n = id => byId.get(id)?.name || '—';
+        const s = id => byId.get(id)?.skill || 'N';
+        const fmt = ts => {
+          const d = new Date(ts);
+          const pad = n => String(n).padStart(2, '0');
+          return `${pad(d.getDate())}/${pad(d.getMonth() + 1)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        };
+        html += `
+          <div class="panel p-4">
+            <div class="flex items-center justify-between">
+              <div class="font-semibold">ลำดับ ${ev.seq || idx + 1}</div>
+              <div class="muted text-xs">${fmt(ev.ts)}</div>
+            </div>
+            <div class="mt-2 text-sm">
+              <div class="muted mb-1">${ev.courtName || '—'} • ลูกที่ ${ev.shuttlecockHistory?.length ? ev.shuttlecockHistory.join(', ') : (ev.shuttlecockNo || '?')}</div>
+              <span class="chip">${n(A)} <span class="tag">มือ ${s(A)}</span></span>
+              <span class="muted">×</span>
+              <span class="chip">${n(B)} <span class="tag">มือ ${s(B)}</span></span>
+              <span class="muted">เจอ</span>
+              <span class="chip">${n(C)} <span class="tag">มือ ${s(C)}</span></span>
+              <span class="muted">×</span>
+              <span class="chip">${n(D)} <span class="tag">มือ ${s(D)}</span></span>
+            </div>
+          </div>
+        `;
+      });
+      content.innerHTML = html;
+    }
+
+    // =================== ORIGINAL UTILITIES ===================
     const uuid=()=> (crypto?.randomUUID?crypto.randomUUID():'id-'+Math.random().toString(36).slice(2)+Date.now());
     const show=id=>{const el=document.getElementById(id); if(el){el.classList.remove('hidden'); el.classList.add('flex');}};
     const hide=id=>{const el=document.getElementById(id); if(el){el.classList.add('hidden'); el.classList.remove('flex');}};
@@ -555,27 +693,6 @@
     const mapById = arr => { const m=new Map(); arr.forEach(x=>m.set(x.id,x)); return m; };
     const minutesSince=ts=>!ts?0:(Math.floor((Date.now()-ts)/60000)||'<1');
 
-    /* ------- Tab Navigation ------- */
-    function showTab(tabName) {
-      history.pushState(null, '', `#${tabName}`);
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-      document.getElementById(`tab-${tabName}`).classList.add('active');
-      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-      document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
-
-      // เรียก render ตาม tab
-      if (tabName === 'courts') renderCourts();
-      else if (tabName === 'players') renderPlayers();
-      else if (tabName === 'queue') renderQueue();
-      else if (tabName === 'history') renderHistoryTab();
-    }
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-      btn.addEventListener('click', () => showTab(btn.dataset.tab));
-    });
-    const initialTab = location.hash.slice(1) || 'dashboard';
-    showTab(initialTab);
-
-    /* ------- Toast + Undo ------- */
     let _undo = null;
     function showToast(msg, undoLabel=null, undoHandler=null, timeoutMs=6000){
       const cont=document.getElementById('toast-container');
@@ -591,7 +708,6 @@
     function setUndo(label, undoFn){ _undo = {label, undoFn}; }
     function triggerUndo(){ if(_undo?.undoFn){ _undo.undoFn(); _undo=null; } }
 
-    /* ------- Price ------- */
     function getPrice(){return {shuttle:parseFloat(localStorage.getItem('shuttlecockPrice')??'20'), fee:parseFloat(localStorage.getItem('courtRentalFee')??'0')}};
     function updatePriceDisplay(){const p=getPrice(); document.getElementById('shuttlecock-price-display').textContent=p.shuttle; document.getElementById('court-price').textContent=p.fee;}
     document.getElementById('settings-form').addEventListener('submit',e=>{
@@ -602,7 +718,6 @@
       showToast('บันทึกราคาเรียบร้อย ✓');
     });
 
-    /* ------- Data migration ------- */
     function migrate(){
       let players=getPlayers(); let changed=false;
       for(const p of players){
@@ -626,7 +741,6 @@
       saveCourts(courts);
     }
 
-    /* ------- Match Log ------- */
     const saveMatchLog = v => save('match_log', v);
     const getMatchLog  = () => load('match_log', []);
 
@@ -654,57 +768,54 @@
       const lastSeq = (log.length>0 && typeof (last && last.seq)==='number') ? last.seq : log.length;
       ev.seq = lastSeq + 1;
       log.push(ev); saveMatchLog(log);
+      renderAllHistoryTab();
       updateHistoryCount();
     }
 
-    function renderHistoryTab() {
-      const host = document.getElementById('history-all-content-side');
-      if (!host) return;
-      host.innerHTML = '<div class="muted">กำลังโหลด...</div>';
-      const log = getMatchLog();
-      const players = getPlayers();
-      const byId = mapById(players);
-      if (log.length === 0) {
-        host.innerHTML = '<div class="muted text-center py-4">ยังไม่มีประวัติ</div>';
-        return;
-      }
-      const sorted = [...log].sort((a, b) => (b.ts || 0) - (a.ts || 0));
-      let html = '';
-      sorted.forEach((ev, idx) => {
+    function renderAllHistoryTab(){
+      const players=getPlayers(), byId=mapById(players);
+      const raw = getMatchLog().slice();
+      if(raw.length===0) return;
+      const log = raw.slice().sort((a,b)=>(b.ts||0)-(a.ts||0));
+      const fmt=ts=>{const d=new Date(ts),pad=n=>String(n).padStart(2,'0');return `${pad(d.getHours())}:${pad(d.getMinutes())} • ${pad(d.getDate())}/${d.getMonth()+1}/${d.getFullYear()}`};
+      log.forEach(ev=>{
         const pairs = ev.pairs||[[],[]];
         const [A,B,C,D] = [pairs?.[0]?.[0], pairs?.[0]?.[1], pairs?.[1]?.[0], pairs?.[1]?.[1]];
         const n=id=>byId.get(id)?.name||'—', s=id=>byId.get(id)?.skill||'N';
-        const fmt = ts => {
-          const d = new Date(ts);
-          const pad = n => String(n).padStart(2, '0');
-          return `${pad(d.getDate())}/${pad(d.getMonth() + 1)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-        };
-        html += `
-          <div class="panel p-4 mb-3">
-            <div class="flex items-center justify-between">
-              <div class="font-semibold">ลำดับ ${ev.seq || idx + 1}</div>
-              <div class="muted text-xs">${fmt(ev.ts)}</div>
-            </div>
-            <div class="mt-2 text-sm">
-              <div class="muted mb-1">${ev.courtName || '—'} • ลูก: ${ev.shuttlecockHistory?.length ? ev.shuttlecockHistory.join(', ') : (ev.shuttlecockNo || '?')}</div>
-              <span class="chip">${n(A)} <span class="tag">มือ ${s(A)}</span></span>
-              <span class="muted">×</span>
-              <span class="chip">${n(B)} <span class="tag">มือ ${s(B)}</span></span>
-              <span class="muted">เจอ</span>
-              <span class="chip">${n(C)} <span class="tag">มือ ${s(C)}</span></span>
-              <span class="muted">×</span>
-              <span class="chip">${n(D)} <span class="tag">มือ ${s(D)}</span></span>
-            </div>
-          </div>
-        `;
+        if(document.getElementById('history-tab-content')) {
+          const row=document.createElement('div'); row.className='border-b border-[var(--border)] py-2';
+          row.innerHTML = `<div class="font-semibold">ลำดับ ${ev.seq||'?'} • ${ev.courtName||'—'}</div>
+              <div class="muted">
+                <span class="chip">${n(A)} <span class="tag">มือ ${s(A)}</span></span>
+                <span class="muted">×</span>
+                <span class="chip">${n(B)} <span class="tag">มือ ${s(B)}</span></span>
+                <span class="muted">เจอ</span>
+                <span class="chip">${n(C)} <span class="tag">มือ ${s(C)}</span></span>
+                <span class="muted">×</span>
+                <span class="chip">${n(D)} <span class="tag">มือ ${s(D)}</span></span>
+              </div>
+              <div class="muted text-xs">${fmt(ev.ts)}</div>`;
+          document.getElementById('history-tab-content').appendChild(row);
+        }
       });
-      host.innerHTML = html;
     }
 
+    try{
+      const _pushHistory_orig = pushHistory;
+      pushHistory = function(court, players){
+        _pushHistory_orig(court, players);
+        try{ appendMatchLog(court); }catch(e){}
+      };
+    }catch(e){}
+
+    function clearMatchLogFromCard(){
+      if(!confirm('ยืนยันการล้างประวัติทั้งหมด?\n(จะไม่สามารถกู้คืนได้)')) return;
+      clearMatchLog();
+    }
     function clearMatchLog(){
       try{
         save('match_log', []);
-        renderHistoryTab();
+        if(document.getElementById('history-tab-content')) document.getElementById('history-tab-content').innerHTML = '<div class="muted text-center py-4">ยังไม่มีประวัติ</div>';
         updateHistoryCount();
         showToast('ล้างประวัติรวมแล้ว ✓');
       }catch(e){
@@ -712,12 +823,6 @@
       }
     }
 
-    function clearMatchLogFromCard(){
-      if(!confirm('ยืนยันการล้างประวัติทั้งหมด?\n(จะไม่สามารถกู้คืนได้)')) return;
-      clearMatchLog();
-    }
-
-    /* ------- Helpers ------- */
     function ensureAvailableSince(players){
       const now=Date.now();
       players.forEach(p=>{
@@ -739,7 +844,6 @@
       return c;
     }
 
-    /* ------- History ------- */
     const opponentIndex = idx => (idx%2===0)? idx+1 : idx-1;
     function pushHistory(court, players){
       const byId=mapById(players), ts=Date.now();
@@ -757,26 +861,7 @@
         });
       });
     }
-    function openHistory(id){
-      const players=getPlayers(), p=players.find(x=>x.id===id); if(!p) return;
-      document.getElementById('history-player-name').textContent=p.name||'—';
-      const host=document.getElementById('history-list'); host.innerHTML='';
-      const byId=mapById(players);
-      const fmt=ts=>{const d=new Date(ts),pad=n=>String(n).padStart(2,'0');return `${pad(d.getHours())}:${pad(d.getMinutes())} • ${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`};
-      const hist=[...(p.history||[])].sort((a,b)=>(b.ts||0)-(a.ts||0));
-      if(hist.length===0){ host.innerHTML='<div class="muted">ยังไม่มีประวัติ</div>'; show('history-modal'); return; }
-      hist.forEach(h=>{
-        const partner=byId.get(h.partnerId)?.name||'—';
-        const opp=(h.opponentsIds||[]).map(x=>byId.get(x)?.name||'—').join(', ')||'—';
-        const row=document.createElement('div'); row.className='border-b border-[var(--border)] py-2';
-        row.innerHTML=`<div><div class="font-semibold">ตา ${h.round} • ${h.courtName||'—'} </div><div class="muted text-xs">คู่กับ ${partner} • คู่แข่ง ${opp}</div></div><div class="muted text-xs">${fmt(h.ts)}</div>`;
-        host.appendChild(row);
-      });
-      show('history-modal');
-    }
-    window.openHistory=openHistory;
 
-    /* ------- Filters ------- */
     let _filter = {q:'', skill:'', status:''};
     const filterSearch=document.getElementById('filter-search');
     const filterSkill=document.getElementById('filter-skill');
@@ -791,38 +876,60 @@
       return true;
     }
 
-    /* Sorting headers setup */
     let _sort = {key:null, dir:1};
+    (function restoreSort(){
+      try{ const s = JSON.parse(localStorage.getItem('playerSort')||'null'); if(s) window._sort=s; }catch{ window._sort={key:null, dir:1}; }
+    })();
+
+    function setupSortableHeaders(){
+      const map = {'เกม':'games','ลูกแบด':'shuttles','ค่าใช้จ่าย':'cost'};
+      const ths = document.querySelectorAll('thead th');
+      ths.forEach(th=>{
+        const label = (th.textContent||'').trim();
+        if(map[label]){
+          th.classList.add('sortable');
+          th.setAttribute('data-key', map[label]);
+          if(!th.querySelector('.sort-caret')){
+            const span=document.createElement('span'); span.className='sort-caret'; th.appendChild(span);
+          }
+        }
+      });
+      const thead=document.querySelector('thead');
+      if(!thead.__sortBound){
+        thead.addEventListener('click', e=>{
+          const th = e.target.closest('th.sortable'); if(!th) return;
+          const key = th.getAttribute('data-key');
+          if(_sort.key===key){ _sort.dir = -_sort.dir; } else { _sort.key = key; _sort.dir = 1; }
+          localStorage.setItem('playerSort', JSON.stringify(_sort));
+          renderPlayers();
+        });
+        thead.__sortBound = true;
+      }
+      applySortHeaders();
+    }
     function applySortHeaders(){
       const ths = document.querySelectorAll('thead th.sortable');
       ths.forEach(th=>{
         th.classList.remove('active','desc');
         const key=th.getAttribute('data-key');
-        if(window._sort && key===_sort.key){
+        if(key===_sort.key){
           th.classList.add('active');
           if(_sort.dir===-1) th.classList.add('desc');
         }
       });
     }
 
-    (function restoreSort(){
-      try{ const s = JSON.parse(localStorage.getItem('playerSort')||'null'); if(s) window._sort=s; }catch{ window._sort={key:null, dir:1}; }
-    })();
-
-    /* ------- Players render ------- */
     let _editPlayerId=null; let _editingForm=false;
-
-    function isPaid(p) {
-      return p.paymentStatus === 'เงินสด' || p.paymentStatus === 'เงินโอน';
-    }
-
     function renderPlayers(){
       const tbody = document.getElementById('player-table-body');
+      if (!tbody) return;
       tbody.innerHTML = '';
       const players = ensureAvailableSince(getPlayers());
       savePlayers(players);
       const {shuttle, fee} = getPrice();
       const data = players.filter(passFilter);
+
+      const isPaid = (p) => p.paymentStatus === 'เงินสด' || p.paymentStatus === 'เงินโอน';
       const getVal = (p) => {
         if (_sort.key === 'games') return p.gamesPlayed || 0;
         if (_sort.key === 'shuttles') return p.shuttlecocksUsed || 0;
@@ -832,11 +939,12 @@
         }
         return 0;
       };
+
       data.sort((a, b) => {
         const aPaid = isPaid(a);
         const bPaid = isPaid(b);
         if (aPaid === bPaid) {
-          if (_sort.key) {
+          if (window._sort && _sort.key) {
             const va = getVal(a), vb = getVal(b);
             if (va === vb) return (a.name || '').localeCompare(b.name || '');
             return (va - vb) * (_sort.dir || 1);
@@ -851,6 +959,7 @@
         }
         return aPaid ? 1 : -1;
       });
+
       data.forEach((p, i) => {
         const feeOnce = (p.gamesPlayed || 0) > 0 ? fee : 0;
         const cost = (p.shuttlecocksUsed || 0) * shuttle + feeOnce;
@@ -895,6 +1004,7 @@
           </tr>
         `);
       });
+
       const master = document.getElementById('select-all');
       if (master) {
         master.checked = data.every(p => p.selected);
@@ -909,9 +1019,10 @@
           renderPlayers();
         };
       }
+
       document.getElementById('queue-count').textContent = getQueue().matches?.length || 0;
       setupPlayerSelection();
-      applySortHeaders();
+      if (typeof applySortHeaders === 'function') applySortHeaders();
     }
 
     function setupPlayerSelection() {
@@ -927,39 +1038,13 @@
             renderPlayers();
           }
         };
+        const players = getPlayers();
+        const p = players.find(x => x.id === cb.dataset.id);
+        if (p && p.selected) {
+          cb.checked = true;
+        }
       });
     }
-
-    document.getElementById('player-table-body').addEventListener('change', (e) => {
-      const select = e.target;
-      if (!select.classList.contains('payment-select')) return;
-      const playerId = select.getAttribute('data-player-id');
-      const value = select.value;
-      const players = getPlayers();
-      const p = players.find(x => x.id === playerId);
-      if (p && p.paymentStatus !== value) {
-        p.paymentStatus = value;
-        if (value === 'เงินสด' || value === 'เงินโอน') {
-          p.status = 'จ่ายเงินแล้ว';
-        } else {
-          const courts = getCourts();
-          let inCourt = false, isPlaying = false;
-          for (const c of courts) {
-            if (c.players?.includes(p.id)) {
-              inCourt = true;
-              if (c.status === 'กำลังเล่น') isPlaying = true;
-              break;
-            }
-          }
-          if (isPlaying) p.status = 'กำลังเล่น';
-          else if (inCourt) p.status = 'ในสนาม';
-          else p.status = 'ว่าง';
-        }
-        savePlayers(players);
-        renderPlayers();
-        showToast(`อัปเดตการชำระเงินของ ${p.name} เป็น "${value}" ✓`);
-      }
-    });
 
     function addPlayer() {
       const name = prompt('ชื่อผู้เล่น');
@@ -981,6 +1066,11 @@
       renderCourts();
     }
 
+    function selectAllFiltered(){
+      document.querySelectorAll('#player-table-body .player-select').forEach(cb=>cb.checked=true);
+      showToast('เลือกผู้เล่นตามการกรองแล้ว ✓');
+    }
+
     function openEditPlayer(id, safeName){
       _editPlayerId=id;
       const players=getPlayers(); const p=players.find(x=>x.id===id);
@@ -993,6 +1083,7 @@
       submitBtn.classList.remove('btn-primary'); submitBtn.classList.add('btn-green');
       _editingForm = true;
     }
+
     document.getElementById('add-player-form').addEventListener('submit',e=>{
       e.preventDefault();
       const name=document.getElementById('player-name-input').value.trim();
@@ -1022,14 +1113,15 @@
       saveCourts(courts);
       const q=getQueue(); q.matches=(q.matches||[]).filter(mt=> !mt.pairs.some(pr=>pr.includes(id))); saveQueue(q);
       players=players.filter(x=>x.id!==id); savePlayers(players);
-      renderPlayers(); renderCourts(); renderQueue();
-      setUndo('ลบผู้เล่น', ()=>{ savePlayers(before.players); saveCourts(before.courts); saveQueue(before.queue); renderPlayers(); renderCourts(); renderQueue(); });
+      renderPlayers(); renderCourts(); renderQueueTab();
+      setUndo('ลบผู้เล่น', ()=>{ savePlayers(before.players); saveCourts(before.courts); saveQueue(before.queue); renderPlayers(); renderCourts(); renderQueueTab(); });
       showToast('ลบผู้เล่นแล้ว', 'เลิกทำ', triggerUndo);
     }
 
-    /* ------- Courts ------- */
     function renderCourts(){
-      const wrap=document.getElementById('court-container'); wrap.innerHTML='';
+      const wrap=document.getElementById('court-container');
+      if (!wrap) return;
+      wrap.innerHTML='';
       const courts=getCourts(), players=getPlayers(), byId=mapById(players);
       courts.forEach(c=>{
         ensurePairs(c);
@@ -1145,12 +1237,51 @@
       if (input) {
         const nextNo = (c.shuttlecockNo || 0) + 1;
         input.value = nextNo;
+        input.style.display = 'block';
         input.focus();
         input.select();
       }
       window._shuttleCourtId = courtId;
       window._isStartingGame = true;
       show('confirm-shuttle-modal');
+    }
+
+    function endGame(courtId){
+      const courts = getCourts(), players = getPlayers(), byId = mapById(players);
+      const c = courts.find(x => x.id === courtId);
+      if (!c) return;
+      const beforePlayers = JSON.parse(JSON.stringify(players));
+      const beforeCourts = JSON.parse(JSON.stringify(courts));
+      const historyCount = Array.isArray(c.shuttlecockHistory) ? c.shuttlecockHistory.length : 0;
+      const totalShuttlesUsed = Math.max(1, historyCount);
+      c.players.forEach(pid => {
+        const p = byId.get(pid);
+        if (p) {
+          p.status = 'ว่าง';
+          p.availableSince = Date.now();
+          p.shuttlecocksUsed = (p.shuttlecocksUsed || 0) + totalShuttlesUsed;
+        }
+      });
+      pushHistory(c, players);
+      appendMatchLog(c);
+      c.players = [];
+      c.pairs = [];
+      c.waiting = null;
+      c.status = 'ว่าง';
+      c.shuttlecockNo = 0;
+      c.shuttlecockHistory = [];
+      c.roundNo = (c.roundNo || 0) + 1;
+      savePlayers(players);
+      saveCourts(courts);
+      renderPlayers();
+      renderCourts();
+      setUndo('จบเกม', () => {
+        savePlayers(beforePlayers);
+        saveCourts(beforeCourts);
+        renderPlayers();
+        renderCourts();
+      });
+      showToast('จบเกมแล้ว ✓', 'เลิกทำ', triggerUndo);
     }
 
     function openConfirmShuttlecock(courtId){
@@ -1176,44 +1307,40 @@
         alert('กรุณาใส่หมายเลขลูกแบดที่ถูกต้อง (≥1)');
         return;
       }
-
       const courts = getCourts(), players = getPlayers(), byId = mapById(players);
       const c = courts.find(x => x.id === courtId);
       if (!c) return;
-
-      // ตรวจสอบลูกซ้ำ
       if (!Array.isArray(c.shuttlecockHistory)) c.shuttlecockHistory = [];
       if (c.shuttlecockHistory.includes(newNo)) {
-        alert(`ลูกแบดหมายเลข ${newNo} ถูกใช้ไปแล้วในสนามนี้ กรุณาใส่หมายเลขใหม่`);
+        alert(`ลูกแบดหมายเลข ${newNo} ถูกใช้ไปแล้ว`);
         return;
       }
-
       const beforePlayers = JSON.parse(JSON.stringify(players));
       const beforeCourts = JSON.parse(JSON.stringify(courts));
-
       c.shuttlecockNo = newNo;
       c.shuttlecockHistory.push(newNo);
-
-      const isStartingGame = window._isStartingGame === true;
-
-      if (isStartingGame) {
+      const isStarting = window._isStartingGame === true;
+      if (isStarting) {
         c.players.forEach(pid => {
           const p = byId.get(pid);
           if (p) {
             p.status = 'กำลังเล่น';
             p.availableSince = null;
+            p.gamesPlayed = (p.gamesPlayed || 0) + 1;
           }
         });
         c.status = 'กำลังเล่น';
+        pushHistory(c, players);
+        appendMatchLog(c);
       }
-
       savePlayers(players);
       saveCourts(courts);
       renderPlayers();
       renderCourts();
       hide('confirm-shuttle-modal');
-
-      const action = isStartingGame ? 'เริ่มเกม' : 'เพิ่มลูก';
+      delete window._shuttleCourtId;
+      delete window._isStartingGame;
+      const action = isStarting ? 'เริ่มเกม' : 'เพิ่มลูก';
       const msg = `${action}แล้ว ✓ (ลูกที่ ${newNo})`;
       setUndo(msg, () => {
         savePlayers(beforePlayers);
@@ -1222,55 +1349,8 @@
         renderCourts();
       });
       showToast(msg, 'เลิกทำ', triggerUndo);
-
-      delete window._shuttleCourtId;
-      delete window._isStartingGame;
     }
 
-    function endGame(courtId){
-      const courts = getCourts(), players = getPlayers(), byId = mapById(players);
-      const c = courts.find(x => x.id === courtId);
-      if (!c) return;
-      const beforePlayers = JSON.parse(JSON.stringify(players));
-      const beforeCourts = JSON.parse(JSON.stringify(courts));
-
-      const isRepairShuttle = (c.shuttlecockNo === 0);
-      const historyCount = Array.isArray(c.shuttlecockHistory) ? c.shuttlecockHistory.length : 0;
-      const totalShuttlesUsed = isRepairShuttle ? 0 : Math.max(1, historyCount);
-
-      c.players.forEach(pid => {
-        const p = byId.get(pid);
-        if (p) {
-          p.status = 'ว่าง';
-          p.availableSince = Date.now();
-          p.gamesPlayed = (p.gamesPlayed || 0) + 1;
-          p.shuttlecocksUsed = (p.shuttlecocksUsed || 0) + totalShuttlesUsed;
-        }
-      });
-
-      pushHistory(c, players);
-      appendMatchLog(c);
-
-      c.players = [];
-      c.pairs = [];
-      c.waiting = null;
-      c.status = 'ว่าง';
-      c.roundNo = (c.roundNo || 0) + 1;
-
-      savePlayers(players);
-      saveCourts(courts);
-      renderPlayers();
-      renderCourts();
-      setUndo('จบเกม', () => {
-        savePlayers(beforePlayers);
-        saveCourts(beforeCourts);
-        renderPlayers();
-        renderCourts();
-      });
-      showToast('จบเกมแล้ว ✓', 'เลิกทำ', triggerUndo);
-    }
-
-    /* ------- Assign to court ------- */
     let _assignIds=[];
     function openAssignModal(){
       _assignIds = Array.from(document.querySelectorAll('#player-table-body .player-select:checked'))
@@ -1281,8 +1361,10 @@
         return;
       }
       buildAssignCourtList();
+      document.getElementById('assign-auto').checked = false;
       show('assign-modal');
     }
+
     function buildAssignCourtList(){
       const host=document.getElementById('assign-court-list'); host.innerHTML='';
       const courts=getCourts(), players=getPlayers(), byId=mapById(players);
@@ -1294,6 +1376,7 @@
         host.appendChild(row);
       });
     }
+
     function confirmAssign(){
       const auto=document.getElementById('assign-auto').checked;
       const players=getPlayers(), courts=getCourts(), byId=mapById(players);
@@ -1320,7 +1403,40 @@
       showToast(`เพิ่มผู้เล่นลงสนาม ${added} คน ✓`,'เลิกทำ', triggerUndo);
     }
 
-    /* ------- Manage court (swap + move/delete/replace) ------- */
+    document.getElementById('player-table-body').addEventListener('change', (e) => {
+      const select = e.target;
+      if (!select.classList.contains('payment-select')) return;
+      const playerId = select.getAttribute('data-player-id');
+      const value = select.value;
+      const players = getPlayers();
+      const p = players.find(x => x.id === playerId);
+      if (p && p.paymentStatus !== value) {
+        p.paymentStatus = value;
+        if (value === 'เงินสด' || value === 'เงินโอน') {
+          p.status = 'จ่ายเงินแล้ว';
+        } else {
+          if (p.availableSince !== null && p.status !== 'กำลังเล่น') {
+            p.status = 'ว่าง';
+          }
+          const courts = getCourts();
+          let inCourt = false, isPlaying = false;
+          for (const c of courts) {
+            if (c.players?.includes(p.id)) {
+              inCourt = true;
+              if (c.status === 'กำลังเล่น') isPlaying = true;
+              break;
+            }
+          }
+          if (isPlaying) p.status = 'กำลังเล่น';
+          else if (inCourt) p.status = 'ในสนาม';
+          else p.status = 'ว่าง';
+        }
+        savePlayers(players);
+        renderPlayers();
+        showToast(`อัปเดตการชำระเงินของ ${p.name} เป็น "${value}" ✓`);
+      }
+    });
+
     let _manageCtx=null; let _replaceTarget=null; let _replaceCourtId=null; let _addCourtId=null;
     function openManage(courtId){
       const courts=getCourts(), players=getPlayers(), byId=mapById(players);
@@ -1401,19 +1517,28 @@
     }
 
     function buildFreeList(kw){
-      const host=document.getElementById('free-list'); host.innerHTML='';
-      const players=getPlayers();
-      const free=players
-        .filter(p=>p.status==='ว่าง')
-        .filter(p => p.paymentStatus !== 'เงินสด' && p.paymentStatus !== 'เงินโอน')
-        .filter(p=>!kw || (p.name||'').toLowerCase().includes(kw.toLowerCase()));
-      if(free.length===0){ host.innerHTML='<div class="muted text-sm">ไม่มีผู้เล่นว่างที่ตรงเงื่อนไข</div>'; return; }
-      free.forEach(p=>{
-        const row=document.createElement('div'); row.className='flex items-center justify-between border-b border-[var(--border)] py-2';
-        row.innerHTML=`<div><span class="font-medium">${p.name}</span> <span class="badge">มือ ${p.skill||'N'}</span></div><button class="btn btn-green">เลือก</button>`;
-        row.querySelector('button').onclick = ()=>{
-          if(_replaceTarget){ replaceWithFree(_replaceTarget, _replaceCourtId, p.id); }
-          else if(_addCourtId){ addFreeToCourt(_addCourtId, p.id); }
+      const host = document.getElementById('free-list');
+      host.innerHTML = '';
+      const players = getPlayers();
+      const isPaid = (p) => p.paymentStatus === 'เงินสด' || p.paymentStatus === 'เงินโอน';
+      const free = players
+        .filter(p => p.status === 'ว่าง')
+        .filter(p => !isPaid(p))
+        .filter(p => !kw || (p.name || '').toLowerCase().includes(kw.toLowerCase()));
+      if (free.length === 0) {
+        host.innerHTML = '<div class="muted text-sm">ไม่มีผู้เล่นว่างที่ตรงเงื่อนไข</div>';
+        return;
+      }
+      free.forEach(p => {
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between border-b border-[var(--border)] py-2';
+        row.innerHTML = `<div><span class="font-medium">${p.name}</span> <span class="badge">มือ ${p.skill || 'N'}</span></div><button class="btn btn-green">เลือก</button>`;
+        row.querySelector('button').onclick = () => {
+          if (_replaceTarget) {
+            replaceWithFree(_replaceTarget, _replaceCourtId, p.id);
+          } else if (_addCourtId) {
+            addFreeToCourt(_addCourtId, p.id);
+          }
           hide('free-picker-modal');
         };
         host.appendChild(row);
@@ -1509,13 +1634,13 @@
       if(withToast){ setUndo('ลบออกจากสนาม', ()=>{ savePlayers(beforePlayers); saveCourts(beforeCourts); renderPlayers(); renderCourts(); openManage(cid); }); showToast('ลบผู้เล่นออกจากสนามแล้ว ✓','เลิกทำ', triggerUndo); }
     }
 
-    /* ------- Queue ------- */
     let _manualSel=[]; let _manualMode='create'; let _manualEditIndex=null; let _manualPairsPreview={mode:'AB_CD'};
-
     function renderQueue(){
-      const host=document.getElementById('queue-container'); host.innerHTML='';
+      const host=document.getElementById('queue-container'); 
+      if (!host) return;
+      host.innerHTML='';
       const q=getQueue(), players=getPlayers(), byId=mapById(players);
-      const count = q.matches?.length || 0;
+      const count = q.matches?.length || 0; 
       document.getElementById('queue-count').textContent = count;
       if(!q.matches || q.matches.length===0){ host.innerHTML='<div class="muted">ยังไม่มีคิว</div>'; return; }
       q.matches.forEach((mt,idx)=>{
@@ -1605,16 +1730,30 @@
     }
 
     function buildQueueMatchesFromAvailable(){
-      const players=getPlayers();
-      const free=players
-        .filter(p=>p.status==='ว่าง')
+      const players = getPlayers();
+      const free = players
+        .filter(p => p.status === 'ว่าง')
         .filter(p => p.paymentStatus !== 'เงินสด' && p.paymentStatus !== 'เงินโอน')
-        .sort((a,b)=>(a.availableSince??0)-(b.availableSince??0)).map(p=>p.id);
-      if(free.length<4){ alert('ผู้เล่นว่างน้อยกว่า 4 คน'); return; }
-      const matches=[]; for(let i=0;i+3<free.length;i+=4){ matches.push({pairs:[[free[i],free[i+1]],[free[i+2],free[i+3]]]}); }
-      const before=getQueue(); saveQueue({matches}); renderQueue();
-      setUndo('จัดคิวอัตโนมัติ', ()=>{ saveQueue(before); renderQueue(); });
-      showToast(`สร้างคิวอัตโนมัติ ${matches.length} คิว ✓`,'เลิกทำ', triggerUndo);
+        .sort((a, b) => (a.availableSince ?? 0) - (b.availableSince ?? 0))
+        .map(p => p.id);
+      if (free.length < 4) {
+        alert('ผู้เล่นว่างน้อยกว่า 4 คน');
+        return;
+      }
+      const matches = [];
+      for (let i = 0; i + 3 < free.length; i += 4) {
+        matches.push({ pairs: [[free[i], free[i + 1]], [free[i + 2], free[i + 3]]] });
+      }
+      const before = getQueue();
+      saveQueue({ matches });
+      renderQueue();
+      renderQueueTab();
+      setUndo('จัดคิวอัตโนมัติ', () => {
+        saveQueue(before);
+        renderQueue();
+        renderQueueTab();
+      });
+      showToast(`สร้างคิวอัตโนมัติ ${matches.length} คิว ✓`, 'เลิกทำ', triggerUndo);
     }
 
     function openManualMatch(pre=null, mode='create', editIndex=null){
@@ -1628,7 +1767,14 @@
       document.getElementById('btn-add-match').onclick   =()=>manualAddMatch();
     }
 
-    function clearQueueMatches(){ const before=getQueue(); saveQueue({matches:[]}); renderQueue(); setUndo('ล้างคิว', ()=>{ saveQueue(before); renderQueue(); }); showToast('ล้างคิวแล้ว ✓','เลิกทำ', triggerUndo); }
+    function clearQueueMatches(){ 
+      const before=getQueue(); 
+      saveQueue({matches:[]}); 
+      renderQueue(); 
+      renderQueueTab();
+      setUndo('ล้างคิว', ()=>{ saveQueue(before); renderQueue(); renderQueueTab(); }); 
+      showToast('ล้างคิวแล้ว ✓','เลิกทำ', triggerUndo); 
+    }
 
     function openQueueEdit(idx){
       const q=getQueue(); const mt=q.matches?.[idx]; if(!mt) return;
@@ -1637,22 +1783,33 @@
     }
 
     function renderManualList(){
-      const host=document.getElementById('manual-list'); host.innerHTML='';
-      const players=getPlayers();
+      const host = document.getElementById('manual-list');
+      host.innerHTML = '';
+      const players = getPlayers();
       const availablePlayers = players.filter(p => 
         p.status === 'ว่าง' && 
         p.paymentStatus !== 'เงินสด' && 
         p.paymentStatus !== 'เงินโอน'
       );
-      availablePlayers.forEach(p=>{
+      availablePlayers.forEach(p => {
         const checked = _manualSel.includes(p.id) ? 'checked' : '';
-        const row=document.createElement('label'); row.className='flex items-center justify-between border-b border-[var(--border)] py-2 cursor-pointer';
-        row.innerHTML=`<div class="flex items-center gap-3"><input type="checkbox" ${checked} value="${p.id}" class="accent-indigo-400"><div class="font-medium">${p.name}</div></div><div class="muted text-xs">มือ ${p.skill||'N'} • รอ ${minutesSince(p.availableSince)} นาที</div>`;
-        const cb=row.querySelector('input'); cb.onchange=(e)=>{
-          const id=e.target.value;
-          if(e.target.checked){ if(_manualSel.length>=4){ e.target.checked=false; return; } _manualSel.push(id); }
-          else{ _manualSel = _manualSel.filter(x=>x!==id); }
-          updateManualSlots(); updateManualStage();
+        const row = document.createElement('label');
+        row.className = 'flex items-center justify-between border-b border-[var(--border)] py-2 cursor-pointer';
+        row.innerHTML = `<div class="flex items-center gap-3"><input type="checkbox" ${checked} value="${p.id}" class="accent-indigo-400"><div class="font-medium">${p.name}</div></div><div class="muted text-xs">มือ ${p.skill || 'N'} • รอ ${minutesSince(p.availableSince)} นาที</div>`;
+        const cb = row.querySelector('input');
+        cb.onchange = (e) => {
+          const id = e.target.value;
+          if (e.target.checked) {
+            if (_manualSel.length >= 4) {
+              e.target.checked = false;
+              return;
+            }
+            _manualSel.push(id);
+          } else {
+            _manualSel = _manualSel.filter(x => x !== id);
+          }
+          updateManualSlots();
+          updateManualStage();
         };
         host.appendChild(row);
       });
@@ -1693,19 +1850,18 @@
       if(_manualMode==='edit'){
         const i=_manualEditIndex; if(i==null||!q.matches[i]) return;
         if(q.matches.some((mt,idx)=>idx!==i&&sameSet(mt))){ alert('คิวแบบนี้มีอยู่แล้ว'); return; }
-        q.matches[i].pairs=pairs; saveQueue(q); hide('queue-manual-modal'); renderQueue();
-        setUndo('แก้ไขคิว', ()=>{ saveQueue(before); renderQueue(); });
+        q.matches[i].pairs=pairs; saveQueue(q); hide('queue-manual-modal'); renderQueue(); renderQueueTab();
+        setUndo('แก้ไขคิว', ()=>{ saveQueue(before); renderQueue(); renderQueueTab(); });
         showToast('บันทึกคิวแล้ว ✓','เลิกทำ', triggerUndo);
         return;
       }
       if(q.matches.some(sameSet)){ alert('คิวชุดนี้มีอยู่แล้ว'); return; }
-      q.matches.push({pairs}); saveQueue(q); renderQueue();
+      q.matches.push({pairs}); saveQueue(q); renderQueue(); renderQueueTab();
       _manualSel=[]; renderManualList(); updateManualSlots(); updateManualStage();
-      setUndo('เพิ่มคิว', ()=>{ saveQueue(before); renderQueue(); });
+      setUndo('เพิ่มคิว', ()=>{ saveQueue(before); renderQueue(); renderQueueTab(); });
       showToast('เพิ่มคิวแล้ว ✓','เลิกทำ', triggerUndo);
     }
 
-    /* Queue send */
     let _queueSendIndex=null;
     function openQueueSendModal(idx){
       _queueSendIndex=idx; const q=getQueue(); const mt=q.matches[idx]; const players=getPlayers(), byId=mapById(players);
@@ -1727,12 +1883,11 @@
       c.pairs = [ [...mt.pairs[0]], [...mt.pairs[1]] ];
       ensurePairs(c); recalcCourtStatus(c);
       q.matches.splice(_queueSendIndex,1); saveQueue(q); saveCourts(courts); savePlayers(players);
-      hide('queue-send-modal'); renderCourts(); renderPlayers(); renderQueue();
-      setUndo('ส่งคิวลงสนาม', ()=>{ saveQueue(before); saveCourts(courts); renderCourts(); renderQueue(); });
+      hide('queue-send-modal'); renderCourts(); renderPlayers(); renderQueue(); renderQueueTab();
+      setUndo('ส่งคิวลงสนาม', ()=>{ saveQueue(before); saveCourts(courts); renderCourts(); renderQueue(); renderQueueTab(); });
       showToast('ส่งคิวลงสนามแล้ว ✓','เลิกทำ', triggerUndo);
     }
 
-    /* Forms: add court */
     document.getElementById('add-court-form').addEventListener('submit',e=>{
       e.preventDefault();
       const name=document.getElementById('court-name-input').value.trim();
@@ -1745,7 +1900,6 @@
       showToast('เพิ่มสนามแล้ว ✓','เลิกทำ', triggerUndo);
     });
 
-    /* Export/Import */
     function openDataModal(){ show('data-modal'); document.getElementById('export-textarea').value=''; }
     function exportData(){
       const data = {
@@ -1775,8 +1929,8 @@
           savePlayers(obj.players||[]);
           saveCourts(obj.courts||[]);
           saveQueue(obj.queue||{matches:[]});
-          renderPlayers(); renderCourts(); renderQueue();
-          showToast('นำเข้าข้อมูลเรียบร้อย ✓','เลิกทำ', ()=>{ savePlayers(before.players); saveCourts(before.courts); saveQueue(before.queue); renderPlayers(); renderCourts(); renderQueue(); });
+          renderPlayers(); renderCourts(); renderQueue(); renderQueueTab();
+          showToast('นำเข้าข้อมูลเรียบร้อย ✓','เลิกทำ', ()=>{ savePlayers(before.players); saveCourts(before.courts); saveQueue(before.queue); renderPlayers(); renderCourts(); renderQueue(); renderQueueTab(); });
         }catch(err){ alert('นำเข้าไม่สำเร็จ: '+err.message); }
       };
       reader.readAsText(file, 'utf-8');
@@ -1790,8 +1944,18 @@
       if (mode === 'acbd') Q.matches[idx].pairs = [[a, c], [b, d]];
       else if (mode === 'adbc') Q.matches[idx].pairs = [[a, d], [b, c]];
       saveQueue(Q);
-      openQueueModal();
+      renderQueue(); renderQueueTab();
       showToast(`สลับคู่แบบ ${mode === 'acbd' ? '1–3 / 2–4' : '1–4 / 2–3'} ✓`);
+    }
+
+    function deleteQueueMatch(idx) {
+      const Q = getQueue();
+      const before = JSON.parse(JSON.stringify(Q));
+      Q.matches.splice(idx, 1);
+      saveQueue(Q);
+      renderQueue(); renderQueueTab();
+      setUndo('ลบคิว', () => { saveQueue(before); renderQueue(); renderQueueTab(); });
+      showToast('ลบคิวแล้ว ✓', 'เลิกทำ', triggerUndo);
     }
 
     function deleteQueueMatchFromPopup(idx) {
@@ -1898,13 +2062,13 @@
       savePlayers(players);
       renderCourts();
       renderPlayers();
-      renderQueue();
+      renderQueue(); renderQueueTab();
       setUndo('ลบสนาม', () => {
         saveCourts(beforeCourts);
         savePlayers(beforePlayers);
         renderCourts();
         renderPlayers();
-        renderQueue();
+        renderQueue(); renderQueueTab();
       });
       showToast('ลบสนามแล้ว ✓', 'เลิกทำ', triggerUndo);
     }
@@ -1914,17 +2078,38 @@
       document.getElementById('history-count').textContent = count;
     }
 
-    /* Init */
+    function isPaid(p) {
+      return p.paymentStatus === 'เงินสด' || p.paymentStatus === 'เงินโอน';
+    }
+
     function init(){
       try{ migrate(); }catch(e){}
       try{ renderCourts(); }catch(e){}
       try{ renderPlayers(); }catch(e){}
       try{ renderQueue(); }catch(e){}
       try{ updatePriceDisplay(); }catch(e){}
+      try{ setupSortableHeaders(); }catch(e){}
+      try{ renderQueueTab(); }catch(e){}
+      try{ renderHistoryTab(); }catch(e){}
+      try{ setInterval(renderPlayers, 30000); }catch(e){}
       document.getElementById('history-count').textContent = getMatchLog().length;
     }
 
-    function clearAllCourts(){ if(confirm('ล้างข้อมูลทั้งหมด?')){ localStorage.removeItem('players'); localStorage.removeItem('courts'); localStorage.removeItem('queue_matches'); renderCourts(); renderPlayers(); renderQueue(); updatePriceDisplay(); showToast('ล้างข้อมูลทั้งหมดแล้ว'); } }
+    function clearAllCourts(){ 
+      if(confirm('ล้างข้อมูลทั้งหมด?')){ 
+        localStorage.removeItem('players'); 
+        localStorage.removeItem('courts'); 
+        localStorage.removeItem('queue_matches'); 
+        localStorage.removeItem('match_log');
+        renderCourts(); 
+        renderPlayers(); 
+        renderQueue(); 
+        renderQueueTab();
+        renderHistoryTab();
+        updatePriceDisplay(); 
+        showToast('ล้างข้อมูลทั้งหมดแล้ว'); 
+      } 
+    }
 
     init();
   </script>
