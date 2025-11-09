@@ -1179,47 +1179,59 @@
       show('shuttle-type-modal');
     }
 
-    function handleShuttleTypeSelection(){
-      const type = document.querySelector('input[name="shuttle-type"]:checked')?.value || 'real';
-      const courtId = window._startGameCourtId;
-      if (!courtId) return;
-      hide('shuttle-type-modal');
-      if (type === 'real') {
-        openConfirmShuttlecockForStart(courtId);
-      } else {
-        startGameWithRepairShuttle(courtId);
-      }
-    }
+	function handleShuttleTypeSelection(){
+	  const type = document.querySelector('input[name="shuttle-type"]:checked')?.value || 'real';
+	  const courtId = window._startGameCourtId;
+	  if (!courtId) return;
+	  hide('shuttle-type-modal');
+	  if (type === 'repair') {
+		startGameWithRepairShuttle(courtId);
+	  } else {
+		openConfirmShuttlecockForStart(courtId);
+	  }
+	}
 
-    function startGameWithRepairShuttle(courtId){
-      const courts = getCourts(), players = getPlayers(), byId = mapById(players);
-      const c = courts.find(x => x.id === courtId);
-      if (!c) return;
-      const beforePlayers = JSON.parse(JSON.stringify(players));
-      const beforeCourts = JSON.parse(JSON.stringify(courts));
-      c.status = 'กำลังเล่น';
-      c.shuttlecockNo = 0;
-      c.shuttlecockHistory = [];
-      c.players.forEach(pid => {
-        const p = byId.get(pid);
-        if (p) {
-          p.status = 'กำลังเล่น';
-          p.availableSince = null;
-        }
-      });
-      savePlayers(players);
-      saveCourts(courts);
-      renderPlayers();
-      renderCourts();
-      setUndo('เริ่มเกม (ลูกซ่อม)', () => {
-        savePlayers(beforePlayers);
-        saveCourts(beforeCourts);
-        renderPlayers();
-        renderCourts();
-      });
-      showToast('เริ่มเกมด้วยลูกซ่อม (ไม่คิดเงิน) ✓', 'เลิกทำ', triggerUndo);
-      delete window._startGameCourtId;
-    }
+	function startGameWithRepairShuttle(courtId){
+	  const courts = getCourts(), players = getPlayers(), byId = mapById(players);
+	  const c = courts.find(x => x.id === courtId);
+	  if (!c) return;
+
+	  const beforePlayers = JSON.parse(JSON.stringify(players));
+	  const beforeCourts = JSON.parse(JSON.stringify(courts));
+
+	  // เริ่มเกมด้วยลูกซ่อม → ไม่ใช้ลูกจริง
+	  c.status = 'กำลังเล่น';
+	  c.shuttlecockNo = 0;
+	  c.shuttlecockHistory = []; // ไม่มีประวัติลูก
+
+	  c.players.forEach(pid => {
+		const p = byId.get(pid);
+		if (p) {
+		  p.status = 'กำลังเล่น';
+		  p.availableSince = null;
+		  // ⚠️ ยังไม่บวก gamesPlayed ที่นี่ (จะบวกตอน endGame เหมือนกันทุกกรณี)
+		}
+	  });
+
+	  // ⚠️ ไม่บันทึกประวัติที่นี่ → บันทึกตอน endGame เท่านั้น
+	  // แต่จำเป็นต้องบันทึกการเริ่มเกมใน match log หรือไม่? 
+	  // → ไม่จำเป็น เพราะยังไม่ "จบตา" → รอจนจบเกมค่อย log
+
+	  savePlayers(players);
+	  saveCourts(courts);
+	  renderPlayers();
+	  renderCourts();
+
+	  setUndo('เริ่มเกม (ลูกซ่อม)', () => {
+		savePlayers(beforePlayers);
+		saveCourts(beforeCourts);
+		renderPlayers();
+		renderCourts();
+	  });
+
+	  showToast('เริ่มเกมด้วยลูกซ่อม (ไม่คิดเงิน) ✓', 'เลิกทำ', triggerUndo);
+	  delete window._startGameCourtId;
+	}
 
     function openConfirmShuttlecockForStart(courtId){
       const courts = getCourts(), players = getPlayers(), byId = mapById(players);
@@ -1246,43 +1258,54 @@
       show('confirm-shuttle-modal');
     }
 
-    function endGame(courtId){
-      const courts = getCourts(), players = getPlayers(), byId = mapById(players);
-      const c = courts.find(x => x.id === courtId);
-      if (!c) return;
-      const beforePlayers = JSON.parse(JSON.stringify(players));
-      const beforeCourts = JSON.parse(JSON.stringify(courts));
-      const historyCount = Array.isArray(c.shuttlecockHistory) ? c.shuttlecockHistory.length : 0;
-      const totalShuttlesUsed = Math.max(1, historyCount);
-      c.players.forEach(pid => {
-        const p = byId.get(pid);
-        if (p) {
-          p.status = 'ว่าง';
-          p.availableSince = Date.now();
-          p.shuttlecocksUsed = (p.shuttlecocksUsed || 0) + totalShuttlesUsed;
-        }
-      });
-      pushHistory(c, players);
-      appendMatchLog(c);
-      c.players = [];
-      c.pairs = [];
-      c.waiting = null;
-      c.status = 'ว่าง';
-      c.shuttlecockNo = 0;
-      c.shuttlecockHistory = [];
-      c.roundNo = (c.roundNo || 0) + 1;
-      savePlayers(players);
-      saveCourts(courts);
-      renderPlayers();
-      renderCourts();
-      setUndo('จบเกม', () => {
-        savePlayers(beforePlayers);
-        saveCourts(beforeCourts);
-        renderPlayers();
-        renderCourts();
-      });
-      showToast('จบเกมแล้ว ✓', 'เลิกทำ', triggerUndo);
-    }
+	function endGame(courtId){
+	  const courts = getCourts(), players = getPlayers(), byId = mapById(players);
+	  const c = courts.find(x => x.id === courtId);
+	  if (!c) return;
+
+	  const beforePlayers = JSON.parse(JSON.stringify(players));
+	  const beforeCourts = JSON.parse(JSON.stringify(courts));
+
+	  // ✅ นับจำนวนลูกที่ใช้จาก shuttlecockHistory
+	  const totalShuttlesUsed = Array.isArray(c.shuttlecockHistory) ? c.shuttlecockHistory.length : 0;
+
+	  c.players.forEach(pid => {
+		const p = byId.get(pid);
+		if (p) {
+		  p.status = 'ว่าง';
+		  p.availableSince = Date.now();
+		  p.gamesPlayed = (p.gamesPlayed || 0) + 1; // ✅ บวกเกมตอนจบเสมอ
+		  p.shuttlecocksUsed = (p.shuttlecocksUsed || 0) + totalShuttlesUsed; // ✅ บวกเฉพาะลูกจริงที่ใช้
+		}
+	  });
+
+	  // ✅ บันทึกประวัติการเล่น (ตอนจบตา)
+	  pushHistory(c, players);
+	  appendMatchLog(c);
+
+	  // รีเซ็ตสนาม
+	  c.players = [];
+	  c.pairs = [];
+	  c.waiting = null;
+	  c.status = 'ว่าง';
+	  c.shuttlecockNo = 0;
+	  c.shuttlecockHistory = [];
+	  c.roundNo = (c.roundNo || 0) + 1;
+
+	  savePlayers(players);
+	  saveCourts(courts);
+	  renderPlayers();
+	  renderCourts();
+
+	  setUndo('จบเกม', () => {
+		savePlayers(beforePlayers);
+		saveCourts(beforeCourts);
+		renderPlayers();
+		renderCourts();
+	  });
+
+	  showToast('จบเกมแล้ว ✓', 'เลิกทำ', triggerUndo);
+	}
 
     function openConfirmShuttlecock(courtId){
       const courts = getCourts();
