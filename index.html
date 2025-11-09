@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Badminton Court Manager — v8 (Toast + Undo + Export/Import + Filters)</title>
+  <title>Badminton Court Manager — v8 (Tab UI)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
   <style>
@@ -45,7 +45,6 @@
     .subtle{font-size:.85rem;color:var(--muted)}
     .pair-box{border:1px dashed var(--border); border-radius:14px; padding:.75rem; background:rgba(255,255,255,.02)}
     .pair-title{font-size:.9rem;color:#c7d2fe;font-weight:700;letter-spacing:.2px}
-
     /* Dark select styling */
     select.soft{
       -webkit-appearance: none;
@@ -65,232 +64,125 @@
     select.soft:focus{ outline:none; box-shadow:0 0 0 2px rgba(99,102,241,.45); border-color:rgba(99,102,241,.55); }
     select.soft option{ background:#0f172a; color:#e5e7eb; }
     select.soft::-ms-expand{ display:none; }
-	
-	.paid { background: rgba(100,100,100,.2); color: #9ca3af; border: 1px solid rgba(156,163,175,.3); }
-
-    
-    /* ===== Right Queue Slidebar (no-shift) ===== */
-    :root{ --qsW: 320px; --headerH: 84px; --qsCollapsed: 96px; }
-    .queue-slidebar{
-      position: fixed; right: 0; top: var(--headerH);
-      width: var(--qsW); z-index: 60;
+    .paid { background: rgba(100,100,100,.2); color: #9ca3af; border: 1px solid rgba(156,163,175,.3); }
+    /* Tab */
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .tab-btn { 
+      padding: 0.5rem 1rem; 
+      border-radius: 10px; 
+      background: rgba(255,255,255,.02); 
+      border: 1px solid var(--border);
+      color: #cbd5e1;
+      font-weight: 600;
     }
-    .queue-slidebar .panel{
-      border-top-right-radius: 0; border-bottom-right-radius: 0; border-right: none;
-      box-shadow: -12px 0 24px rgba(0,0,0,.35);
+    .tab-btn:hover { background: rgba(99,102,241,.1); color: #e5e7eb; }
+    .tab-btn.active { 
+      background: rgba(99,102,241,.2); 
+      border-color: rgba(99,102,241,.4);
+      color: white;
     }
-    .queue-slidebar .qs-header{ display:flex; align-items:center; justify-content:space-between; gap:.5rem; padding:.85rem 1rem; border-bottom:1px solid var(--border); }
-    .queue-slidebar .qs-body{ padding:.75rem; }
-    .queue-slidebar .qs-list{ max-height: calc(100vh - 190px); overflow: auto; }
-    .queue-slidebar.collapsed{ width: var(--qsCollapsed); }
-    .queue-slidebar.collapsed .qs-title,
-    .queue-slidebar.collapsed .qs-actions,
-    .queue-slidebar.collapsed .qs-body{ display:none; }
-    .qs-toggle{
-      position:absolute; left:-24px; top:50%; transform: translateY(-50%);
-      height: 42px; padding: 0 .9rem; border-radius: 9999px;
-      display:inline-flex; gap:.45rem; align-items:center; justify-content:center;
-      background: radial-gradient(120% 120% at 30% 20%, rgba(99,102,241,.35), rgba(99,102,241,.18)), #0b1220;
-      border:1px solid rgba(99,102,241,.55); box-shadow: 0 10px 24px rgba(2,6,23,.45); cursor:pointer;
-    }
-    .qs-toggle i{ font-size:14px; color:#e5e7eb; }
-    .qs-toggle .qs-label{ display:none; font-weight:700; letter-spacing:.3px; }
-    .queue-slidebar.collapsed .qs-toggle .qs-label{ display:inline; }
-
-    /* Mobile: keep queue inline (fallback) */
-    @media (max-width: 1279px){
-      .queue-slidebar{ position: static; width: auto; }
-      .qs-toggle{ position: absolute; left: 12px; top: 12px; transform:none; }
-    }
-
-    /* ===== Left History Slidebar ===== */
-    :root{ --hsW: 320px; }
-    .history-slidebar{
-      position: fixed; left: 0; top: var(--headerH); width: var(--hsW); z-index: 60;
-    }
-    .history-slidebar .panel{
-      border-top-left-radius: 0; border-bottom-left-radius: 0; border-left:none;
-      box-shadow: 12px 0 24px rgba(0,0,0,.35);
-    }
-    .history-slidebar .hs-header{ display:flex; align-items:center; justify-content:space-between; gap:.5rem; padding:.85rem 1rem; border-bottom:1px solid var(--border); }
-    .history-slidebar .hs-body{ padding:.75rem; }
-    .history-slidebar .hs-list{ max-height: calc(100vh - 190px); overflow: auto; }
-    .history-slidebar.collapsed{ width: 88px; }
-    .history-slidebar.collapsed .hs-title,
-    .history-slidebar.collapsed .hs-actions,
-    .history-slidebar.collapsed .hs-body{ display:none; }
-    .hs-toggle{
-      position:absolute; right:-21px; top:50%; transform: translateY(-50%);
-      width:42px; height:42px; border-radius: 9999px;
-      display:inline-flex; align-items:center; justify-content:center;
-      background: radial-gradient(120% 120% at 30% 20%, rgba(99,102,241,.35), rgba(99,102,241,.18)), #0b1220;
-      border:1px solid rgba(99,102,241,.55); box-shadow: 0 10px 24px rgba(2,6,23,.45); cursor:pointer;
-    }
-    .hs-toggle i{ font-size:14px; color:#e5e7eb; }
-
-    /* Hide left history on small screens */
-    @media (max-width: 1279px){
-      .history-slidebar{ display:none; }
-    }
-    
-    .hs-toggle .hs-label{ display:none; font-weight:700; letter-spacing:.3px; margin-left:.5rem; color:#e5e7eb; }
-    .history-slidebar.collapsed .hs-toggle .hs-label{ display:inline; }
-    
     /* Toast */
     #toast-container{ position:fixed; right:16px; bottom:16px; display:flex; flex-direction:column; gap:10px; z-index:9999; }
     .toast{ background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03)); border:1px solid var(--border); border-radius:12px; padding:.75rem 1rem; min-width:260px; display:flex; align-items:center; gap:.6rem; box-shadow:0 10px 30px rgba(2,6,23,.35); }
     .toast .msg{ flex:1; font-size:.9rem; }
     .toast .undo{ border:1px solid var(--border); padding:.3rem .6rem; border-radius:10px; }
-  
-    /* Sort caret */
-    th.sortable{ cursor:pointer; user-select:none; }
-    th.sortable .sort-caret{ display:inline-block; width:0; height:0; margin-left:.35rem; border-left:5px solid transparent; border-right:5px solid transparent; border-top:6px solid var(--muted); transform: translateY(-1px); opacity:.8; }
-    th.sortable.desc .sort-caret{ border-top:none; border-bottom:6px solid var(--muted); transform: translateY(2px); }
-    th.sortable.active{ color:#e2e8f0; }
-	
-	/* === Fix: modal scroll on mobile & long name overflow === */
-	.modal { padding: 16px; overflow-y: auto; }                     /* ให้พื้นหลัง modal เลื่อนได้เมื่อจอเล็ก */
-	.modal-card {
-	  max-height: 88vh;                                             /* จำกัดความสูงรวมของการ์ด */
-	  display: flex; flex-direction: column; overflow: hidden;      /* เตรียมพื้นที่ภายในให้เลื่อนส่วนเนื้อหา */
-	}
-
-	/* เฉพาะหน้าจอเล็ก ให้การ์ดกินความกว้างเต็ม ๆ */
-	@media (max-width: 640px){
-	  .modal-card { width: 100vw; max-width: none; border-radius: 12px; }
-	}
-
-	/* พื้นที่เลื่อนภายใน “จัดการผู้เล่นสนาม” */
-	#manage-modal .scroll-area {
-	  flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
-	}
-
-	/* ป้องกันชื่อผู้เล่นล้นขอบใน slot */
-	#manage-modal .slot { min-width: 0; overflow: hidden; }         /* ให้ flex สามารถหดได้ */
-	#manage-modal .slot * { min-width: 0; }                         /* กัน element ลูกฝืนความกว้าง */
-	#manage-modal .slot .name,
-	#manage-modal .slot .chip,
-	#manage-modal .slot span {
-	  display: inline-block; max-width: 100%;
-	  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-	}
-
-	/* ปุ่มดูเรียบร้อยบนมือถือ */
-	#manage-modal .controls { width: 100%; }
-
-	/* ให้ปุ่มจัดวางไอคอน/ตัวหนังสือสวยขึ้นทุกขนาดจอ */
-	#manage-modal .btn {
-	  display: inline-flex;
-	  align-items: center;
-	  justify-content: center;
-	  gap: .5rem;              /* ระยะห่างไอคอน-ข้อความ */
-	  line-height: 1.2;
-	  min-height: 40px;        /* ไม่เตี้ยเกินไปบนมือถือ */
-	}
-
-	/* กัน select ไปดันปุ่ม */
-	#manage-modal select { min-width: 0; }
-
-	/* เฉพาะจอเล็ก: ให้ทุกชิ้นเป็นเต็มความกว้าง */
-	@media (max-width: 640px){
-	  #manage-modal .left > * { width: 100%; }
-	}
-
-
-
+    /* Responsive */
+    @media (max-width: 768px) {
+      .tab-btn span { display: none; }
+      .tab-btn i { margin-right: 0; }
+    }
   </style>
 </head>
 <body>
-  <!-- Topbar -->
+  <!-- Topbar + Tab Navigation -->
   <header class="sticky top-0 z-40 backdrop-blur supports-[backdrop-filter]:bg-white/0">
-    <div class="max-w-7xl mx-auto px-5 py-4 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-xl bg-white/5 border border-[var(--border)] flex items-center justify-center">
-          <i class="fa-solid fa-table-tennis-paddle-ball text-indigo-300"></i>
-        </div>
-        <h1 class="text-2xl font-bold title-grad">Court Manager</h1>
-      </div>
-      <div class="flex gap-2">
-        <button class="btn btn-ghost" onclick="show('settings-modal')"><i class="fa-solid fa-sliders"></i><span class="hidden sm:inline">กำหนดราคา</span></button>
-        <button class="btn btn-ghost" onclick="show('add-player-modal')"><i class="fa-solid fa-user-plus"></i><span class="hidden sm:inline">เพิ่มผู้เล่น</span></button>
-        <button class="btn btn-ghost" onclick="show('add-court-modal')"><i class="fa-solid fa-plus"></i><span class="hidden sm:inline">เพิ่มสนาม</span></button>
-        <button class="btn" onclick="openDataModal()"><i class="fa-solid fa-database"></i><span class="hidden sm:inline">สำรอง/นำเข้า</span></button>
-        <button class="btn" onclick="clearAllCourts()"><i class="fa-solid fa-trash"></i></button>
-      </div>
-    </div>
-    <div class="divider"></div>
-  </header>
-
-  <main class="max-w-7xl mx-auto px-5 py-8 space-y-8">
-    <!-- Overview -->
-    <section class="grid sm:grid-cols-3 gap-4">
-      <div class="panel p-5">
-        <div class="subtle">ราคาลูกแบด</div>
-        <div class="text-2xl font-bold"><span id="shuttlecock-price-display">20</span> บาท</div>
-      </div>
-      <div class="panel p-5">
-        <div class="subtle">ราคาเช่าสนาม</div>
-        <div class="text-2xl font-bold"><span id="court-price">0</span> บาท</div>
-      </div>
-      <div class="panel p-5 flex items-center justify-between">
-        <div>
-          <div class="subtle">คิวทั้งหมด</div>
-          <div class="text-2xl font-bold"><span id="queue-count">0</span> คิว</div>
+    <div class="max-w-7xl mx-auto px-5 py-4">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-white/5 border border-[var(--border)] flex items-center justify-center">
+            <i class="fa-solid fa-table-tennis-paddle-ball text-indigo-300"></i>
+          </div>
+          <h1 class="text-2xl font-bold title-grad">Court Manager</h1>
         </div>
         <div class="flex gap-2">
-		  <button class="btn btn-primary" onclick="openManualMatch()"><i class="fa-solid fa-hand-pointer"></i><span class="hidden sm:inline">จับคู่ด้วยมือ</span></button>
-          <button class="btn btn-green" onclick="openQueueModal()">
-		  <i class="fa-solid fa-list-check"></i>
-		  <span class="hidden sm:inline">ดูคิว</span>
-		  </button>
+          <button class="btn btn-ghost" onclick="show('settings-modal')"><i class="fa-solid fa-sliders"></i><span class="hidden sm:inline">กำหนดราคา</span></button>
+          <button class="btn" onclick="openDataModal()"><i class="fa-solid fa-database"></i><span class="hidden sm:inline">สำรอง/นำเข้า</span></button>
+          <button class="btn text-red-400" onclick="clearAllCourts()"><i class="fa-solid fa-trash"></i></button>
         </div>
       </div>
-		<div class="panel p-5">
-		  <div class="subtle">ประวัติทั้งหมด</div>
-		  <div class="text-2xl font-bold"><span id="history-count">0</span> รายการ</div>
-		  <div class="flex flex-wrap gap-2 mt-3">
-			<button class="btn btn-primary" onclick="openHistoryAllModal()">
-			  <i class="fa-solid fa-clock-rotate-left"></i>
-			  <span class="hidden sm:inline">ดูประวัติทั้งหมด</span>
-			</button>
-			<button class="btn btn-ghost text-red-400 hover:text-red-300 hover:bg-red-500/10" onclick="clearMatchLogFromCard()">
-			  <i class="fa-solid fa-trash-can"></i>
-			  <span class="hidden sm:inline">ล้างประวัติ</span>
-			</button>
-		  </div>
-		</div>
-		</div>
-    </section>
+      <!-- Tab Menu -->
+      <nav class="flex flex-wrap gap-2 border-b border-[var(--border)] pb-2">
+        <button class="tab-btn active" data-tab="dashboard"><i class="fa-solid fa-chart-line"></i> <span>แดชบอร์ด</span></button>
+        <button class="tab-btn" data-tab="courts"><i class="fa-solid fa-table-cells"></i> <span>สนาม</span></button>
+        <button class="tab-btn" data-tab="players"><i class="fa-solid fa-users"></i> <span>ผู้เล่น</span></button>
+        <button class="tab-btn" data-tab="queue"><i class="fa-solid fa-list-check"></i> <span>คิว</span></button>
+        <button class="tab-btn" data-tab="history"><i class="fa-solid fa-clock-rotate-left"></i> <span>ประวัติ</span></button>
+      </nav>
+    </div>
+  </header>
 
-    <!-- Courts -->
-    <section class="space-y-3">
-      <div class="flex items-center justify-between">
+  <main class="max-w-7xl mx-auto px-5 py-6">
+    <!-- Tab: Dashboard -->
+    <div id="tab-dashboard" class="tab-content active">
+      <section class="grid sm:grid-cols-3 gap-4 mb-8">
+        <div class="panel p-5">
+          <div class="subtle">ราคาลูกแบด</div>
+          <div class="text-2xl font-bold"><span id="shuttlecock-price-display">20</span> บาท</div>
+        </div>
+        <div class="panel p-5">
+          <div class="subtle">ราคาเช่าสนาม</div>
+          <div class="text-2xl font-bold"><span id="court-price">0</span> บาท</div>
+        </div>
+        <div class="panel p-5">
+          <div class="subtle">คิวทั้งหมด</div>
+          <div class="text-2xl font-bold"><span id="queue-count">0</span> คิว</div>
+          <div class="flex gap-2 mt-2">
+            <button class="btn btn-primary" onclick="openManualMatch()"><i class="fa-solid fa-hand-pointer"></i> จับคู่ด้วยมือ</button>
+            <button class="btn btn-green" onclick="openQueueModal()"><i class="fa-solid fa-list-check"></i> ดูคิว</button>
+          </div>
+        </div>
+        <div class="panel p-5">
+          <div class="subtle">ประวัติทั้งหมด</div>
+          <div class="text-2xl font-bold"><span id="history-count">0</span> รายการ</div>
+          <div class="flex gap-2 mt-2">
+            <button class="btn btn-primary" onclick="openHistoryAllModal()"><i class="fa-solid fa-clock-rotate-left"></i> ดูประวัติทั้งหมด</button>
+            <button class="btn btn-ghost text-red-400 hover:text-red-300 hover:bg-red-500/10" onclick="clearMatchLogFromCard()"><i class="fa-solid fa-trash-can"></i> ล้างประวัติ</button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Tab: Courts -->
+    <div id="tab-courts" class="tab-content">
+      <div class="flex items-center justify-between mb-4">
         <div class="heading">สนาม</div>
+        <button class="btn btn-green" onclick="show('add-court-modal')"><i class="fa-solid fa-plus"></i> เพิ่มสนาม</button>
       </div>
       <div id="court-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
-    </section>
+    </div>
 
-    <!-- Players -->
-    <section class="space-y-3">
-      <div class="flex items-center justify-between">
+    <!-- Tab: Players -->
+    <div id="tab-players" class="tab-content">
+      <div class="flex items-center justify-between mb-4">
         <div class="heading">ผู้เล่น</div>
-        <div class="flex flex-wrap gap-2">
-          <input id="filter-search" class="soft px-3 py-2" placeholder="ค้นหาชื่อ...">
-          <select id="filter-skill" class="soft px-3 py-2">
-            <option value="">ทุกมือ</option>
-            <option>BG</option><option>N</option><option>S</option><option>P-</option><option>P</option><option>P+</option><option>C</option>
-          </select>
-          <select id="filter-status" class="soft px-3 py-2">
-            <option value="">ทุกสถานะ</option>
-            <option value="ว่าง">ว่าง</option>
-            <option value="ในสนาม">ในสนาม</option>
-            <option value="กำลังเล่น">กำลังเล่น</option>
-          </select>
-          <button class="btn" onclick="selectAllFiltered()"><i class="fa-regular fa-square-check"></i> เลือกทั้งหมด(ตามที่กรอง)</button>
-          <button class="btn" onclick="openAssignModal()"><i class="fa-solid fa-arrow-right"></i> เพิ่มผู้เล่นที่เลือกลงสนาม</button>
-        </div>
+        <button class="btn btn-primary" onclick="show('add-player-modal')"><i class="fa-solid fa-user-plus"></i> เพิ่มผู้เล่น</button>
       </div>
-
+      <div class="flex flex-wrap gap-2 mb-4">
+        <input id="filter-search" class="soft px-3 py-2" placeholder="ค้นหาชื่อ...">
+        <select id="filter-skill" class="soft px-3 py-2">
+          <option value="">ทุกมือ</option>
+          <option>BG</option><option>N</option><option>S</option><option>P-</option><option>P</option><option>P+</option><option>C</option>
+        </select>
+        <select id="filter-status" class="soft px-3 py-2">
+          <option value="">ทุกสถานะ</option>
+          <option value="ว่าง">ว่าง</option>
+          <option value="ในสนาม">ในสนาม</option>
+          <option value="กำลังเล่น">กำลังเล่น</option>
+        </select>
+        <button class="btn" onclick="selectAllFiltered()"><i class="fa-regular fa-square-check"></i> เลือกทั้งหมด(ตามที่กรอง)</button>
+        <button class="btn" onclick="openAssignModal()"><i class="fa-solid fa-arrow-right"></i> เพิ่มผู้เล่นที่เลือกลงสนาม</button>
+      </div>
       <div class="panel overflow-x-auto">
         <table class="table min-w-full text-sm">
           <thead class="bg-white/5">
@@ -303,49 +195,37 @@
               <th class="text-center p-3 sortable" data-key="games">เกม <span class="sort-caret"></span></th>
               <th class="text-center p-3 sortable" data-key="shuttles">ลูกแบด <span class="sort-caret"></span></th>
               <th class="text-center p-3 sortable" data-key="cost">ค่าใช้จ่าย <span class="sort-caret"></span></th>
-			  <th class="text-center p-3">สถานะการชำระเงิน</th>
+              <th class="text-center p-3">สถานะการชำระเงิน</th>
               <th class="text-center p-3">จัดการ</th>
             </tr>
           </thead>
           <tbody id="player-table-body"></tbody>
         </table>
       </div>
-    </section>
+    </div>
+
+    <!-- Tab: Queue -->
+    <div id="tab-queue" class="tab-content">
+      <div class="flex items-center justify-between mb-4">
+        <div class="heading">คิว</div>
+        <div class="flex gap-2">
+          <button class="btn" onclick="buildQueueMatchesFromAvailable()"><i class="fa-solid fa-robot"></i> จับคู่อัตโนมัติ</button>
+          <button class="btn btn-primary" onclick="openManualMatch()"><i class="fa-solid fa-hand-pointer"></i> จับคู่ด้วยมือ</button>
+          <button class="btn btn-ghost text-red-400" onclick="clearQueueMatches()"><i class="fa-solid fa-broom"></i> ล้างคิว</button>
+        </div>
+      </div>
+      <div id="queue-container" class="space-y-2"></div>
+    </div>
+
+    <!-- Tab: History -->
+    <div id="tab-history" class="tab-content">
+      <div class="flex items-center justify-between mb-4">
+        <div class="heading">ประวัติทั้งหมด</div>
+        <button class="btn btn-ghost text-red-400 hover:text-red-300 hover:bg-red-500/10" onclick="clearMatchLog()"><i class="fa-solid fa-trash-can"></i> ล้างประวัติ</button>
+      </div>
+      <div id="history-all-content-side" class="soft p-4 max-h-[70vh] overflow-auto"></div>
+    </div>
   </main>
-
-  <aside id="history-slidebar" class="history-slidebar hidden">
-    <div class="panel relative">
-      <button class="hs-toggle" onclick="toggleHistorySidebar()" title="ย่อ/ขยายประวัติ" aria-label="ย่อ/ขยายประวัติ"><i class="fa-solid fa-angles-left"></i><span class="hs-label">ประวัติ</span></button>
-      <div class="hs-header">
-        <div class="hs-title">ประวัติรวม</div>
-        <div class="hs-actions flex gap-2">
-          <button class="btn btn-ghost" onclick="clearMatchLog()"><i class="fa-solid fa-eraser"></i> ล้าง</button>
-        </div>
-      </div>
-      <div class="hs-body">
-        <div id="history-all-list-side" class="hs-list text-sm"></div>
-      </div>
-    </div>
-  </aside>
-
-
-  <aside id="queue-slidebar" class="queue-slidebar hidden">
-    <div class="panel relative">
-      <button class="qs-toggle" onclick="toggleQueueSidebar()" title="ย่อ/ขยายคิว" aria-label="ย่อ/ขยายคิว">
-        <i class="fa-solid fa-angles-right"></i><span class="qs-label">คิว</span>
-      </button>
-      <div class="qs-header">
-        <div class="qs-title">คิว (4 คน / 2 คู่)</div>
-        <div class="qs-actions flex gap-2">
-          <button class="btn" onclick="clearQueueMatches()"><i class="fa-solid fa-broom"></i> ล้างคิว</button>
-        </div>
-      </div>
-      <div class="qs-body">
-        <div id="queue-container" class="qs-list space-y-2"></div>
-      </div>
-    </div>
-  </aside>
-
 
   <!-- Toast container -->
   <div id="toast-container"></div>
@@ -427,38 +307,39 @@
       </form>
     </div>
   </div>
+
   <!-- History All Modal -->
-	<div id="history-all-modal" class="modal fixed inset-0 hidden items-center justify-center z-50">
-	  <div class="modal-card w-[92vw] max-w-lg p-6">
-		<div class="flex items-center justify-between mb-4">
-		  <div class="heading">ประวัติทั้งหมด</div>
-		  <button class="icon-btn" onclick="hide('history-all-modal')"><i class="fa-solid fa-xmark"></i></button>
-		</div>
-		<div id="history-all-content" class="soft p-3 max-h-[60vh] overflow-auto"></div>
-		<div class="flex justify-end gap-2 mt-4">
-		  <button class="btn" onclick="hide('history-all-modal')">ปิด</button>
-		</div>
-	  </div>
-	</div>
-  
+  <div id="history-all-modal" class="modal fixed inset-0 hidden items-center justify-center z-50">
+    <div class="modal-card w-[92vw] max-w-lg p-6">
+      <div class="flex items-center justify-between mb-4">
+        <div class="heading">ประวัติทั้งหมด</div>
+        <button class="icon-btn" onclick="hide('history-all-modal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div id="history-all-content" class="soft p-3 max-h-[60vh] overflow-auto"></div>
+      <div class="flex justify-end gap-2 mt-4">
+        <button class="btn" onclick="hide('history-all-modal')">ปิด</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Queue Modal (Popup) -->
-	<div id="queue-modal" class="modal fixed inset-0 hidden items-center justify-center z-50">
-	  <div class="modal-card w-[92vw] max-w-lg p-6">
-		<div class="flex items-center justify-between mb-4">
-		  <div class="heading">คิวทั้งหมด</div>
-		  <button class="icon-btn" onclick="hide('queue-modal')"><i class="fa-solid fa-xmark"></i></button>
-		</div>
-		<div id="queue-modal-content" class="soft p-3 max-h-[60vh] overflow-auto"></div>
-		<div class="flex justify-end gap-2 mt-4">
-		  <button class="btn btn-primary" onclick="buildQueueMatchesFromAvailable()">สร้างคิวอัตโนมัติ</button>
-		  <button class="btn" onclick="hide('queue-modal')">ปิด</button>
-		</div>
-	  </div>
-	</div>
+  <div id="queue-modal" class="modal fixed inset-0 hidden items-center justify-center z-50">
+    <div class="modal-card w-[92vw] max-w-lg p-6">
+      <div class="flex items-center justify-between mb-4">
+        <div class="heading">คิวทั้งหมด</div>
+        <button class="icon-btn" onclick="hide('queue-modal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div id="queue-modal-content" class="soft p-3 max-h-[60vh] overflow-auto"></div>
+      <div class="flex justify-end gap-2 mt-4">
+        <button class="btn btn-primary" onclick="buildQueueMatchesFromAvailable()">สร้างคิวอัตโนมัติ</button>
+        <button class="btn" onclick="hide('queue-modal')">ปิด</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Manual Queue Modal -->
-	<div id="queue-manual-modal" class="modal fixed inset-0 hidden items-center justify-center z-50 overflow-y-auto p-4">
-	  <div class="modal-card w-[94vw] max-w-4xl max-h-[90vh] p-0 overflow-auto">
+  <div id="queue-manual-modal" class="modal fixed inset-0 hidden items-center justify-center z-50 overflow-y-auto p-4">
+    <div class="modal-card w-[94vw] max-w-4xl max-h-[90vh] p-0 overflow-auto">
       <div class="px-6 py-4 border-b border-[var(--border)] flex items-center justify-between">
         <div class="flex items-center gap-3">
           <div class="chip"><i class="fa-solid fa-wand-magic-sparkles"></i><span>โหมดเพิ่มคิว</span></div>
@@ -476,68 +357,62 @@
           <div id="manual-slots" class="grid grid-cols-2 gap-2 mb-4"></div>
           <div class="heading mb-2">พรีวิว</div>
           <div id="manual-stage" class="soft p-4 min-h-[120px] mb-3"></div>
-		  <div class="flex flex-wrap gap-2 w-full">
-			  <button id="btn-add-match" class="btn btn-primary w-full sm:w-auto disabled:opacity-40" disabled>เพิ่มลงคิว</button>
-			  <button id="btn-pair-default" class="btn btn-green disabled:opacity-40 flex-1 min-w-[120px] hidden" disabled>1-2 vs 3-4</button>
-			  <button id="btn-pair-acbd" class="btn disabled:opacity-40 flex-1 min-w-[120px] hidden" disabled>1-3 / 2-4</button>
-			  <button id="btn-pair-adbc" class="btn disabled:opacity-40 flex-1 min-w-[120px] hidden" disabled>1-4 / 2-3</button>
-			  
-		  </div>
+          <div class="flex flex-wrap gap-2 w-full">
+            <button id="btn-add-match" class="btn btn-primary w-full sm:w-auto disabled:opacity-40" disabled>เพิ่มลงคิว</button>
+            <button id="btn-pair-default" class="btn btn-green disabled:opacity-40 flex-1 min-w-[120px] hidden" disabled>1-2 vs 3-4</button>
+            <button id="btn-pair-acbd" class="btn disabled:opacity-40 flex-1 min-w-[120px] hidden" disabled>1-3 / 2-4</button>
+            <button id="btn-pair-adbc" class="btn disabled:opacity-40 flex-1 min-w-[120px] hidden" disabled>1-4 / 2-3</button>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-	<!-- Manage Modal -->
-	<div id="manage-modal" class="modal fixed inset-0 hidden items-center justify-center z-50 overflow-y-auto p-4">
-	  <div class="modal-card w-[94vw] max-w-3xl p-6">
-		<div class="flex items-center justify-between mb-4">
-		  <div class="heading">จัดการผู้เล่นใน <span id="manage-court-name"></span></div>
-		  <button class="icon-btn" onclick="hide('manage-modal')"><i class="fa-solid fa-xmark"></i></button>
-		</div>
-
-		<!-- ส่วนหัว (คู่ A/B) คงที่ ไม่เลื่อน -->
-		<div class="soft p-3 mb-4">
-		  <p class="subtle mb-3">แตะสลอต 2 จุดเพื่อ <span class="font-semibold">สลับตำแหน่ง</span> • บันทึกอัตโนมัติ</p>
-		  <div class="grid md:grid-cols-2 gap-3">
-			<div class="pair-box">
-			  <div class="pair-title mb-2">คู่ A</div>
-			  <div class="space-y-2">
-				<div class="slot" id="pairA-0"></div>
-				<div class="slot" id="pairA-1"></div>
-			  </div>
-			</div>
-			<div class="pair-box">
-			  <div class="pair-title mb-2">คู่ B</div>
-			  <div class="space-y-2">
-				<div class="slot" id="pairB-0"></div>
-				<div class="slot" id="pairB-1"></div>
-			  </div>
-			</div>
-		  </div>
-		</div>
-
-		<!-- ส่วนล่างให้เลื่อน -->
-		<div class="soft p-3 scroll-area">
-			<div class="controls flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
-			  <div class="left flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-				<select id="bulk-move-select" class="soft px-2 py-2 text-sm w-full sm:w-56"></select>
-				<button id="bulk-move-btn" class="btn inline-flex items-center justify-center gap-2 w-full sm:w-auto">
-				  <i class="fa-solid fa-people-arrows"></i>
-				  <span>ย้ายทั้งหมด</span>
-				</button>
-			  </div>
-			  <button class="btn btn-green inline-flex items-center justify-center gap-2 w-full sm:w-auto"
-					  onclick="openFreePicker(null, _manageCtx?.courtId)">
-				<i class="fa-solid fa-user-plus"></i>
-				<span>เพิ่มผู้เล่นว่างเข้าสนาม</span>
-			  </button>
-		  </div>
-		  <div id="manage-list" class="space-y-2 mt-3"></div>
-		</div>
-	  </div>
-	</div>
-
+  <!-- Manage Modal -->
+  <div id="manage-modal" class="modal fixed inset-0 hidden items-center justify-center z-50 overflow-y-auto p-4">
+    <div class="modal-card w-[94vw] max-w-3xl p-6">
+      <div class="flex items-center justify-between mb-4">
+        <div class="heading">จัดการผู้เล่นใน <span id="manage-court-name"></span></div>
+        <button class="icon-btn" onclick="hide('manage-modal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="soft p-3 mb-4">
+        <p class="subtle mb-3">แตะสลอต 2 จุดเพื่อ <span class="font-semibold">สลับตำแหน่ง</span> • บันทึกอัตโนมัติ</p>
+        <div class="grid md:grid-cols-2 gap-3">
+          <div class="pair-box">
+            <div class="pair-title mb-2">คู่ A</div>
+            <div class="space-y-2">
+              <div class="slot" id="pairA-0"></div>
+              <div class="slot" id="pairA-1"></div>
+            </div>
+          </div>
+          <div class="pair-box">
+            <div class="pair-title mb-2">คู่ B</div>
+            <div class="space-y-2">
+              <div class="slot" id="pairB-0"></div>
+              <div class="slot" id="pairB-1"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="soft p-3 scroll-area">
+        <div class="controls flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
+          <div class="left flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <select id="bulk-move-select" class="soft px-2 py-2 text-sm w-full sm:w-56"></select>
+            <button id="bulk-move-btn" class="btn inline-flex items-center justify-center gap-2 w-full sm:w-auto">
+              <i class="fa-solid fa-people-arrows"></i>
+              <span>ย้ายทั้งหมด</span>
+            </button>
+          </div>
+          <button class="btn btn-green inline-flex items-center justify-center gap-2 w-full sm:w-auto"
+            onclick="openFreePicker(null, _manageCtx?.courtId)">
+            <i class="fa-solid fa-user-plus"></i>
+            <span>เพิ่มผู้เล่นว่างเข้าสนาม</span>
+          </button>
+        </div>
+        <div id="manage-list" class="space-y-2 mt-3"></div>
+      </div>
+    </div>
+  </div>
 
   <!-- Free picker -->
   <div id="free-picker-modal" class="modal fixed inset-0 hidden items-center justify-center z-50">
@@ -582,27 +457,26 @@
     </div>
   </div>
 
-	<div id="confirm-shuttle-modal" class="modal fixed inset-0 hidden items-center justify-center z-50">
-	  <div class="modal-card w-[92vw] max-w-md p-6">
-		<div class="flex items-center justify-between mb-3">
-		  <div class="heading">ยืนยันการเพิ่มลูกแบด</div>
-		  <button class="icon-btn" onclick="hide('confirm-shuttle-modal')"><i class="fa-solid fa-xmark"></i></button>
-		</div>
-		<div class="soft p-3 mb-3">
-		  เพิ่มให้ <span id="confirm-shuttlecourt-name" class="font-semibold"></span><br/>
-		  ผู้เล่น: <span id="confirm-shuttlecourt-players" class="muted">—</span>
-		</div>
-		<!-- Input สำหรับกรอกหมายเลขลูก -->
-		<label class="grid gap-2 mb-4">
-		  <span class="subtle">หมายเลขลูกแบด (เช่น 1, 2, 3...)</span>
-		  <input id="shuttle-number-input" type="number" min="1" class="soft px-3 py-2" placeholder="1">
-		</label>
-		<div class="flex justify-end gap-2">
-		  <button class="btn" onclick="hide('confirm-shuttle-modal')">ยกเลิก</button>
-		  <button class="btn btn-primary" onclick="confirmAddShuttlecock()">ยืนยัน</button>
-		</div>
-	  </div>
-	</div>
+  <div id="confirm-shuttle-modal" class="modal fixed inset-0 hidden items-center justify-center z-50">
+    <div class="modal-card w-[92vw] max-w-md p-6">
+      <div class="flex items-center justify-between mb-3">
+        <div class="heading">ยืนยันการเพิ่มลูกแบด</div>
+        <button class="icon-btn" onclick="hide('confirm-shuttle-modal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="soft p-3 mb-3">
+        เพิ่มให้ <span id="confirm-shuttlecourt-name" class="font-semibold"></span><br/>
+        ผู้เล่น: <span id="confirm-shuttlecourt-players" class="muted">—</span>
+      </div>
+      <label class="grid gap-2 mb-4">
+        <span class="subtle">หมายเลขลูกแบด (เช่น 1, 2, 3...)</span>
+        <input id="shuttle-number-input" type="number" min="1" class="soft px-3 py-2" placeholder="1">
+      </label>
+      <div class="flex justify-end gap-2">
+        <button class="btn" onclick="hide('confirm-shuttle-modal')">ยกเลิก</button>
+        <button class="btn btn-primary" onclick="confirmAddShuttlecock()">ยืนยัน</button>
+      </div>
+    </div>
+  </div>
 
   <div id="queue-send-modal" class="modal fixed inset-0 hidden items-center justify-center z-50">
     <div class="modal-card w-[92vw] max-w-md p-6">
@@ -618,36 +492,36 @@
       </div>
     </div>
   </div>
-  
-	<!-- Modal เลือกลูก -->
-	<div id="shuttle-type-modal" class="modal fixed inset-0 hidden items-center justify-center z-50">
-	  <div class="modal-card w-[92vw] max-w-md p-6">
-		<div class="flex items-center justify-between mb-4">
-		  <div class="heading">เริ่มเกม — เลือกประเภทลูก</div>
-		  <button class="icon-btn" onclick="hide('shuttle-type-modal')"><i class="fa-solid fa-xmark"></i></button>
-		</div>
-		<div class="space-y-4 mb-5">
-		  <label class="flex items-center gap-3 p-3 soft cursor-pointer rounded-lg">
-			<input type="radio" name="shuttle-type" value="real" checked class="accent-indigo-400">
-			<div>
-			  <div class="font-medium">ลูกจริง</div>
-			  <div class="muted text-sm">คิดเงินตามจำนวนลูกที่ใช้</div>
-			</div>
-		  </label>
-		  <label class="flex items-center gap-3 p-3 soft cursor-pointer rounded-lg">
-			<input type="radio" name="shuttle-type" value="repair" class="accent-indigo-400">
-			<div>
-			  <div class="font-medium">ลูกซ่อม</div>
-			  <div class="muted text-sm">ไม่คิดเงินลูก (ฟรี)</div>
-			</div>
-		  </label>
-		</div>
-		<div class="flex justify-end gap-2">
-		  <button class="btn" onclick="hide('shuttle-type-modal')">ยกเลิก</button>
-		  <button class="btn btn-primary" onclick="handleShuttleTypeSelection()">ยืนยัน</button>
-		</div>
-	  </div>
-	</div>
+
+  <!-- Modal เลือกลูก -->
+  <div id="shuttle-type-modal" class="modal fixed inset-0 hidden items-center justify-center z-50">
+    <div class="modal-card w-[92vw] max-w-md p-6">
+      <div class="flex items-center justify-between mb-4">
+        <div class="heading">เริ่มเกม — เลือกประเภทลูก</div>
+        <button class="icon-btn" onclick="hide('shuttle-type-modal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="space-y-4 mb-5">
+        <label class="flex items-center gap-3 p-3 soft cursor-pointer rounded-lg">
+          <input type="radio" name="shuttle-type" value="real" checked class="accent-indigo-400">
+          <div>
+            <div class="font-medium">ลูกจริง</div>
+            <div class="muted text-sm">คิดเงินตามจำนวนลูกที่ใช้</div>
+          </div>
+        </label>
+        <label class="flex items-center gap-3 p-3 soft cursor-pointer rounded-lg">
+          <input type="radio" name="shuttle-type" value="repair" class="accent-indigo-400">
+          <div>
+            <div class="font-medium">ลูกซ่อม</div>
+            <div class="muted text-sm">ไม่คิดเงินลูก (ฟรี)</div>
+          </div>
+        </label>
+      </div>
+      <div class="flex justify-end gap-2">
+        <button class="btn" onclick="hide('shuttle-type-modal')">ยกเลิก</button>
+        <button class="btn btn-primary" onclick="handleShuttleTypeSelection()">ยืนยัน</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Data modal -->
   <div id="data-modal" class="modal fixed inset-0 hidden items-center justify-center z-50">
@@ -681,8 +555,28 @@
     const mapById = arr => { const m=new Map(); arr.forEach(x=>m.set(x.id,x)); return m; };
     const minutesSince=ts=>!ts?0:(Math.floor((Date.now()-ts)/60000)||'<1');
 
+    /* ------- Tab Navigation ------- */
+    function showTab(tabName) {
+      history.pushState(null, '', `#${tabName}`);
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.getElementById(`tab-${tabName}`).classList.add('active');
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+
+      // เรียก render ตาม tab
+      if (tabName === 'courts') renderCourts();
+      else if (tabName === 'players') renderPlayers();
+      else if (tabName === 'queue') renderQueue();
+      else if (tabName === 'history') renderHistoryTab();
+    }
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => showTab(btn.dataset.tab));
+    });
+    const initialTab = location.hash.slice(1) || 'dashboard';
+    showTab(initialTab);
+
     /* ------- Toast + Undo ------- */
-    let _undo = null; // {do:fn, undo:fn, label:string}
+    let _undo = null;
     function showToast(msg, undoLabel=null, undoHandler=null, timeoutMs=6000){
       const cont=document.getElementById('toast-container');
       const el=document.createElement('div'); el.className='toast';
@@ -700,7 +594,6 @@
     /* ------- Price ------- */
     function getPrice(){return {shuttle:parseFloat(localStorage.getItem('shuttlecockPrice')??'20'), fee:parseFloat(localStorage.getItem('courtRentalFee')??'0')}};
     function updatePriceDisplay(){const p=getPrice(); document.getElementById('shuttlecock-price-display').textContent=p.shuttle; document.getElementById('court-price').textContent=p.fee;}
-
     document.getElementById('settings-form').addEventListener('submit',e=>{
       e.preventDefault();
       localStorage.setItem('shuttlecockPrice', document.getElementById('shuttlecock-price').value);
@@ -717,10 +610,9 @@
         if(!p.status){ p.status='ว่าง'; changed=true; }
         if(!p.skill){ p.skill='N'; changed=true; }
         if(!Array.isArray(p.history)){ p.history=[]; changed=true; }
-		if(!p.paymentStatus){ p.paymentStatus='ยังไม่จ่าย'; changed=true; }
+        if(!p.paymentStatus){ p.paymentStatus='ยังไม่จ่าย'; changed=true; }
       }
       if(changed) savePlayers(players);
-
       let courts=getCourts();
       for(const c of courts){
         if(!c.id){ c.id=uuid(); }
@@ -728,96 +620,73 @@
         if(!Array.isArray(c.pairs)) c.pairs=[];
         if(c.waiting===undefined) c.waiting=null;
         if(typeof c.roundNo!=='number') c.roundNo=0;
-		if(typeof c.shuttlecockNo!=='number') c.shuttlecockNo=0;
+        if(typeof c.shuttlecockNo!=='number') c.shuttlecockNo=0;
         ensurePairs(c); recalcCourtStatus(c);
       }
       saveCourts(courts);
     }
 
-    
-    /* ===== Slidebars + History (safe hooks) ===== */
-    // Persist collapsed state
-    function applyQueueSidebarState(){
-      const el = document.getElementById('queue-slidebar'); if(!el) return;
-      const collapsed = localStorage.getItem('queueSidebarCollapsed') === '1';
-      el.classList.toggle('collapsed', collapsed);
-      updateQueueBadge();
-    }
-    function toggleQueueSidebar(){
-      const el = document.getElementById('queue-slidebar'); if(!el) return;
-      const collapsed = el.classList.contains('collapsed');
-      el.classList.toggle('collapsed', !collapsed);
-      localStorage.setItem('queueSidebarCollapsed', (!collapsed)?'1':'0');
-      updateQueueBadge();
-    }
-    function updateQueueBadge(){
-      const el = document.querySelector('#queue-slidebar .qs-label');
-      if(!el) return;
-      const n = (getQueue()?.matches?.length)||0;
-      el.textContent = `คิว (${n})`;
-    }
-
-    function applyHistorySidebarState(){
-      const el = document.getElementById('history-slidebar'); if(!el) return;
-      const collapsed = localStorage.getItem('historySidebarCollapsed') === '1';
-      el.classList.toggle('collapsed', collapsed);
-    }
-    function toggleHistorySidebar(){
-      const el = document.getElementById('history-slidebar'); if(!el) return;
-      const collapsed = el.classList.contains('collapsed');
-      el.classList.toggle('collapsed', !collapsed);
-      localStorage.setItem('historySidebarCollapsed', (!collapsed)?'1':'0');
-    }
-
-    // Global match log helpers
+    /* ------- Match Log ------- */
     const saveMatchLog = v => save('match_log', v);
     const getMatchLog  = () => load('match_log', []);
 
-    // Append with dedupe (use signature + 4s window) and global seq
     function appendMatchLog(court){
       if(!court) return;
       const ev = { 
-		  ts: Date.now(), 
-		  courtId: court.id, 
-		  courtName: court.name, 
-		  round: court.roundNo||0, 
-		  pairs: (court.pairs||[]).map(pr=>[...pr]),
-		  shuttlecockNo: court.shuttlecockNo || 0, // เพิ่มบรรทัดนี้
-		  shuttlecockHistory: [...(court.shuttlecockHistory || [])]
-		};
+        ts: Date.now(), 
+        courtId: court.id, 
+        courtName: court.name, 
+        round: court.roundNo||0, 
+        pairs: (court.pairs||[]).map(pr=>[...pr]),
+        shuttlecockNo: court.shuttlecockNo || 0,
+        shuttlecockHistory: [...(court.shuttlecockHistory || [])]
+      };
       const makeSig = (e)=>{
         try{ return `${e.courtId||''}|${(e.pairs||[]).flat().filter(Boolean).map(String).sort().join(',')}`; }catch(_){ return `${e.courtId||''}|?`; }
       };
       ev._sig = makeSig(ev);
-
       const log = getMatchLog();
       const last = log.length ? log[log.length-1] : null;
       const lastSig = last ? (last._sig || makeSig(last)) : null;
       const recent = last && (Math.abs((ev.ts)-(last.ts||0)) <= 4000);
       const sameSig = last && (lastSig === ev._sig);
-      if(recent && sameSig){ return; } // skip duplicate
-
+      if(recent && sameSig){ return; }
       const lastSeq = (log.length>0 && typeof (last && last.seq)==='number') ? last.seq : log.length;
       ev.seq = lastSeq + 1;
-		log.push(ev); saveMatchLog(log);
-		try{ renderAllHistorySidebar(); updateHistoryCount(); }catch(e){}
+      log.push(ev); saveMatchLog(log);
+      updateHistoryCount();
     }
 
-    function renderAllHistorySidebar(){
-      const host = document.getElementById('history-all-list-side'); if(!host) return;
-      host.innerHTML='';
-      const players=getPlayers(), byId=mapById(players);
-      const raw = getMatchLog().slice();
-      if(raw.length===0){ host.innerHTML='<div class="muted">ยังไม่มีประวัติ</div>'; return; }
-      const log = raw.slice().sort((a,b)=>(b.ts||0)-(a.ts||0));
-      const fmt=ts=>{const d=new Date(ts),pad=n=>String(n).padStart(2,'0');return `${pad(d.getHours())}:${pad(d.getMinutes())} • ${pad(d.getDate())}/${d.getMonth()+1}/${d.getFullYear()}`};
-      log.forEach(ev=>{
+    function renderHistoryTab() {
+      const host = document.getElementById('history-all-content-side');
+      if (!host) return;
+      host.innerHTML = '<div class="muted">กำลังโหลด...</div>';
+      const log = getMatchLog();
+      const players = getPlayers();
+      const byId = mapById(players);
+      if (log.length === 0) {
+        host.innerHTML = '<div class="muted text-center py-4">ยังไม่มีประวัติ</div>';
+        return;
+      }
+      const sorted = [...log].sort((a, b) => (b.ts || 0) - (a.ts || 0));
+      let html = '';
+      sorted.forEach((ev, idx) => {
         const pairs = ev.pairs||[[],[]];
         const [A,B,C,D] = [pairs?.[0]?.[0], pairs?.[0]?.[1], pairs?.[1]?.[0], pairs?.[1]?.[1]];
         const n=id=>byId.get(id)?.name||'—', s=id=>byId.get(id)?.skill||'N';
-        const row=document.createElement('div'); row.className='border-b border-[var(--border)] py-2';
-        row.innerHTML = `<div class="font-semibold">ลำดับ ${ev.seq||'?'} • ${ev.courtName||'—'}</div>
-            <div class="muted">
+        const fmt = ts => {
+          const d = new Date(ts);
+          const pad = n => String(n).padStart(2, '0');
+          return `${pad(d.getDate())}/${pad(d.getMonth() + 1)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        };
+        html += `
+          <div class="panel p-4 mb-3">
+            <div class="flex items-center justify-between">
+              <div class="font-semibold">ลำดับ ${ev.seq || idx + 1}</div>
+              <div class="muted text-xs">${fmt(ev.ts)}</div>
+            </div>
+            <div class="mt-2 text-sm">
+              <div class="muted mb-1">${ev.courtName || '—'} • ลูก: ${ev.shuttlecockHistory?.length ? ev.shuttlecockHistory.join(', ') : (ev.shuttlecockNo || '?')}</div>
               <span class="chip">${n(A)} <span class="tag">มือ ${s(A)}</span></span>
               <span class="muted">×</span>
               <span class="chip">${n(B)} <span class="tag">มือ ${s(B)}</span></span>
@@ -826,35 +695,28 @@
               <span class="muted">×</span>
               <span class="chip">${n(D)} <span class="tag">มือ ${s(D)}</span></span>
             </div>
-            <div class="muted text-xs">${fmt(ev.ts)}</div>`;
-        host.appendChild(row);
+          </div>
+        `;
       });
+      host.innerHTML = html;
     }
 
-    // Safe hook into pushHistory (called when startGame runs) — do not change original logic
-    try{
-      const _pushHistory_orig = pushHistory;
-      pushHistory = function(court, players){
-        _pushHistory_orig(court, players);
-        try{ appendMatchLog(court); }catch(e){}
-      };
-    }catch(e){ /* if not found, ignore */ }
-
+    function clearMatchLog(){
+      try{
+        save('match_log', []);
+        renderHistoryTab();
+        updateHistoryCount();
+        showToast('ล้างประวัติรวมแล้ว ✓');
+      }catch(e){
+        alert('ล้างประวัติไม่สำเร็จ: '+e.message);
+      }
+    }
 
     function clearMatchLogFromCard(){
-	  if(!confirm('ยืนยันการล้างประวัติทั้งหมด?\n(จะไม่สามารถกู้คืนได้)')) return;
-	  clearMatchLog();
-	}
-	function clearMatchLog(){
-	  try{
-		save('match_log', []);
-		renderAllHistorySidebar?.();
-		updateHistoryCount(); // 👈 เพิ่มบรรทัดนี้
-		showToast('ล้างประวัติรวมแล้ว ✓');
-	  }catch(e){
-		alert('ล้างประวัติไม่สำเร็จ: '+e.message);
-	  }
-	}
+      if(!confirm('ยืนยันการล้างประวัติทั้งหมด?\n(จะไม่สามารถกู้คืนได้)')) return;
+      clearMatchLog();
+    }
+
     /* ------- Helpers ------- */
     function ensureAvailableSince(players){
       const now=Date.now();
@@ -888,10 +750,10 @@
           const p=byId.get(pid); if(!p) return;
           const partnerId=pr[1-k];
           p.history.push({
-			  ts, courtId: court.id, courtName: court.name, round: court.roundNo, 
-			  partnerId, opponentsIds: opp.filter(x=>x!==pid&&x!==partnerId),
-			  shuttlecockNo: court.shuttlecockNo || 0  // เพิ่ม
-			});
+            ts, courtId: court.id, courtName: court.name, round: court.roundNo, 
+            partnerId, opponentsIds: opp.filter(x=>x!==pid&&x!==partnerId),
+            shuttlecockNo: court.shuttlecockNo || 0
+          });
         });
       });
     }
@@ -906,7 +768,7 @@
       hist.forEach(h=>{
         const partner=byId.get(h.partnerId)?.name||'—';
         const opp=(h.opponentsIds||[]).map(x=>byId.get(x)?.name||'—').join(', ')||'—';
-        const row=document.createElement('div'); row.className='flex items-center justify-between border-b border-[var(--border)] py-2';
+        const row=document.createElement('div'); row.className='border-b border-[var(--border)] py-2';
         row.innerHTML=`<div><div class="font-semibold">ตา ${h.round} • ${h.courtName||'—'} </div><div class="muted text-xs">คู่กับ ${partner} • คู่แข่ง ${opp}</div></div><div class="muted text-xs">${fmt(h.ts)}</div>`;
         host.appendChild(row);
       });
@@ -922,7 +784,6 @@
     filterSearch.oninput=(e)=>{ _filter.q = e.target.value.trim().toLowerCase(); renderPlayers(); };
     filterSkill.onchange=(e)=>{ _filter.skill = e.target.value; renderPlayers(); };
     filterStatus.onchange=(e)=>{ _filter.status = e.target.value; renderPlayers(); };
-
     function passFilter(p){
       if(_filter.q && !(p.name||'').toLowerCase().includes(_filter.q)) return false;
       if(_filter.skill && p.skill!==_filter.skill) return false;
@@ -930,252 +791,194 @@
       return true;
     }
 
-    
     /* Sorting headers setup */
     let _sort = {key:null, dir:1};
-    function setupSortableHeaders(){
-      const map = {'เกม':'games','ลูกแบด':'shuttles','ค่าใช้จ่าย':'cost'};
-      const ths = document.querySelectorAll('thead th');
-      ths.forEach(th=>{
-        const label = (th.textContent||'').trim();
-        if(map[label]){
-          th.classList.add('sortable');
-          th.setAttribute('data-key', map[label]);
-          if(!th.querySelector('.sort-caret')){
-            const span=document.createElement('span'); span.className='sort-caret'; th.appendChild(span);
-          }
-        }
-      });
-      const thead=document.querySelector('thead');
-      if(!thead.__sortBound){
-        thead.addEventListener('click', e=>{
-          const th = e.target.closest('th.sortable'); if(!th) return;
-          const key = th.getAttribute('data-key');
-          if(_sort.key===key){ _sort.dir = -_sort.dir; } else { _sort.key = key; _sort.dir = 1; }
-          localStorage.setItem('playerSort', JSON.stringify(_sort));
-          renderPlayers();
-        });
-        thead.__sortBound = true;
-      }
-      try{ const s=JSON.parse(localStorage.getItem('playerSort')||'null'); if(s) _sort=s; }catch{}
-      applySortHeaders();
-    }
     function applySortHeaders(){
       const ths = document.querySelectorAll('thead th.sortable');
       ths.forEach(th=>{
         th.classList.remove('active','desc');
         const key=th.getAttribute('data-key');
-        if(key===_sort.key){
-          th.classList.add('active');
-          if(_sort.dir===-1) th.classList.add('desc');
-        }
-      });
-    }
-
-    
-    /* Sort handlers */
-    function attachSortHandlers(){
-      const thead = document.querySelector('thead');
-      if(!thead) return;
-      thead.addEventListener('click', (e)=>{
-        const th = e.target.closest('th.sortable'); if(!th) return;
-        const key = th.getAttribute('data-key');
-        if(!window._sort) window._sort = {key:null, dir:1};
-        if(_sort.key===key){ _sort.dir = -_sort.dir; } else { _sort.key = key; _sort.dir = 1; }
-        try{ localStorage.setItem('playerSort', JSON.stringify(_sort)); }catch{}
-        renderPlayers();
-      });
-    }
-    function applySortHeaders(){
-      const ths = document.querySelectorAll('thead th.sortable');
-      ths.forEach(th=>{
-        th.classList.remove('active','desc');
-        const key = th.getAttribute('data-key');
         if(window._sort && key===_sort.key){
           th.classList.add('active');
           if(_sort.dir===-1) th.classList.add('desc');
         }
       });
     }
+
     (function restoreSort(){
       try{ const s = JSON.parse(localStorage.getItem('playerSort')||'null'); if(s) window._sort=s; }catch{ window._sort={key:null, dir:1}; }
     })();
-	
 
-    
     /* ------- Players render ------- */
     let _editPlayerId=null; let _editingForm=false;
-function renderPlayers(){
-  const tbody = document.getElementById('player-table-body');
-  tbody.innerHTML = '';
-  const players = ensureAvailableSince(getPlayers());
-  savePlayers(players);
-  const {shuttle, fee} = getPrice();
-  const data = players.filter(passFilter);
 
-  // --- จัดเรียง ---
-  if (!window._sort) window._sort = {key: null, dir: 1};
-
-  // ฟังก์ชันตรวจสอบว่า "จ่ายเงินแล้ว" หรือไม่
-  const isPaid = (p) => p.paymentStatus === 'เงินสด' || p.paymentStatus === 'เงินโอน';
-
-  const getVal = (p) => {
-    if (_sort.key === 'games') return p.gamesPlayed || 0;
-    if (_sort.key === 'shuttles') return p.shuttlecocksUsed || 0;
-    if (_sort.key === 'cost') {
-      const feeOnce = (p.gamesPlayed || 0) > 0 ? fee : 0;
-      return (p.shuttlecocksUsed || 0) * shuttle + feeOnce;
+    function isPaid(p) {
+      return p.paymentStatus === 'เงินสด' || p.paymentStatus === 'เงินโอน';
     }
-    return 0;
-  };
 
-  // จัดเรียงหลัก: ผู้ที่ยังไม่จ่าย → ตาม sort เดิม / ผู้ที่จ่ายแล้ว → ล่างสุด
-  data.sort((a, b) => {
-    const aPaid = isPaid(a);
-    const bPaid = isPaid(b);
-
-    // ถ้าทั้งคู่ "จ่ายแล้ว" หรือ "ยังไม่จ่าย" → ใช้ logic เดิม
-    if (aPaid === bPaid) {
-      if (window._sort && _sort.key) {
-        const va = getVal(a), vb = getVal(b);
-        if (va === vb) return (a.name || '').localeCompare(b.name || '');
-        return (va - vb) * (_sort.dir || 1);
-      } else {
-        const order = s => s === 'ว่าง' ? 0 : (s === 'ในสนาม' ? 1 : 2);
-        const oa = order(a.status), ob = order(b.status);
-        if (oa !== ob) return oa - ob;
-        if (a.status === 'ว่าง' && b.status === 'ว่าง')
-          return (a.availableSince ?? Date.now()) - (b.availableSince ?? Date.now());
-        return (a.name || '').localeCompare(b.name || '');
+    function renderPlayers(){
+      const tbody = document.getElementById('player-table-body');
+      tbody.innerHTML = '';
+      const players = ensureAvailableSince(getPlayers());
+      savePlayers(players);
+      const {shuttle, fee} = getPrice();
+      const data = players.filter(passFilter);
+      const getVal = (p) => {
+        if (_sort.key === 'games') return p.gamesPlayed || 0;
+        if (_sort.key === 'shuttles') return p.shuttlecocksUsed || 0;
+        if (_sort.key === 'cost') {
+          const feeOnce = (p.gamesPlayed || 0) > 0 ? fee : 0;
+          return (p.shuttlecocksUsed || 0) * shuttle + feeOnce;
+        }
+        return 0;
+      };
+      data.sort((a, b) => {
+        const aPaid = isPaid(a);
+        const bPaid = isPaid(b);
+        if (aPaid === bPaid) {
+          if (_sort.key) {
+            const va = getVal(a), vb = getVal(b);
+            if (va === vb) return (a.name || '').localeCompare(b.name || '');
+            return (va - vb) * (_sort.dir || 1);
+          } else {
+            const order = s => s === 'ว่าง' ? 0 : (s === 'ในสนาม' ? 1 : 2);
+            const oa = order(a.status), ob = order(b.status);
+            if (oa !== ob) return oa - ob;
+            if (a.status === 'ว่าง' && b.status === 'ว่าง')
+              return (a.availableSince ?? Date.now()) - (b.availableSince ?? Date.now());
+            return (a.name || '').localeCompare(b.name || '');
+          }
+        }
+        return aPaid ? 1 : -1;
+      });
+      data.forEach((p, i) => {
+        const feeOnce = (p.gamesPlayed || 0) > 0 ? fee : 0;
+        const cost = (p.shuttlecocksUsed || 0) * shuttle + feeOnce;
+        let displayStatus = p.status;
+        if (isPaid(p)) {
+          displayStatus = 'จ่ายเงินแล้ว';
+        }
+        let cls = '';
+        if (isPaid(p)) {
+          cls = 'text-gray-400 bg-gray-800/30 border-gray-600';
+        } else {
+          cls = p.status === 'ว่าง' ? 'available' : (p.status === 'ในสนาม' ? 'ready' : 'playing');
+        }
+        const info = p.status === 'ว่าง' && !isPaid(p)
+          ? `<span class="badge">รอ ${minutesSince(p.availableSince)} นาที</span>`
+          : (p.status === 'ในสนาม' && !isPaid(p) ? `<span class="badge">รอเริ่ม</span>` : '');
+        tbody.insertAdjacentHTML('beforeend', `
+          <tr>
+            <td class="text-left p-3">
+              <input type="checkbox" class="player-select accent-indigo-400" data-id="${p.id}" ${p.selected ? 'checked' : ''} ${isPaid(p) ? 'disabled' : ''}>
+            </td>
+            <td class="text-center p-3">${i + 1}</td>
+            <td class="text-left p-3">
+              <button class="text-indigo-300 hover:underline" onclick="openHistory('${p.id}')">${p.name}</button>
+            </td>
+            <td class="text-center p-3"><span class="badge">มือ ${p.skill || 'N'}</span></td>
+            <td class="text-center p-3"><span class="status ${cls}">${displayStatus}</span> ${info}</td>
+            <td class="text-center p-3">${p.gamesPlayed || 0}</td>
+            <td class="text-center p-3">${p.shuttlecocksUsed || 0}</td>
+            <td class="text-center p-3">${cost}</td>
+            <td class="text-center p-3">
+              <select class="soft px-2 py-1 text-sm payment-select" data-player-id="${p.id}">
+                <option value="ยังไม่จ่าย" ${p.paymentStatus === 'ยังไม่จ่าย' ? 'selected' : ''}>ยังไม่จ่าย</option>
+                <option value="เงินสด" ${p.paymentStatus === 'เงินสด' ? 'selected' : ''}>เงินสด</option>
+                <option value="เงินโอน" ${p.paymentStatus === 'เงินโอน' ? 'selected' : ''}>เงินโอน</option>
+              </select>
+            </td>
+            <td class="text-center p-3">
+              <button class="icon-btn" title="แก้ไข" onclick="openEditPlayer('${p.id}', '${encodeURIComponent(p.name)}')"><i class="fa-solid fa-pen"></i></button>
+              <button class="icon-btn" title="ลบ" onclick="deletePlayer('${p.id}')"><i class="fa-solid fa-trash"></i></button>
+            </td>
+          </tr>
+        `);
+      });
+      const master = document.getElementById('select-all');
+      if (master) {
+        master.checked = data.every(p => p.selected);
+        master.onchange = e => {
+          const check = e.target.checked;
+          const players = getPlayers();
+          data.forEach(p => {
+            const player = players.find(x => x.id === p.id);
+            if (player) player.selected = check;
+          });
+          savePlayers(players);
+          renderPlayers();
+        };
       }
-    }
-    // ถ้าคนใดคนหนึ่งจ่ายแล้ว → ให้อยู่ล่าง
-    return aPaid ? 1 : -1;
-  });
-
-  // --- สร้างแถว ---
-  data.forEach((p, i) => {
-    const feeOnce = (p.gamesPlayed || 0) > 0 ? fee : 0;
-    const cost = (p.shuttlecocksUsed || 0) * shuttle + feeOnce;
-
-    // กำหนดสถานะที่แสดง
-    let displayStatus = p.status;
-    if (isPaid(p)) {
-      displayStatus = 'จ่ายเงินแล้ว';
+      document.getElementById('queue-count').textContent = getQueue().matches?.length || 0;
+      setupPlayerSelection();
+      applySortHeaders();
     }
 
-    // กำหนด class สำหรับสี
-    let cls = '';
-    if (isPaid(p)) {
-      cls = 'text-gray-400 bg-gray-800/30 border-gray-600'; // สีเทาจาง ๆ
-    } else {
-      cls = p.status === 'ว่าง' ? 'available' : (p.status === 'ในสนาม' ? 'ready' : 'playing');
+    function setupPlayerSelection() {
+      document.querySelectorAll('.player-select').forEach(cb => {
+        cb.onchange = null;
+        cb.onchange = function() {
+          const pid = this.dataset.id;
+          const players = getPlayers();
+          const p = players.find(x => x.id === pid);
+          if (p) {
+            p.selected = this.checked;
+            savePlayers(players);
+            renderPlayers();
+          }
+        };
+      });
     }
 
-    const info = p.status === 'ว่าง' && !isPaid(p)
-      ? `<span class="badge">รอ ${minutesSince(p.availableSince)} นาที</span>`
-      : (p.status === 'ในสนาม' && !isPaid(p) ? `<span class="badge">รอเริ่ม</span>` : '');
-
-    tbody.insertAdjacentHTML('beforeend', `
-      <tr>
-        <td class="text-left p-3">
-          <input type="checkbox" class="player-select accent-indigo-400" data-id="${p.id}" ${p.selected ? 'checked' : ''}>
-        </td>
-        <td class="text-center p-3">${i + 1}</td>
-        <td class="text-left p-3">
-          <button class="text-indigo-300 hover:underline" onclick="openHistory('${p.id}')">${p.name}</button>
-        </td>
-        <td class="text-center p-3"><span class="badge">มือ ${p.skill || 'N'}</span></td>
-        <td class="text-center p-3"><span class="status ${cls}">${displayStatus}</span> ${info}</td>
-        <td class="text-center p-3">${p.gamesPlayed || 0}</td>
-        <td class="text-center p-3">${p.shuttlecocksUsed || 0}</td>
-        <td class="text-center p-3">${cost}</td>
-        <td class="text-center p-3">
-          <select class="soft px-2 py-1 text-sm payment-select" data-player-id="${p.id}">
-            <option value="ยังไม่จ่าย" ${p.paymentStatus === 'ยังไม่จ่าย' ? 'selected' : ''}>ยังไม่จ่าย</option>
-            <option value="เงินสด" ${p.paymentStatus === 'เงินสด' ? 'selected' : ''}>เงินสด</option>
-            <option value="เงินโอน" ${p.paymentStatus === 'เงินโอน' ? 'selected' : ''}>เงินโอน</option>
-          </select>
-        </td>
-        <td class="text-center p-3">
-          <button class="icon-btn" title="แก้ไข" onclick="openEditPlayer('${p.id}', '${encodeURIComponent(p.name)}')"><i class="fa-solid fa-pen"></i></button>
-          <button class="icon-btn" title="ลบ" onclick="deletePlayer('${p.id}')"><i class="fa-solid fa-trash"></i></button>
-        </td>
-      </tr>
-    `);
-  });
-
-  // --- Select All ---
-  const master = document.getElementById('select-all');
-  if (master) {
-    master.checked = data.every(p => p.selected);
-    master.onchange = e => {
-      const check = e.target.checked;
+    document.getElementById('player-table-body').addEventListener('change', (e) => {
+      const select = e.target;
+      if (!select.classList.contains('payment-select')) return;
+      const playerId = select.getAttribute('data-player-id');
+      const value = select.value;
       const players = getPlayers();
-      data.forEach(p => {
-        const player = players.find(x => x.id === p.id);
-        if (player) player.selected = check;
+      const p = players.find(x => x.id === playerId);
+      if (p && p.paymentStatus !== value) {
+        p.paymentStatus = value;
+        if (value === 'เงินสด' || value === 'เงินโอน') {
+          p.status = 'จ่ายเงินแล้ว';
+        } else {
+          const courts = getCourts();
+          let inCourt = false, isPlaying = false;
+          for (const c of courts) {
+            if (c.players?.includes(p.id)) {
+              inCourt = true;
+              if (c.status === 'กำลังเล่น') isPlaying = true;
+              break;
+            }
+          }
+          if (isPlaying) p.status = 'กำลังเล่น';
+          else if (inCourt) p.status = 'ในสนาม';
+          else p.status = 'ว่าง';
+        }
+        savePlayers(players);
+        renderPlayers();
+        showToast(`อัปเดตการชำระเงินของ ${p.name} เป็น "${value}" ✓`);
+      }
+    });
+
+    function addPlayer() {
+      const name = prompt('ชื่อผู้เล่น');
+      if (!name?.trim()) return;
+      const players = getPlayers();
+      const newId = Date.now().toString();
+      players.push({
+        id: newId,
+        name: name.trim(),
+        status: 'ว่าง',
+        availableSince: Date.now(),
+        gamesPlayed: 0,
+        shuttlecocksUsed: 0,
+        selected: false,
+        paymentStatus: 'ยังไม่จ่าย'
       });
       savePlayers(players);
       renderPlayers();
-    };
-  }
-
-  // --- อัปเดตคิว ---
-  document.getElementById('queue-count').textContent = getQueue().matches?.length || 0;
-
-  // --- เรียก setupPlayerSelection() ---
-  setupPlayerSelection();
-
-  // --- อัปเดตหัวตาราง ---
-  if (typeof applySortHeaders === 'function') applySortHeaders();
-}
-	function setupPlayerSelection() {
-  document.querySelectorAll('.player-select').forEach(cb => {
-    cb.onchange = null; // ลบ event เก่า
-
-    cb.onchange = function() {
-      const pid = this.dataset.id;
-      const players = getPlayers();
-      const p = players.find(x => x.id === pid);
-      if (p) {
-        p.selected = this.checked;
-        savePlayers(players);
-        renderPlayers(); // รีเฟรชเพื่ออัปเดต select-all
-      }
-    };
-
-    // โหลดสถานะจาก localStorage
-    const players = getPlayers();
-    const p = players.find(x => x.id === cb.dataset.id);
-    if (p && p.selected) {
-      cb.checked = true;
-    }
-  });
-}
-	
-function addPlayer() {
-  const name = prompt('ชื่อผู้เล่น');
-  if (!name?.trim()) return;
-  const players = getPlayers();
-  const newId = Date.now().toString();
-  players.push({
-    id: newId,
-    name: name.trim(),
-    status: 'ว่าง',
-    availableSince: Date.now(),
-    gamesPlayed: 0,
-    shuttlecocksUsed: 0,
-    selected: false, // ต้องมี
-    paymentStatus: 'ยังไม่จ่าย'
-  });
-  savePlayers(players);
-  renderPlayers();
-  renderCourts();
-}
-    function selectAllFiltered(){
-      document.querySelectorAll('#player-table-body .player-checkbox').forEach(cb=>cb.checked=true);
-      showToast('เลือกผู้เล่นตามการกรองแล้ว ✓');
+      renderCourts();
     }
 
     function openEditPlayer(id, safeName){
@@ -1206,6 +1009,7 @@ function addPlayer() {
       submitBtn.textContent = 'เพิ่ม'; submitBtn.classList.remove('btn-green'); submitBtn.classList.add('btn-primary');
       e.target.reset();
     });
+
     function deletePlayer(id){
       if(!confirm('ลบผู้เล่นนี้ออกจากระบบ?')) return;
       let players=getPlayers(); const courts=getCourts();
@@ -1238,376 +1042,247 @@ function addPlayer() {
         const startDis=(c.status==='กำลังเล่น'||used===0|| (c.pairs?.length||0) < 2)?'opacity-40 pointer-events-none':'';
         const endDis  =(c.status!=='กำลังเล่น')?'opacity-40 pointer-events-none':'';
         const card=document.createElement('div'); card.className='panel p-5';
-		const shuttleLabel = c.shuttlecockNo > 0 ? `ลูกที่ ${c.shuttlecockNo}` : 'ยังไม่มีลูก';
+        const shuttleLabel = c.shuttlecockNo > 0 ? `ลูกที่ ${c.shuttlecockNo}` : 'ยังไม่มีลูก';
         card.innerHTML=`
-		<div class="flex items-center justify-between mb-2">
-			<div class="flex items-center gap-2">
-			  <div class="badge">สนาม</div>
-			  <div class="text-lg font-semibold">${c.name}</div>
-			</div>
-			<div class="flex items-center gap-2">
-			  <span class="status ${cls}">${ used===0 ? 'ว่าง' : (c.status==='กำลังเล่น'?'กำลังเล่น':'พร้อมเล่น') }</span>
-			  <button class="icon-btn text-red-400 hover:bg-red-500/10" title="ลบสนามนี้" onclick="deleteCourt('${c.id}')">
-				<i class="fa-solid fa-trash"></i>
-			  </button>
-			</div>
-		  </div>
-		  <div class="muted text-xs mb-2">ตาปัจจุบัน: ${c.roundNo||0} • ${shuttleLabel}</div>
-          <div class="mb-3 text-sm"><span class="muted">ผู้เล่น (${used}/${cap})</span><div class="mt-1 font-medium">${label}</div></div>
-          <div class="w-full bg-white/5 rounded-full h-1.5 mb-4"><div class="bg-indigo-400 h-1.5 rounded-full" style="width:${percent}%"></div></div>
-          <div class="flex flex-wrap gap-2">
-            <button class="btn btn-green ${startDis}" onclick="startGame('${c.id}')"><i class="fa-solid fa-play"></i> เริ่มเกม</button>
-            <button class="btn ${endDis}" onclick="endGame('${c.id}')"><i class="fa-solid fa-stop"></i> จบเกม</button>
-            <button class="btn" onclick="openManage('${c.id}')"><i class="fa-solid fa-sliders"></i> จัดการ</button>
-            <button class="btn" onclick="openConfirmShuttlecock('${c.id}')"><i class="fa-solid fa-plus"></i> เพิ่มลูก</button>
-          </div>`;
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <div class="badge">สนาม</div>
+            <div class="text-lg font-semibold">${c.name}</div>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="status ${cls}">${ used===0 ? 'ว่าง' : (c.status==='กำลังเล่น'?'กำลังเล่น':'พร้อมเล่น') }</span>
+            <button class="icon-btn text-red-400 hover:bg-red-500/10" title="ลบสนามนี้" onclick="deleteCourt('${c.id}')">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
+        </div>
+        <div class="muted text-xs mb-2">ตาปัจจุบัน: ${c.roundNo||0} • ${shuttleLabel}</div>
+        <div class="mb-3 text-sm"><span class="muted">ผู้เล่น (${used}/${cap})</span><div class="mt-1 font-medium">${label}</div></div>
+        <div class="w-full bg-white/5 rounded-full h-1.5 mb-4"><div class="bg-indigo-400 h-1.5 rounded-full" style="width:${percent}%"></div></div>
+        <div class="flex flex-wrap gap-2">
+          <button class="btn btn-green ${startDis}" onclick="startGame('${c.id}')"><i class="fa-solid fa-play"></i> เริ่มเกม</button>
+          <button class="btn ${endDis}" onclick="endGame('${c.id}')"><i class="fa-solid fa-stop"></i> จบเกม</button>
+          <button class="btn" onclick="openManage('${c.id}')"><i class="fa-solid fa-sliders"></i> จัดการ</button>
+          <button class="btn" onclick="openConfirmShuttlecock('${c.id}')"><i class="fa-solid fa-plus"></i> เพิ่มลูก</button>
+        </div>`;
         wrap.appendChild(card);
       });
     }
 
-	function startGame(courtId){
-	  const courts = getCourts(), players = getPlayers(), byId = mapById(players);
-	  const c = courts.find(x => x.id === courtId);
-	  if (!c) return;
-	  ensurePairs(c);
-	  if (!c.players || c.players.length === 0) {
-		alert('ยังไม่มีผู้เล่นในสนาม');
-		return;
-	  }
-	  if ((c.pairs?.length || 0) < 2) {
-		alert('โปรดตั้งคู่ให้ครบ 2 คู่ก่อนเริ่ม');
-		return;
-	  }
-	  if (c.status === 'กำลังเล่น') return;
-
-	  window._startGameCourtId = courtId;
-	  show('shuttle-type-modal');
-	}
-	
-function handleShuttleTypeSelection(){
-  const type = document.querySelector('input[name="shuttle-type"]:checked')?.value || 'real';
-  const courtId = window._startGameCourtId;
-  if (!courtId) return;
-
-  hide('shuttle-type-modal');
-
-  if (type === 'real') {
-    // ไปกรอกหมายเลขลูกแบบเดิม (แต่บอกว่ามาจาก "เริ่มเกม")
-    openConfirmShuttlecockForStart(courtId);
-  } else {
-    // ลูกซ่อม → เริ่มเกมทันที ไม่บวก shuttlecocksUsed
-    startGameWithRepairShuttle(courtId);
-  }
-}
-	
-function startGameWithRepairShuttle(courtId){
-  const courts = getCourts(), players = getPlayers(), byId = mapById(players);
-  const c = courts.find(x => x.id === courtId);
-  if (!c) return;
-
-  const beforePlayers = JSON.parse(JSON.stringify(players));
-  const beforeCourts = JSON.parse(JSON.stringify(courts));
-
-  // เริ่มเกมโดยไม่ใช้ลูกจริง → ไม่บวก shuttlecocksUsed
-  c.status = 'กำลังเล่น';
-  c.shuttlecockNo = 0;
-  c.shuttlecockHistory = [];
-
-  c.players.forEach(pid => {
-    const p = byId.get(pid);
-    if (p) {
-      p.status = 'กำลังเล่น';
-      p.availableSince = null;
-      // ⚠️ ยังไม่นับ gamesPlayed ตอนนี้ (นับตอนจบเกมเหมือนกันทุกกรณี)
+    function startGame(courtId){
+      const courts = getCourts(), players = getPlayers(), byId = mapById(players);
+      const c = courts.find(x => x.id === courtId);
+      if (!c) return;
+      ensurePairs(c);
+      if (!c.players || c.players.length === 0) {
+        alert('ยังไม่มีผู้เล่นในสนาม');
+        return;
+      }
+      if ((c.pairs?.length || 0) < 2) {
+        alert('โปรดตั้งคู่ให้ครบ 2 คู่ก่อนเริ่ม');
+        return;
+      }
+      if (c.status === 'กำลังเล่น') return;
+      window._startGameCourtId = courtId;
+      show('shuttle-type-modal');
     }
-  });
 
-  // ⚠️ ไม่เรียก pushHistory() หรือ appendMatchLog() ที่นี่!
-
-  savePlayers(players);
-  saveCourts(courts);
-  renderPlayers();
-  renderCourts();
-
-  setUndo('เริ่มเกม (ลูกซ่อม)', () => {
-    savePlayers(beforePlayers);
-    saveCourts(beforeCourts);
-    renderPlayers();
-    renderCourts();
-  });
-  showToast('เริ่มเกมด้วยลูกซ่อม (ไม่คิดเงิน) ✓', 'เลิกทำ', triggerUndo);
-
-  delete window._startGameCourtId;
-}
-	
-    function confirmStartGame(){
-  const courtId = window._startGameCourtId;
-  if (!courtId) return;
-
-  const type = document.querySelector('input[name="shuttle-type"]:checked')?.value || 'real';
-  const courts = getCourts();
-  const players = getPlayers();
-  const byId = mapById(players);
-  const c = courts.find(x => x.id === courtId);
-  if (!c) return;
-
-  const beforePlayers = JSON.parse(JSON.stringify(players));
-  const beforeCourts = JSON.parse(JSON.stringify(courts));
-
-  // ตั้งสถานะเริ่มเกม
-  c.status = 'กำลังเล่น';
-  c.players.forEach(pid => {
-    const p = byId.get(pid);
-    if (p) {
-      p.status = 'กำลังเล่น';
-      p.availableSince = null;
-      p.gamesPlayed = (p.gamesPlayed || 0) + 1;
-      // ⚠️ ถ้าเป็น "ลูกจริง" เท่านั้น ถึงจะบวก shuttlecocksUsed
+    function handleShuttleTypeSelection(){
+      const type = document.querySelector('input[name="shuttle-type"]:checked')?.value || 'real';
+      const courtId = window._startGameCourtId;
+      if (!courtId) return;
+      hide('shuttle-type-modal');
       if (type === 'real') {
-        p.shuttlecocksUsed = (p.shuttlecocksUsed || 0) + 1;
+        openConfirmShuttlecockForStart(courtId);
+      } else {
+        startGameWithRepairShuttle(courtId);
       }
     }
-  });
 
-  // จัดการลูกแบด
-  if (type === 'real') {
-    // ใช้หมายเลขลูกถัดไป
-    const nextNo = (c.shuttlecockNo || 0) + 1;
-    c.shuttlecockNo = nextNo;
-    c.shuttlecockHistory = [nextNo];
-  } else {
-    // ลูกซ่อม → ไม่บันทึกหมายเลข, ไม่เพิ่มประวัติ
-    c.shuttlecockNo = 0;
-    c.shuttlecockHistory = [];
-  }
+    function startGameWithRepairShuttle(courtId){
+      const courts = getCourts(), players = getPlayers(), byId = mapById(players);
+      const c = courts.find(x => x.id === courtId);
+      if (!c) return;
+      const beforePlayers = JSON.parse(JSON.stringify(players));
+      const beforeCourts = JSON.parse(JSON.stringify(courts));
+      c.status = 'กำลังเล่น';
+      c.shuttlecockNo = 0;
+      c.shuttlecockHistory = [];
+      c.players.forEach(pid => {
+        const p = byId.get(pid);
+        if (p) {
+          p.status = 'กำลังเล่น';
+          p.availableSince = null;
+        }
+      });
+      savePlayers(players);
+      saveCourts(courts);
+      renderPlayers();
+      renderCourts();
+      setUndo('เริ่มเกม (ลูกซ่อม)', () => {
+        savePlayers(beforePlayers);
+        saveCourts(beforeCourts);
+        renderPlayers();
+        renderCourts();
+      });
+      showToast('เริ่มเกมด้วยลูกซ่อม (ไม่คิดเงิน) ✓', 'เลิกทำ', triggerUndo);
+      delete window._startGameCourtId;
+    }
 
-  // บันทึกประวัติ
-  pushHistory(c, players);
-  appendMatchLog(c);
+    function openConfirmShuttlecockForStart(courtId){
+      const courts = getCourts(), players = getPlayers(), byId = mapById(players);
+      const c = courts.find(x => x.id === courtId);
+      if (!c) return;
+      document.getElementById('confirm-shuttlecourt-name').textContent = c.name || '—';
+      const playerNames = (c.players || [])
+        .map(pid => byId.get(pid)?.name)
+        .filter(Boolean)
+        .join(', ') || '—';
+      document.getElementById('confirm-shuttlecourt-players').textContent = playerNames;
+      const headingEl = document.querySelector('#confirm-shuttle-modal .heading');
+      if (headingEl) headingEl.textContent = 'เริ่มเกม – ใส่หมายเลขลูก';
+      const input = document.getElementById('shuttle-number-input');
+      if (input) {
+        const nextNo = (c.shuttlecockNo || 0) + 1;
+        input.value = nextNo;
+        input.focus();
+        input.select();
+      }
+      window._shuttleCourtId = courtId;
+      window._isStartingGame = true;
+      show('confirm-shuttle-modal');
+    }
 
-  savePlayers(players);
-  saveCourts(courts);
-  renderPlayers();
-  renderCourts();
-  hide('shuttle-type-modal');
+    function openConfirmShuttlecock(courtId){
+      const courts = getCourts();
+      const c = courts.find(x => x.id === courtId);
+      if (!c) return;
+      document.getElementById('confirm-shuttlecourt-name').textContent = c.name || '—';
+      const players = getPlayers(), byId = mapById(players);
+      const names = (c.players || []).map(pid => byId.get(pid)?.name).filter(Boolean).join(', ') || '—';
+      document.getElementById('confirm-shuttlecourt-players').textContent = names;
+      const nextNo = (c.shuttlecockNo || 0) + 1;
+      document.getElementById('shuttle-number-input').value = nextNo;
+      window._shuttleCourtId = courtId;
+      show('confirm-shuttle-modal');
+    }
 
-  const msg = type === 'real' 
-    ? `เริ่มเกมด้วยลูกจริง ✓` 
-    : `เริ่มเกมด้วยลูกซ่อม (ไม่คิดเงิน) ✓`;
+    function confirmAddShuttlecock(){
+      const courtId = window._shuttleCourtId;
+      if (!courtId) return;
+      const input = document.getElementById('shuttle-number-input');
+      const newNo = parseInt(input?.value?.trim() || '');
+      if (!Number.isInteger(newNo) || newNo < 1) {
+        alert('กรุณาใส่หมายเลขลูกแบดที่ถูกต้อง (≥1)');
+        return;
+      }
 
-  setUndo('เริ่มเกม', () => {
-    savePlayers(beforePlayers);
-    saveCourts(beforeCourts);
-    renderPlayers();
-    renderCourts();
-  });
-  showToast(msg, 'เลิกทำ', triggerUndo);
+      const courts = getCourts(), players = getPlayers(), byId = mapById(players);
+      const c = courts.find(x => x.id === courtId);
+      if (!c) return;
 
-  // ล้างตัวแปรชั่วคราว
-  delete window._startGameCourtId;
-}
-	function openConfirmShuttlecockForStart(courtId){
-	  const courts = getCourts(), players = getPlayers(), byId = mapById(players);
-	  const c = courts.find(x => x.id === courtId);
-	  if (!c) return;
+      // ตรวจสอบลูกซ้ำ
+      if (!Array.isArray(c.shuttlecockHistory)) c.shuttlecockHistory = [];
+      if (c.shuttlecockHistory.includes(newNo)) {
+        alert(`ลูกแบดหมายเลข ${newNo} ถูกใช้ไปแล้วในสนามนี้ กรุณาใส่หมายเลขใหม่`);
+        return;
+      }
 
-	  // แสดงชื่อสนาม
-	  const courtNameEl = document.getElementById('confirm-shuttlecourt-name');
-	  if (courtNameEl) courtNameEl.textContent = c.name || '—';
+      const beforePlayers = JSON.parse(JSON.stringify(players));
+      const beforeCourts = JSON.parse(JSON.stringify(courts));
 
-	  // แสดงชื่อผู้เล่น
-	  const playerNames = (c.players || [])
-		.map(pid => byId.get(pid)?.name)
-		.filter(Boolean)
-		.join(', ') || '—';
-	  const playersEl = document.getElementById('confirm-shuttlecourt-players');
-	  if (playersEl) playersEl.textContent = playerNames;
+      c.shuttlecockNo = newNo;
+      c.shuttlecockHistory.push(newNo);
 
-	  // เปลี่ยนหัวข้อ modal
-	  const headingEl = document.querySelector('#confirm-shuttle-modal .heading');
-	  if (headingEl) headingEl.textContent = 'เริ่มเกม – ใส่หมายเลขลูก';
+      const isStartingGame = window._isStartingGame === true;
 
-	  // ตั้งค่า input: ลูกถัดไป
-	  const input = document.getElementById('shuttle-number-input');
-	  if (input) {
-		const nextNo = (c.shuttlecockNo || 0) + 1;
-		input.value = nextNo;
-		input.style.display = 'block';
-		input.focus();
-		input.select(); // เลือกข้อความทั้งหมด → พิมพ์ทับได้เลย
-	  }
+      if (isStartingGame) {
+        c.players.forEach(pid => {
+          const p = byId.get(pid);
+          if (p) {
+            p.status = 'กำลังเล่น';
+            p.availableSince = null;
+          }
+        });
+        c.status = 'กำลังเล่น';
+      }
 
-	  // ตั้งค่าแฟล็ก
-	  window._shuttleCourtId = courtId;
-	  window._isStartingGame = true;
+      savePlayers(players);
+      saveCourts(courts);
+      renderPlayers();
+      renderCourts();
+      hide('confirm-shuttle-modal');
 
-	  // เปิด modal
-	  show('confirm-shuttle-modal');
-	}
-	function endGame(courtId){
-	  const courts = getCourts(), players = getPlayers(), byId = mapById(players);
-	  const c = courts.find(x => x.id === courtId);
-	  if (!c) return;
+      const action = isStartingGame ? 'เริ่มเกม' : 'เพิ่มลูก';
+      const msg = `${action}แล้ว ✓ (ลูกที่ ${newNo})`;
+      setUndo(msg, () => {
+        savePlayers(beforePlayers);
+        saveCourts(beforeCourts);
+        renderPlayers();
+        renderCourts();
+      });
+      showToast(msg, 'เลิกทำ', triggerUndo);
 
-	  const beforePlayers = JSON.parse(JSON.stringify(players));
-	  const beforeCourts = JSON.parse(JSON.stringify(courts));
+      delete window._shuttleCourtId;
+      delete window._isStartingGame;
+    }
 
-	  // ตรวจสอบว่าเป็นลูกซ่อมหรือไม่ (shuttlecockNo === 0)
-	  const isRepairShuttle = (c.shuttlecockNo === 0);
+    function endGame(courtId){
+      const courts = getCourts(), players = getPlayers(), byId = mapById(players);
+      const c = courts.find(x => x.id === courtId);
+      if (!c) return;
+      const beforePlayers = JSON.parse(JSON.stringify(players));
+      const beforeCourts = JSON.parse(JSON.stringify(courts));
 
-	  // อัปเดตสถานะผู้เล่น
-	  c.players.forEach(pid => {
-		const p = byId.get(pid);
-		if (p) {
-		  p.status = 'ว่าง';
-		  p.availableSince = Date.now();
-		  p.gamesPlayed = (p.gamesPlayed || 0) + 1; // ✅ นับที่นี่เสมอ
+      const isRepairShuttle = (c.shuttlecockNo === 0);
+      const historyCount = Array.isArray(c.shuttlecockHistory) ? c.shuttlecockHistory.length : 0;
+      const totalShuttlesUsed = isRepairShuttle ? 0 : Math.max(1, historyCount);
 
-		  // บวก shuttlecocksUsed เฉพาะลูกจริง
-		  if (!isRepairShuttle) {
-			const historyCount = Array.isArray(c.shuttlecockHistory) ? c.shuttlecockHistory.length : 0;
-			const used = historyCount > 0 ? historyCount : 1;
-			p.shuttlecocksUsed = (p.shuttlecocksUsed || 0) + used;
-		  }
-		}
-	  });
+      c.players.forEach(pid => {
+        const p = byId.get(pid);
+        if (p) {
+          p.status = 'ว่าง';
+          p.availableSince = Date.now();
+          p.gamesPlayed = (p.gamesPlayed || 0) + 1;
+          p.shuttlecocksUsed = (p.shuttlecocksUsed || 0) + totalShuttlesUsed;
+        }
+      });
 
-	  // ✅ บันทึกประวัติที่นี่ (ครั้งเดียว)
-	  pushHistory(c, players);
-	  appendMatchLog(c);
+      pushHistory(c, players);
+      appendMatchLog(c);
 
-	  // รีเซ็ตสนาม
-	  c.players = [];
-	  c.pairs = [];
-	  c.waiting = null;
-	  c.status = 'ว่าง';
-	  c.roundNo = (c.roundNo || 0) + 1;
+      c.players = [];
+      c.pairs = [];
+      c.waiting = null;
+      c.status = 'ว่าง';
+      c.roundNo = (c.roundNo || 0) + 1;
 
-	  savePlayers(players);
-	  saveCourts(courts);
-	  renderPlayers();
-	  renderCourts();
+      savePlayers(players);
+      saveCourts(courts);
+      renderPlayers();
+      renderCourts();
+      setUndo('จบเกม', () => {
+        savePlayers(beforePlayers);
+        saveCourts(beforeCourts);
+        renderPlayers();
+        renderCourts();
+      });
+      showToast('จบเกมแล้ว ✓', 'เลิกทำ', triggerUndo);
+    }
 
-	  setUndo('จบเกม', () => {
-		savePlayers(beforePlayers);
-		saveCourts(beforeCourts);
-		renderPlayers();
-		renderCourts();
-	  });
-	  showToast('จบเกมแล้ว ✓', 'เลิกทำ', triggerUndo);
-	}
-	function openConfirmShuttlecock(courtId){
-	  const courts = getCourts();
-	  const c = courts.find(x => x.id === courtId);
-	  if (!c) return;
-
-	  document.getElementById('confirm-shuttlecourt-name').textContent = c.name || '—';
-	  const players = getPlayers(), byId = mapById(players);
-	  const names = (c.players || []).map(pid => byId.get(pid)?.name).filter(Boolean).join(', ') || '—';
-	  document.getElementById('confirm-shuttlecourt-players').textContent = names;
-
-	  // เซ็ตค่าเริ่มต้นของ input เป็นลูกถัดไป
-	  const nextNo = (c.shuttlecockNo || 0) + 1;
-	  document.getElementById('shuttle-number-input').value = nextNo;
-
-	  window._shuttleCourtId = courtId;
-	  show('confirm-shuttle-modal');
-	}
-		function confirmAddShuttlecock(){
-	  const courtId = window._shuttleCourtId;
-	  if (!courtId) return;
-	  const input = document.getElementById('shuttle-number-input');
-	  const newNo = parseInt(input?.value?.trim() || '');
-	  if (!Number.isInteger(newNo) || newNo < 1) {
-		alert('กรุณาใส่หมายเลขลูกแบดที่ถูกต้อง (≥1)');
-		return;
-	  }
-
-	  const courts = getCourts(), players = getPlayers(), byId = mapById(players);
-	  const c = courts.find(x => x.id === courtId);
-	  if (!c) return;
-
-	  const beforePlayers = JSON.parse(JSON.stringify(players));
-	  const beforeCourts = JSON.parse(JSON.stringify(courts));
-
-	  // ตั้งลูกปัจจุบัน
-	  c.shuttlecockNo = newNo;
-
-	  // จัดการประวัติลูก
-	  if (window._isStartingGame) {
-		c.shuttlecockHistory = [newNo];
-	  } else {
-		if (!Array.isArray(c.shuttlecockHistory)) c.shuttlecockHistory = [];
-		c.shuttlecockHistory.push(newNo);
-	  }
-
-	  // --- กรณีเริ่มเกม: แค่เปลี่ยนสถานะ ---
-	  if (window._isStartingGame) {
-		c.players.forEach(pid => {
-		  const p = byId.get(pid);
-		  if (p) {
-			p.status = 'กำลังเล่น';
-			p.availableSince = null;
-		  }
-		});
-		c.status = 'กำลังเล่น';
-	  } 
-	  // --- กรณีเพิ่มลูก: เพิ่ม shuttlecocksUsed ---
-	  else {
-		c.players.forEach(pid => {
-		  const p = byId.get(pid);
-		  if (p) p.shuttlecocksUsed = (p.shuttlecocksUsed || 0) + 1;
-		});
-
-		// อัปเดต match_log
-		const log = getMatchLog();
-		for (let i = log.length - 1; i >= 0; i--) {
-		  if (log[i].courtId === courtId) {
-			log[i].shuttlecockHistory = [...c.shuttlecockHistory];
-			log[i].shuttlecockNo = newNo;
-			saveMatchLog(log);
-			break;
-		  }
-		}
-	  }
-
-	  savePlayers(players);
-	  saveCourts(courts);
-	  renderPlayers();
-	  renderCourts();
-	  hide('confirm-shuttle-modal');
-
-	  const isStarting = window._isStartingGame === true;
-	  delete window._shuttleCourtId;
-	  delete window._isStartingGame;
-
-	  const action = isStarting ? 'เริ่มเกม' : 'เพิ่มลูก';
-	  const msg = `${action}แล้ว ✓ (ลูกที่ ${newNo})`;
-	  setUndo(msg, () => {
-		savePlayers(beforePlayers);
-		saveCourts(beforeCourts);
-		renderPlayers();
-		renderCourts();
-	  });
-	  showToast(msg, 'เลิกทำ', triggerUndo);
-	}
     /* ------- Assign to court ------- */
     let _assignIds=[];
-	function openAssignModal(){
-	  // ใช้ .player-select:checked แทน .player-checkbox
-	  _assignIds = Array.from(document.querySelectorAll('#player-table-body .player-select:checked'))
-		.map(cb => cb.dataset.id)
-		.filter(Boolean);
-
-	  if(_assignIds.length === 0){
-		alert('กรุณาเลือกผู้เล่นอย่างน้อย 1 คน');
-		return;
-	  }
-
-	  buildAssignCourtList();
-	  document.getElementById('assign-auto').checked = false;
-	  show('assign-modal');
-	}
+    function openAssignModal(){
+      _assignIds = Array.from(document.querySelectorAll('#player-table-body .player-select:checked'))
+        .map(cb => cb.dataset.id)
+        .filter(Boolean);
+      if(_assignIds.length === 0){
+        alert('กรุณาเลือกผู้เล่นอย่างน้อย 1 คน');
+        return;
+      }
+      buildAssignCourtList();
+      show('assign-modal');
+    }
     function buildAssignCourtList(){
       const host=document.getElementById('assign-court-list'); host.innerHTML='';
       const courts=getCourts(), players=getPlayers(), byId=mapById(players);
@@ -1644,48 +1319,6 @@ function startGameWithRepairShuttle(courtId){
       setUndo('เพิ่มผู้เล่นลงสนาม', ()=>{ savePlayers(beforePlayers); saveCourts(beforeCourts); renderPlayers(); renderCourts(); });
       showToast(`เพิ่มผู้เล่นลงสนาม ${added} คน ✓`,'เลิกทำ', triggerUndo);
     }
-	
-	
-	// เพิ่มใน init() หรือหลัง renderPlayers()
-	document.getElementById('player-table-body').addEventListener('change', (e) => {
-	  const select = e.target;
-	  if (!select.classList.contains('payment-select')) return;
-	  const playerId = select.getAttribute('data-player-id');
-	  const value = select.value;
-	  const players = getPlayers();
-	  const p = players.find(x => x.id === playerId);
-	  if (p && p.paymentStatus !== value) {
-		p.paymentStatus = value;
-
-		// 🔁 อัปเดต "สถานะ" ในผู้เล่น
-		if (value === 'เงินสด' || value === 'เงินโอน') {
-		  p.status = 'จ่ายเงินแล้ว';
-		} else {
-		  // ถ้ายังไม่จ่าย → คืนสถานะเดิม (ว่าง / ในสนาม / กำลังเล่น)
-		  // เราต้องคืนตาม logic เดิม → ใช้ helper
-		  if (p.availableSince !== null && p.status !== 'กำลังเล่น') {
-			p.status = 'ว่าง';
-		  }
-		  // แต่ถ้าเขายังอยู่ในสนาม → ต้องดูจาก courts
-		  const courts = getCourts();
-		  let inCourt = false, isPlaying = false;
-		  for (const c of courts) {
-			if (c.players?.includes(p.id)) {
-			  inCourt = true;
-			  if (c.status === 'กำลังเล่น') isPlaying = true;
-			  break;
-			}
-		  }
-		  if (isPlaying) p.status = 'กำลังเล่น';
-		  else if (inCourt) p.status = 'ในสนาม';
-		  else p.status = 'ว่าง';
-		}
-
-		savePlayers(players);
-		renderPlayers(); // 🔁 รีเรนเดอร์ทั้งตารางเพื่อจัดลำดับใหม่
-		showToast(`อัปเดตการชำระเงินของ ${p.name} เป็น "${value}" ✓`);
-	  }
-	});
 
     /* ------- Manage court (swap + move/delete/replace) ------- */
     let _manageCtx=null; let _replaceTarget=null; let _replaceCourtId=null; let _addCourtId=null;
@@ -1693,7 +1326,6 @@ function startGameWithRepairShuttle(courtId){
       const courts=getCourts(), players=getPlayers(), byId=mapById(players);
       const c=courts.find(x=>x.id===courtId); if(!c) return; ensurePairs(c);
       document.getElementById('manage-court-name').textContent=c.name;
-
       const slots=[[null,null],[null,null]];
       if(Array.isArray(c.pairs) && c.pairs.length>=1){
         slots[0][0]=c.pairs[0]?.[0]||null; slots[0][1]=c.pairs[0]?.[1]||null;
@@ -1703,7 +1335,6 @@ function startGameWithRepairShuttle(courtId){
         slots[0][0]=ids[0]||null; slots[0][1]=ids[1]||null; slots[1][0]=ids[2]||null; slots[1][1]=ids[3]||null;
       }
       _manageCtx={courtId, slots};
-
       const drawSlot=(pairIdx, slotIdx)=>{
         const host=document.getElementById((pairIdx===0?'pairA':'pairB')+'-'+slotIdx);
         const pid=_manageCtx.slots[pairIdx][slotIdx]; const name=pid?(byId.get(pid)?.name||'—'):'—'; const skill=pid?(byId.get(pid)?.skill||'N'):'';
@@ -1711,7 +1342,6 @@ function startGameWithRepairShuttle(courtId){
         host.innerHTML=`<span class="badge">#${pairIdx===0? (slotIdx===0?1:2) : (slotIdx===0?3:4)}</span> <span class="font-semibold">${name}</span> ${pid?`<span class="tag">มือ ${skill}</span>`:''}`;
       };
       drawSlot(0,0); drawSlot(0,1); drawSlot(1,0); drawSlot(1,1);
-
       let _pairSelect=null;
       function manageSelectSlot(pairIdx, slotIdx){
         const hostId=(pairIdx===0?'pairA':'pairB')+'-'+slotIdx;
@@ -1726,7 +1356,6 @@ function startGameWithRepairShuttle(courtId){
         _pairSelect=null; autoSaveManagePairs(beforeCourts);
       }
       ['pairA-0','pairA-1','pairB-0','pairB-1'].forEach((id,i)=>{ const el=document.getElementById(id); if(el){ const p=(i<2?0:1), s=(i%2); el.onclick=()=>manageSelectSlot(p,s); }});
-
       function autoSaveManagePairs(beforeCourts=null){
         const courts=getCourts(); const cc=courts.find(x=>x.id===_manageCtx.courtId); if(!cc) return;
         const pairs=[];
@@ -1735,14 +1364,12 @@ function startGameWithRepairShuttle(courtId){
         cc.pairs=pairs; ensurePairs(cc); recalcCourtStatus(cc); saveCourts(courts); renderCourts(); openManage(_manageCtx.courtId);
         if(beforeCourts){ setUndo('สลับสลอต', ()=>{ saveCourts(beforeCourts); renderCourts(); openManage(_manageCtx.courtId); }); showToast('บันทึกการสลับแล้ว ✓','เลิกทำ', triggerUndo); }
       }
-
-      // build action list
       const list=document.getElementById('manage-list'); list.innerHTML='';
       if(!c.players||c.players.length===0){ list.innerHTML='<div class="muted">ไม่มีผู้เล่นในสนามนี้</div>'; }
       else{
         const options=courts.map(ct=>`<option value="${ct.id}" ${ct.id===c.id?'disabled':''}>${ct.name}${ct.id===c.id?' (สนามนี้)':''}</option>`).join('');
-          const bulkSel=document.getElementById('bulk-move-select'); if(bulkSel){ bulkSel.innerHTML=options; }
-          const bulkBtn=document.getElementById('bulk-move-btn'); if(bulkBtn){ bulkBtn.onclick=()=>{ const target=bulkSel?.value; if(!target){ alert('กรุณาเลือกสนามปลายทาง'); return;} if(target===c.id){ alert('สนามปลายทางต้องต่างจากสนามต้นทาง'); return;} bulkMoveAll(c.id, target); }; }
+        const bulkSel=document.getElementById('bulk-move-select'); if(bulkSel){ bulkSel.innerHTML=options; }
+        const bulkBtn=document.getElementById('bulk-move-btn'); if(bulkBtn){ bulkBtn.onclick=()=>{ const target=bulkSel?.value; if(!target){ alert('กรุณาเลือกสนามปลายทาง'); return;} if(target===c.id){ alert('สนามปลายทางต้องต่างจากสนามต้นทาง'); return;} bulkMoveAll(c.id, target); }; }
         c.players.forEach(pid=>{
           const p=byId.get(pid); if(!p) return;
           const row=document.createElement('div'); row.className='flex items-center gap-3 border-b border-[var(--border)] py-2';
@@ -1763,21 +1390,23 @@ function startGameWithRepairShuttle(courtId){
           list.appendChild(row);
         });
       }
-
       show('manage-modal');
     }
 
-    // Free picker (one declaration only)
     function openFreePicker(targetPid=null, courtId){
       _replaceTarget = targetPid; _replaceCourtId = courtId; _addCourtId = (!targetPid ? courtId : null);
       const input=document.getElementById('free-search'); input.value='';
       buildFreeList(''); show('free-picker-modal');
       input.oninput = e => buildFreeList(e.target.value.trim());
     }
+
     function buildFreeList(kw){
       const host=document.getElementById('free-list'); host.innerHTML='';
       const players=getPlayers();
-      const free=players.filter(p=>p.status==='ว่าง').filter(p=>!kw || (p.name||'').toLowerCase().includes(kw.toLowerCase()));
+      const free=players
+        .filter(p=>p.status==='ว่าง')
+        .filter(p => p.paymentStatus !== 'เงินสด' && p.paymentStatus !== 'เงินโอน')
+        .filter(p=>!kw || (p.name||'').toLowerCase().includes(kw.toLowerCase()));
       if(free.length===0){ host.innerHTML='<div class="muted text-sm">ไม่มีผู้เล่นว่างที่ตรงเงื่อนไข</div>'; return; }
       free.forEach(p=>{
         const row=document.createElement('div'); row.className='flex items-center justify-between border-b border-[var(--border)] py-2';
@@ -1790,6 +1419,7 @@ function startGameWithRepairShuttle(courtId){
         host.appendChild(row);
       });
     }
+
     function replaceWithFree(targetPid, courtId, freePid){
       const courts=getCourts(), players=getPlayers(), byId=mapById(players);
       const c=courts.find(x=>x.id===courtId), target=byId.get(targetPid), newcomer=byId.get(freePid);
@@ -1809,6 +1439,7 @@ function startGameWithRepairShuttle(courtId){
       setUndo('แทนที่ผู้เล่น', ()=>{ savePlayers(beforePlayers); saveCourts(beforeCourts); renderPlayers(); renderCourts(); openManage(courtId); });
       showToast('แทนที่ผู้เล่นแล้ว ✓','เลิกทำ', triggerUndo);
     }
+
     function addFreeToCourt(courtId, freePid){
       const courts=getCourts(), players=getPlayers(), byId=mapById(players);
       const c=courts.find(x=>x.id===courtId), newcomer=byId.get(freePid);
@@ -1825,7 +1456,6 @@ function startGameWithRepairShuttle(courtId){
       showToast('เพิ่มผู้เล่นเข้าสนามแล้ว ✓','เลิกทำ', triggerUndo);
     }
 
-    
     function bulkMoveAll(fromId, toId){
       const courts=getCourts(), players=getPlayers(), byId=mapById(players);
       const from=courts.find(x=>x.id===fromId), to=courts.find(x=>x.id===toId);
@@ -1866,6 +1496,7 @@ function startGameWithRepairShuttle(courtId){
       savePlayers(players); saveCourts(courts); renderPlayers(); renderCourts(); openManage(toId);
       if(withToast){ setUndo('ย้ายผู้เล่น', ()=>{ savePlayers(beforePlayers); saveCourts(beforeCourts); renderPlayers(); renderCourts(); openManage(fromId); }); showToast('ย้ายผู้เล่นแล้ว ✓','เลิกทำ', triggerUndo); }
     }
+
     function removePlayerFromCourt(pid, cid, withToast=false){
       const courts=getCourts(), players=getPlayers(), byId=mapById(players);
       const c=courts.find(x=>x.id===cid), p=byId.get(pid); if(!c||!p) return;
@@ -1880,11 +1511,12 @@ function startGameWithRepairShuttle(courtId){
 
     /* ------- Queue ------- */
     let _manualSel=[]; let _manualMode='create'; let _manualEditIndex=null; let _manualPairsPreview={mode:'AB_CD'};
+
     function renderQueue(){
       const host=document.getElementById('queue-container'); host.innerHTML='';
       const q=getQueue(), players=getPlayers(), byId=mapById(players);
-      const count = q.matches?.length || 0; document.getElementById('queue-count').textContent = count;
-      updateQueueBadge?.();
+      const count = q.matches?.length || 0;
+      document.getElementById('queue-count').textContent = count;
       if(!q.matches || q.matches.length===0){ host.innerHTML='<div class="muted">ยังไม่มีคิว</div>'; return; }
       q.matches.forEach((mt,idx)=>{
         const [[A,B],[C,D]] = mt.pairs;
@@ -1919,90 +1551,103 @@ function startGameWithRepairShuttle(courtId){
         host.appendChild(row);
       });
     }
-	function openQueueModal() {
-	  const content = document.getElementById('queue-modal-content');
-	  const q = getQueue();
-	  const players = getPlayers();
-	  const byId = mapById(players);
 
-	  if (!q.matches || q.matches.length === 0) {
-		content.innerHTML = '<div class="muted text-center py-4">ยังไม่มีคิว</div>';
-	  } else {
-		let html = '';
-		q.matches.forEach((mt, idx) => {
-		  const [[A, B], [C, D]] = mt.pairs;
-		  const n = id => byId.get(id)?.name || '—';
-		  const s = id => byId.get(id)?.skill || 'N';
-		  html += `
-			<div class="panel p-4 mb-3">
-			  <div class="flex items-center justify-between">
-				<div class="font-semibold">คิวที่ ${idx + 1}</div>
-				<div class="flex gap-1">
-				  <button class="icon-btn" title="สลับเป็น 1–3/2–4" onclick="swapQueuePairs(${idx}, 'acbd')">
-					<i class="fa-solid fa-arrows-left-right-to-line"></i>
-				  </button>
-				  <button class="icon-btn" title="สลับเป็น 1–4/2–3" onclick="swapQueuePairs(${idx}, 'adbc')">
-					<i class="fa-solid fa-shuffle"></i>
-				  </button>
-				  <button class="icon-btn" title="แก้ไข" onclick="openQueueEditInModal(${idx})">
-					<i class="fa-solid fa-pen"></i>
-				  </button>
-				  <button class="icon-btn" title="ส่งลงสนาม" onclick="openQueueSendModalFromPopup(${idx})">
-					<i class="fa-solid fa-paper-plane"></i>
-				  </button>
-				  <button class="icon-btn" title="ลบ" onclick="deleteQueueMatchFromPopup(${idx})">
-					<i class="fa-solid fa-trash"></i>
-				  </button>
-				</div>
-			  </div>
-			  <div class="mt-2 text-sm">
-				<span class="chip">${n(A)} <span class="tag">มือ ${s(A)}</span></span>
-				<span class="muted">×</span>
-				<span class="chip">${n(B)} <span class="tag">มือ ${s(B)}</span></span>
-				<span class="muted">เจอ</span>
-				<span class="chip">${n(C)} <span class="tag">มือ ${s(C)}</span></span>
-				<span class="muted">×</span>
-				<span class="chip">${n(D)} <span class="tag">มือ ${s(D)}</span></span>
-			  </div>
-			</div>
-		  `;
-		});
-		content.innerHTML = html;
-	  }
-	  show('queue-modal');
-	}
+    function openQueueModal() {
+      const content = document.getElementById('queue-modal-content');
+      const q = getQueue();
+      const players = getPlayers();
+      const byId = mapById(players);
+      if (!q.matches || q.matches.length === 0) {
+        content.innerHTML = '<div class="muted text-center py-4">ยังไม่มีคิว</div>';
+      } else {
+        let html = '';
+        q.matches.forEach((mt, idx) => {
+          const [[A, B], [C, D]] = mt.pairs;
+          const n = id => byId.get(id)?.name || '—';
+          const s = id => byId.get(id)?.skill || 'N';
+          html += `
+            <div class="panel p-4 mb-3">
+              <div class="flex items-center justify-between">
+                <div class="font-semibold">คิวที่ ${idx + 1}</div>
+                <div class="flex gap-1">
+                  <button class="icon-btn" title="สลับเป็น 1–3/2–4" onclick="swapQueuePairs(${idx}, 'acbd')">
+                    <i class="fa-solid fa-arrows-left-right-to-line"></i>
+                  </button>
+                  <button class="icon-btn" title="สลับเป็น 1–4/2–3" onclick="swapQueuePairs(${idx}, 'adbc')">
+                    <i class="fa-solid fa-shuffle"></i>
+                  </button>
+                  <button class="icon-btn" title="แก้ไข" onclick="openQueueEditInModal(${idx})">
+                    <i class="fa-solid fa-pen"></i>
+                  </button>
+                  <button class="icon-btn" title="ส่งลงสนาม" onclick="openQueueSendModalFromPopup(${idx})">
+                    <i class="fa-solid fa-paper-plane"></i>
+                  </button>
+                  <button class="icon-btn" title="ลบ" onclick="deleteQueueMatchFromPopup(${idx})">
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="mt-2 text-sm">
+                <span class="chip">${n(A)} <span class="tag">มือ ${s(A)}</span></span>
+                <span class="muted">×</span>
+                <span class="chip">${n(B)} <span class="tag">มือ ${s(B)}</span></span>
+                <span class="muted">เจอ</span>
+                <span class="chip">${n(C)} <span class="tag">มือ ${s(C)}</span></span>
+                <span class="muted">×</span>
+                <span class="chip">${n(D)} <span class="tag">มือ ${s(D)}</span></span>
+              </div>
+            </div>
+          `;
+        });
+        content.innerHTML = html;
+      }
+      show('queue-modal');
+    }
+
     function buildQueueMatchesFromAvailable(){
       const players=getPlayers();
-      const free=players.filter(p=>p.status==='ว่าง').sort((a,b)=>(a.availableSince??0)-(b.availableSince??0)).map(p=>p.id);
+      const free=players
+        .filter(p=>p.status==='ว่าง')
+        .filter(p => p.paymentStatus !== 'เงินสด' && p.paymentStatus !== 'เงินโอน')
+        .sort((a,b)=>(a.availableSince??0)-(b.availableSince??0)).map(p=>p.id);
       if(free.length<4){ alert('ผู้เล่นว่างน้อยกว่า 4 คน'); return; }
       const matches=[]; for(let i=0;i+3<free.length;i+=4){ matches.push({pairs:[[free[i],free[i+1]],[free[i+2],free[i+3]]]}); }
       const before=getQueue(); saveQueue({matches}); renderQueue();
       setUndo('จัดคิวอัตโนมัติ', ()=>{ saveQueue(before); renderQueue(); });
       showToast(`สร้างคิวอัตโนมัติ ${matches.length} คิว ✓`,'เลิกทำ', triggerUndo);
     }
-	function openManualMatch(pre=null, mode='create', editIndex=null){
-	  _manualMode=mode; _manualEditIndex=(mode==='edit'?editIndex:null);
-	  _manualSel = (Array.isArray(pre)&&pre.length===4)? [...pre] : [];
-	  renderManualList(); updateManualSlots(); updateManualStage();
-	  show('queue-manual-modal');
-	  document.getElementById('btn-pair-default').onclick=()=>setManualPairs('AB_CD');
-	  document.getElementById('btn-pair-acbd').onclick =()=>setManualPairs('AC_BD');
-	  document.getElementById('btn-pair-adbc').onclick =()=>setManualPairs('AD_BC');
-	  document.getElementById('btn-add-match').onclick   =()=>manualAddMatch();
-	}
+
+    function openManualMatch(pre=null, mode='create', editIndex=null){
+      _manualMode=mode; _manualEditIndex=(mode==='edit'?editIndex:null);
+      _manualSel = (Array.isArray(pre)&&pre.length===4)? [...pre] : [];
+      renderManualList(); updateManualSlots(); updateManualStage();
+      show('queue-manual-modal');
+      document.getElementById('btn-pair-default').onclick=()=>setManualPairs('AB_CD');
+      document.getElementById('btn-pair-acbd').onclick =()=>setManualPairs('AC_BD');
+      document.getElementById('btn-pair-adbc').onclick =()=>setManualPairs('AD_BC');
+      document.getElementById('btn-add-match').onclick   =()=>manualAddMatch();
+    }
+
     function clearQueueMatches(){ const before=getQueue(); saveQueue({matches:[]}); renderQueue(); setUndo('ล้างคิว', ()=>{ saveQueue(before); renderQueue(); }); showToast('ล้างคิวแล้ว ✓','เลิกทำ', triggerUndo); }
+
     function openQueueEdit(idx){
       const q=getQueue(); const mt=q.matches?.[idx]; if(!mt) return;
       openManualMatch([ ...mt.pairs[0], ...mt.pairs[1] ], 'edit', idx);
       const btn=document.getElementById('btn-add-match'); btn.textContent='บันทึกคิว';
     }
+
     function renderManualList(){
       const host=document.getElementById('manual-list'); host.innerHTML='';
       const players=getPlayers();
-      players.forEach(p=>{
+      const availablePlayers = players.filter(p => 
+        p.status === 'ว่าง' && 
+        p.paymentStatus !== 'เงินสด' && 
+        p.paymentStatus !== 'เงินโอน'
+      );
+      availablePlayers.forEach(p=>{
         const checked = _manualSel.includes(p.id) ? 'checked' : '';
         const row=document.createElement('label'); row.className='flex items-center justify-between border-b border-[var(--border)] py-2 cursor-pointer';
-        row.innerHTML=`<div class="flex items-center gap-3"><input type="checkbox" ${checked} value="${p.id}" class="accent-indigo-400"><div class="font-medium">${p.name}</div></div><div class="muted text-xs">มือ ${p.skill||'N'} • ${p.status}${p.status==='ว่าง'?` • รอ ${minutesSince(p.availableSince)} นาที`:''}</div>`;
+        row.innerHTML=`<div class="flex items-center gap-3"><input type="checkbox" ${checked} value="${p.id}" class="accent-indigo-400"><div class="font-medium">${p.name}</div></div><div class="muted text-xs">มือ ${p.skill||'N'} • รอ ${minutesSince(p.availableSince)} นาที</div>`;
         const cb=row.querySelector('input'); cb.onchange=(e)=>{
           const id=e.target.value;
           if(e.target.checked){ if(_manualSel.length>=4){ e.target.checked=false; return; } _manualSel.push(id); }
@@ -2012,6 +1657,7 @@ function startGameWithRepairShuttle(courtId){
         host.appendChild(row);
       });
     }
+
     function updateManualSlots(){
       const cont=document.getElementById('manual-slots'); cont.innerHTML='';
       const players=getPlayers(), byId=mapById(players);
@@ -2022,6 +1668,7 @@ function startGameWithRepairShuttle(courtId){
         cont.appendChild(el);
       }
     }
+
     function updateManualStage(){
       const stage=document.getElementById('manual-stage'); stage.innerHTML='';
       const players=getPlayers(), byId=mapById(players);
@@ -2034,7 +1681,9 @@ function startGameWithRepairShuttle(courtId){
       stage.innerHTML=`<div class="text-sm space-y-2"><div>${n[0]} <span class="muted">×</span> ${n[1]} <span class="muted">เจอ</span> ${n[2]} <span class="muted">×</span> ${n[3]}</div><div>${n[0]} <span class="muted">×</span> ${n[2]} <span class="muted">เจอ</span> ${n[1]} <span class="muted">×</span> ${n[3]}</div><div>${n[0]} <span class="muted">×</span> ${n[3]} <span class="muted">เจอ</span> ${n[1]} <span class="muted">×</span> ${n[2]}</div></div>`;
       _manualPairsPreview={mode:'AB_CD'};
     }
+
     function setManualPairs(mode){ _manualPairsPreview.mode=mode; }
+
     function manualAddMatch(){
       if(_manualSel.length!==4) return;
       const [A,B,C,D]=_manualSel;
@@ -2068,6 +1717,7 @@ function startGameWithRepairShuttle(courtId){
       else ok.forEach(({c,cap,used})=>{ const remain=cap-used; const el=document.createElement('label'); el.className='flex items-center gap-3 cursor-pointer'; el.innerHTML=`<input type="radio" class="accent-indigo-400" name="queue-send-court" value="${c.id}"><div class="flex-1">${c.name} <span class="badge">ว่าง ${remain}/${cap}</span></div>`; list.appendChild(el); });
       const host=document.getElementById('queue-send-court'); host.innerHTML=''; host.appendChild(list); show('queue-send-modal');
     }
+
     function confirmSendQueueMatch(){
       const chosen=document.querySelector('input[name="queue-send-court"]:checked'); if(!chosen){ alert('เลือกสนามก่อน'); return; }
       const courtId=chosen.value; const q=getQueue(); const before=JSON.parse(JSON.stringify(q)); const courts=getCourts(); const c=courts.find(x=>x.id===courtId); if(!c) return;
@@ -2131,180 +1781,153 @@ function startGameWithRepairShuttle(courtId){
       };
       reader.readAsText(file, 'utf-8');
     }
-		// === ฟังก์ชันสำหรับ popup ===
 
-	function swapQueuePairs(idx, mode) {
-	  const Q = getQueue();
-	  if (!Q.matches[idx]) return;
-	  const P = Q.matches[idx].pairs;
-	  const [a, b] = P[0], [c, d] = P[1];
-	  if (mode === 'acbd') Q.matches[idx].pairs = [[a, c], [b, d]];
-	  else if (mode === 'adbc') Q.matches[idx].pairs = [[a, d], [b, c]];
-	  saveQueue(Q);
-	  openQueueModal(); // refresh modal
-	  showToast(`สลับคู่แบบ ${mode === 'acbd' ? '1–3 / 2–4' : '1–4 / 2–3'} ✓`);
-	}
-
-	function deleteQueueMatchFromPopup(idx) {
-	  const Q = getQueue();
-	  const before = JSON.parse(JSON.stringify(Q));
-	  Q.matches.splice(idx, 1);
-	  saveQueue(Q);
-	  openQueueModal();
-	  setUndo('ลบคิว', () => {
-		saveQueue(before);
-		openQueueModal();
-	  });
-	  showToast('ลบคิวแล้ว ✓', 'เลิกทำ', triggerUndo);
-	}
-
-	function openQueueEditInModal(idx) {
-	  hide('queue-modal'); // ปิด modal ก่อน
-	  const q = getQueue();
-	  const mt = q.matches?.[idx];
-	  if (!mt) return;
-	  openManualMatch([...mt.pairs[0], ...mt.pairs[1]], 'edit', idx);
-	  const btn = document.getElementById('btn-add-match');
-	  btn.textContent = 'บันทึกคิว';
-	  // เมื่อแก้ไขเสร็จ → ให้กลับมาเปิด modal อีกครั้ง
-	  // เราจะใช้ hook ใน manualAddMatch ด้านล่าง
-	  window._returnToQueueModalAfterEdit = true;
-	}
-
-	function openQueueSendModalFromPopup(idx) {
-	  hide('queue-modal');
-	  openQueueSendModal(idx);
-	  // เมื่อส่งเสร็จ → ไม่ต้องกลับมา (เพราะ renderQueue ปกติ)
-	}
-
-	// === แก้ไข manualAddMatch เพื่อ support การกลับไปที่ popup ===
-	const originalManualAddMatch = manualAddMatch;
-	manualAddMatch = function() {
-	  originalManualAddMatch();
-	  if (window._returnToQueueModalAfterEdit) {
-		window._returnToQueueModalAfterEdit = false;
-		setTimeout(() => openQueueModal(), 300);
-	  }
-	};
-	// ===== History All Modal =====
-	function openHistoryAllModal() {
-	  const content = document.getElementById('history-all-content');
-	  const log = getMatchLog();
-	  const players = getPlayers();
-	  const byId = mapById(players);
-
-	  if (!log || log.length === 0) {
-		content.innerHTML = '<div class="muted text-center py-4">ยังไม่มีประวัติ</div>';
-	  } else {
-		// เรียงจากใหม่ไปเก่า
-		const sorted = [...log].sort((a, b) => (b.ts || 0) - (a.ts || 0));
-		let html = '';
-		sorted.forEach((ev, idx) => {
-		  const pairs = ev.pairs || [[], []];
-		  const [A, B, C, D] = [pairs?.[0]?.[0], pairs?.[0]?.[1], pairs?.[1]?.[0], pairs?.[1]?.[1]];
-		  const n = id => byId.get(id)?.name || '—';
-		  const s = id => byId.get(id)?.skill || 'N';
-		  const fmt = ts => {
-			const d = new Date(ts);
-			const pad = n => String(n).padStart(2, '0');
-			return `${pad(d.getDate())}/${pad(d.getMonth() + 1)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-		  };
-
-		  html += `
-			<div class="panel p-4 mb-3">
-			  <div class="flex items-center justify-between">
-				<div class="font-semibold">ลำดับ ${ev.seq || idx + 1}</div>
-				<div class="muted text-xs">${fmt(ev.ts)}</div>
-			  </div>
-			  <div class="mt-2 text-sm">
-				<div class="muted mb-1">${ev.courtName || '—'} • ลูกที่ ${ev.shuttlecockHistory?.length ? ev.shuttlecockHistory.join(', ') : (ev.shuttlecockNo || '?')}</div>
-				<span class="chip">${n(A)} <span class="tag">มือ ${s(A)}</span></span>
-				<span class="muted">×</span>
-				<span class="chip">${n(B)} <span class="tag">มือ ${s(B)}</span></span>
-				<span class="muted">เจอ</span>
-				<span class="chip">${n(C)} <span class="tag">มือ ${s(C)}</span></span>
-				<span class="muted">×</span>
-				<span class="chip">${n(D)} <span class="tag">มือ ${s(D)}</span></span>
-			  </div>
-			</div>
-		  `;
-		});
-		content.innerHTML = html;
-	  }
-	  document.getElementById('history-count').textContent = log.length;
-	  show('history-all-modal');
-	}
-	
-function deleteCourt(courtId) {
-  if (!confirm('ลบสนามนี้ออกจากระบบ?\n(ผู้เล่นในสนามจะถูกย้ายกลับสู่สถานะ "ว่าง")')) return;
-
-  const courts = getCourts();
-  const players = getPlayers();
-  const byId = mapById(players);
-
-  const c = courts.find(x => x.id === courtId);
-  if (!c) return;
-
-  // เก็บ state ก่อนลบ (สำหรับ undo)
-  const beforeCourts = JSON.parse(JSON.stringify(courts));
-  const beforePlayers = JSON.parse(JSON.stringify(players));
-
-  // ย้ายผู้เล่นในสนามนี้กลับเป็น "ว่าง"
-  (c.players || []).forEach(pid => {
-    const p = byId.get(pid);
-    if (p) {
-      p.status = 'ว่าง';
-      p.availableSince = Date.now();
+    function swapQueuePairs(idx, mode) {
+      const Q = getQueue();
+      if (!Q.matches[idx]) return;
+      const P = Q.matches[idx].pairs;
+      const [a, b] = P[0], [c, d] = P[1];
+      if (mode === 'acbd') Q.matches[idx].pairs = [[a, c], [b, d]];
+      else if (mode === 'adbc') Q.matches[idx].pairs = [[a, d], [b, c]];
+      saveQueue(Q);
+      openQueueModal();
+      showToast(`สลับคู่แบบ ${mode === 'acbd' ? '1–3 / 2–4' : '1–4 / 2–3'} ✓`);
     }
-  });
 
-  // ลบสนาม
-  const newCourts = courts.filter(x => x.id !== courtId);
-  saveCourts(newCourts);
-  savePlayers(players);
+    function deleteQueueMatchFromPopup(idx) {
+      const Q = getQueue();
+      const before = JSON.parse(JSON.stringify(Q));
+      Q.matches.splice(idx, 1);
+      saveQueue(Q);
+      openQueueModal();
+      setUndo('ลบคิว', () => {
+        saveQueue(before);
+        openQueueModal();
+      });
+      showToast('ลบคิวแล้ว ✓', 'เลิกทำ', triggerUndo);
+    }
 
-  // อัปเดต UI
-  renderCourts();
-  renderPlayers();
-  renderQueue(); // คิวอาจอ้างอิงสนามนี้ (แต่ไม่ใช้โดยตรง แต่ render ใหม่เพื่อความปลอดภัย)
+    function openQueueEditInModal(idx) {
+      hide('queue-modal');
+      const q = getQueue();
+      const mt = q.matches?.[idx];
+      if (!mt) return;
+      openManualMatch([...mt.pairs[0], ...mt.pairs[1]], 'edit', idx);
+      const btn = document.getElementById('btn-add-match');
+      btn.textContent = 'บันทึกคิว';
+      window._returnToQueueModalAfterEdit = true;
+    }
 
-  // ตั้ง undo
-  setUndo('ลบสนาม', () => {
-    saveCourts(beforeCourts);
-    savePlayers(beforePlayers);
-    renderCourts();
-    renderPlayers();
-    renderQueue();
-  });
+    function openQueueSendModalFromPopup(idx) {
+      hide('queue-modal');
+      openQueueSendModal(idx);
+    }
 
-  showToast('ลบสนามแล้ว ✓', 'เลิกทำ', triggerUndo);
-}
+    const originalManualAddMatch = manualAddMatch;
+    manualAddMatch = function() {
+      originalManualAddMatch();
+      if (window._returnToQueueModalAfterEdit) {
+        window._returnToQueueModalAfterEdit = false;
+        setTimeout(() => openQueueModal(), 300);
+      }
+    };
 
-function updateHistoryCount() {
-  const count = getMatchLog().length;
-  document.getElementById('history-count').textContent = count;
-}
+    function openHistoryAllModal() {
+      const content = document.getElementById('history-all-content');
+      const log = getMatchLog();
+      const players = getPlayers();
+      const byId = mapById(players);
+      if (!log || log.length === 0) {
+        content.innerHTML = '<div class="muted text-center py-4">ยังไม่มีประวัติ</div>';
+      } else {
+        const sorted = [...log].sort((a, b) => (b.ts || 0) - (a.ts || 0));
+        let html = '';
+        sorted.forEach((ev, idx) => {
+          const pairs = ev.pairs || [[], []];
+          const [A, B, C, D] = [pairs?.[0]?.[0], pairs?.[0]?.[1], pairs?.[1]?.[0], pairs?.[1]?.[1]];
+          const n = id => byId.get(id)?.name || '—';
+          const s = id => byId.get(id)?.skill || 'N';
+          const fmt = ts => {
+            const d = new Date(ts);
+            const pad = n => String(n).padStart(2, '0');
+            return `${pad(d.getDate())}/${pad(d.getMonth() + 1)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+          };
+          html += `
+            <div class="panel p-4 mb-3">
+              <div class="flex items-center justify-between">
+                <div class="font-semibold">ลำดับ ${ev.seq || idx + 1}</div>
+                <div class="muted text-xs">${fmt(ev.ts)}</div>
+              </div>
+              <div class="mt-2 text-sm">
+                <div class="muted mb-1">${ev.courtName || '—'} • ลูกที่ ${ev.shuttlecockHistory?.length ? ev.shuttlecockHistory.join(', ') : (ev.shuttlecockNo || '?')}</div>
+                <span class="chip">${n(A)} <span class="tag">มือ ${s(A)}</span></span>
+                <span class="muted">×</span>
+                <span class="chip">${n(B)} <span class="tag">มือ ${s(B)}</span></span>
+                <span class="muted">เจอ</span>
+                <span class="chip">${n(C)} <span class="tag">มือ ${s(C)}</span></span>
+                <span class="muted">×</span>
+                <span class="chip">${n(D)} <span class="tag">มือ ${s(D)}</span></span>
+              </div>
+            </div>
+          `;
+        });
+        content.innerHTML = html;
+      }
+      document.getElementById('history-count').textContent = log.length;
+      show('history-all-modal');
+    }
 
+    function deleteCourt(courtId) {
+      if (!confirm('ลบสนามนี้ออกจากระบบ?\n(ผู้เล่นในสนามจะถูกย้ายกลับสู่สถานะ "ว่าง")')) return;
+      const courts = getCourts();
+      const players = getPlayers();
+      const byId = mapById(players);
+      const c = courts.find(x => x.id === courtId);
+      if (!c) return;
+      const beforeCourts = JSON.parse(JSON.stringify(courts));
+      const beforePlayers = JSON.parse(JSON.stringify(players));
+      (c.players || []).forEach(pid => {
+        const p = byId.get(pid);
+        if (p) {
+          p.status = 'ว่าง';
+          p.availableSince = Date.now();
+        }
+      });
+      const newCourts = courts.filter(x => x.id !== courtId);
+      saveCourts(newCourts);
+      savePlayers(players);
+      renderCourts();
+      renderPlayers();
+      renderQueue();
+      setUndo('ลบสนาม', () => {
+        saveCourts(beforeCourts);
+        savePlayers(beforePlayers);
+        renderCourts();
+        renderPlayers();
+        renderQueue();
+      });
+      showToast('ลบสนามแล้ว ✓', 'เลิกทำ', triggerUndo);
+    }
 
+    function updateHistoryCount() {
+      const count = getMatchLog().length;
+      document.getElementById('history-count').textContent = count;
+    }
 
     /* Init */
-    
-function init(){
-  try{ migrate(); }catch(e){}
-  try{ renderCourts(); }catch(e){}
-  try{ renderPlayers(); }catch(e){}
-  try{ renderQueue(); }catch(e){}
-  try{ updatePriceDisplay(); }catch(e){}
-  try{ attachSortHandlers(); }catch(e){}
-  try{ applyQueueSidebarState?.(); }catch(e){}
-  try{ applyHistorySidebarState?.(); }catch(e){}
-  try{ renderAllHistorySidebar?.(); }catch(e){}
-  try{ setInterval(renderPlayers, 30000); }catch(e){}
-  document.getElementById('history-count').textContent = getMatchLog().length;
-}
+    function init(){
+      try{ migrate(); }catch(e){}
+      try{ renderCourts(); }catch(e){}
+      try{ renderPlayers(); }catch(e){}
+      try{ renderQueue(); }catch(e){}
+      try{ updatePriceDisplay(); }catch(e){}
+      document.getElementById('history-count').textContent = getMatchLog().length;
+    }
 
     function clearAllCourts(){ if(confirm('ล้างข้อมูลทั้งหมด?')){ localStorage.removeItem('players'); localStorage.removeItem('courts'); localStorage.removeItem('queue_matches'); renderCourts(); renderPlayers(); renderQueue(); updatePriceDisplay(); showToast('ล้างข้อมูลทั้งหมดแล้ว'); } }
+
     init();
   </script>
 </body>
 </html>
+
