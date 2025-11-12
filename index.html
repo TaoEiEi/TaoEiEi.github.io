@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Badminton Court Manager — v8 (Tabbed UI)</title>
+  <title>Badminton Court Manager — By Tao</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
   <style>
@@ -1306,6 +1306,25 @@
 
 	  showToast('จบเกมแล้ว ✓', 'เลิกทำ', triggerUndo);
 	}
+	
+	    function openHistory(id){
+      const players=getPlayers(), p=players.find(x=>x.id===id); if(!p) return;
+      document.getElementById('history-player-name').textContent=p.name||'—';
+      const host=document.getElementById('history-list'); host.innerHTML='';
+      const byId=mapById(players);
+      const fmt=ts=>{const d=new Date(ts),pad=n=>String(n).padStart(2,'0');return `${pad(d.getHours())}:${pad(d.getMinutes())} • ${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`};
+      const hist=[...(p.history||[])].sort((a,b)=>(b.ts||0)-(a.ts||0));
+      if(hist.length===0){ host.innerHTML='<div class="muted">ยังไม่มีประวัติ</div>'; show('history-modal'); return; }
+      hist.forEach(h=>{
+        const partner=byId.get(h.partnerId)?.name||'—';
+        const opp=(h.opponentsIds||[]).map(x=>byId.get(x)?.name||'—').join(', ')||'—';
+        const row=document.createElement('div'); row.className='flex items-center justify-between border-b border-[var(--border)] py-2';
+        row.innerHTML=`<div><div class="font-semibold">ตา ${h.round} • ${h.courtName||'—'} </div><div class="muted text-xs">คู่กับ ${partner} • คู่แข่ง ${opp}</div></div><div class="muted text-xs">${fmt(h.ts)}</div>`;
+        host.appendChild(row);
+      });
+      show('history-modal');
+    }
+    window.openHistory=openHistory;
 
     function openConfirmShuttlecock(courtId){
       const courts = getCourts();
@@ -1349,7 +1368,6 @@
           if (p) {
             p.status = 'กำลังเล่น';
             p.availableSince = null;
-            p.gamesPlayed = (p.gamesPlayed || 0) + 1;
           }
         });
         c.status = 'กำลังเล่น';
@@ -2063,6 +2081,7 @@
       document.getElementById('history-count').textContent = log.length;
       show('history-all-modal');
     }
+	
 
     function deleteCourt(courtId) {
       if (!confirm('ลบสนามนี้ออกจากระบบ?\n(ผู้เล่นในสนามจะถูกย้ายกลับสู่สถานะ "ว่าง")')) return;
