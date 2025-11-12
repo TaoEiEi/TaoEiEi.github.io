@@ -978,9 +978,12 @@
           : (p.status === 'ในสนาม' && !isPaid(p) ? `<span class="badge">รอเริ่ม</span>` : '');
         tbody.insertAdjacentHTML('beforeend', `
           <tr>
-            <td class="text-left p-3">
-              <input type="checkbox" class="player-select accent-indigo-400" data-id="${p.id}" ${p.selected ? 'checked' : ''} ${isPaid(p) ? 'disabled' : ''}>
-            </td>
+			<td class="text-left p-3">
+			  ${p.status === 'ในสนาม' || p.status === 'กำลังเล่น'
+			    ? '<div class="w-6"></div>'  // ซ่อน checkbox แต่เว้นพื้นที่
+			    : `<input type="checkbox" class="player-select accent-indigo-400" data-id="${p.id}" ${p.selected ? 'checked' : ''} ${isPaid(p) ? 'disabled' : ''}>`
+			  }
+			</td>
             <td class="text-center p-3">${i + 1}</td>
             <td class="text-left p-3">
               <button class="text-indigo-300 hover:underline" onclick="openHistory('${p.id}')">${p.name}</button>
