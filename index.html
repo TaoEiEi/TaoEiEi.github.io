@@ -1374,8 +1374,6 @@
           }
         });
         c.status = 'กำลังเล่น';
-        pushHistory(c, players);
-        appendMatchLog(c);
       }
       savePlayers(players);
       saveCourts(courts);
@@ -1775,11 +1773,10 @@
 
     function buildQueueMatchesFromAvailable(){
       const players = getPlayers();
-      const free = players
-        .filter(p => p.status === 'ว่าง')
-        .filter(p => p.paymentStatus !== 'เงินสด' && p.paymentStatus !== 'เงินโอน')
-        .sort((a, b) => (a.availableSince ?? 0) - (b.availableSince ?? 0))
-        .map(p => p.id);
+	const free = players
+	  .filter(p => p.paymentStatus !== 'เงินสด' && p.paymentStatus !== 'เงินโอน')
+	  .sort((a, b) => (a.availableSince ?? 0) - (b.availableSince ?? 0))
+	  .map(p => p.id);
       if (free.length < 4) {
         alert('ผู้เล่นว่างน้อยกว่า 4 คน');
         return;
@@ -1830,11 +1827,10 @@
       const host = document.getElementById('manual-list');
       host.innerHTML = '';
       const players = getPlayers();
-      const availablePlayers = players.filter(p => 
-        p.status === 'ว่าง' && 
-        p.paymentStatus !== 'เงินสด' && 
-        p.paymentStatus !== 'เงินโอน'
-      );
+		const availablePlayers = players.filter(p =>
+		  p.paymentStatus !== 'เงินสด' &&
+		  p.paymentStatus !== 'เงินโอน'
+		);
       availablePlayers.forEach(p => {
         const checked = _manualSel.includes(p.id) ? 'checked' : '';
         const row = document.createElement('label');
