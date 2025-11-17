@@ -1835,7 +1835,7 @@
         const checked = _manualSel.includes(p.id) ? 'checked' : '';
         const row = document.createElement('label');
         row.className = 'flex items-center justify-between border-b border-[var(--border)] py-2 cursor-pointer';
-        row.innerHTML = `<div class="flex items-center gap-3"><input type="checkbox" ${checked} value="${p.id}" class="accent-indigo-400"><div class="font-medium">${p.name}</div></div><div class="muted text-xs">มือ ${p.skill || 'N'} • รอ ${minutesSince(p.availableSince)} นาที</div>`;
+        row.innerHTML = `<div class="flex items-center gap-3"><input type="checkbox" ${checked} value="${p.id}" class="accent-indigo-400"><div class="font-medium">${p.name}</div></div><div class="muted text-xs">มือ ${p.skill || 'N'} • เกม ${p.gamesPlayed || 0} • รอ ${minutesSince(p.availableSince)} นาที</div>`;
         const cb = row.querySelector('input');
         cb.onchange = (e) => {
           const id = e.target.value;
